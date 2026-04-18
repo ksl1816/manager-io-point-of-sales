@@ -1,0 +1,1406 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>POS — Quick Sale</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --indigo: #6366f1;
+    --violet: #8b5cf6;
+    --pink:   #ec4899;
+    --rose:   #f43f5e;
+    --teal:   #14b8a6;
+    --emerald:#10b981;
+    --amber:  #f59e0b;
+    --slate-900: #0f172a;
+    --slate-700: #334155;
+    --slate-600: #475569;
+    --slate-500: #64748b;
+    --slate-400: #94a3b8;
+    --slate-300: #cbd5e1;
+    --slate-200: #e2e8f0;
+    --slate-100: #f1f5f9;
+    --slate-50:  #f8fafc;
+
+    --magic-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+    --magic-gradient-soft: linear-gradient(135deg, rgba(99,102,241,.08), rgba(139,92,246,.08), rgba(236,72,153,.08));
+    --success-gradient: linear-gradient(135deg, #10b981, #14b8a6);
+
+    --shadow-sm:  0 1px 2px rgba(15,23,42,.04), 0 1px 3px rgba(15,23,42,.06);
+    --shadow-md:  0 4px 6px -1px rgba(15,23,42,.05), 0 2px 4px -2px rgba(15,23,42,.04);
+    --shadow-lg:  0 20px 40px -12px rgba(99,102,241,.12), 0 8px 16px -8px rgba(236,72,153,.08);
+    --shadow-xl:  0 30px 60px -20px rgba(99,102,241,.18), 0 15px 30px -15px rgba(236,72,153,.15);
+  }
+
+  html, body { height: 100%; }
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-feature-settings: 'cv11', 'ss01';
+    color: var(--slate-900);
+    background:
+      radial-gradient(ellipse 80% 60% at 15% 0%, rgba(139,92,246,.10), transparent 60%),
+      radial-gradient(ellipse 70% 50% at 90% 10%, rgba(236,72,153,.09), transparent 55%),
+      radial-gradient(ellipse 60% 40% at 50% 100%, rgba(20,184,166,.08), transparent 60%),
+      linear-gradient(180deg, #faf5ff 0%, #fdf4ff 30%, #fff1f2 70%, #f0fdfa 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+    padding: 24px;
+    letter-spacing: -0.01em;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Control bar ─── */
+  .ctrl-bar {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 14px 18px; margin-bottom: 20px;
+    background: rgba(255,255,255,.7);
+    backdrop-filter: blur(16px) saturate(1.4);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    border: 1px solid rgba(255,255,255,.8);
+    box-shadow: var(--shadow-md);
+    border-radius: 16px;
+  }
+  .brand {
+    font-weight: 800; font-size: 15px; letter-spacing: -0.02em;
+    background: var(--magic-gradient);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .brand::before {
+    content: ""; display: inline-block;
+    width: 24px; height: 24px; border-radius: 7px;
+    background: var(--magic-gradient);
+    box-shadow: 0 4px 12px rgba(139,92,246,.4);
+  }
+  .load-btn {
+    padding: 9px 18px; border: none; border-radius: 10px; cursor: pointer;
+    font-size: 13px; font-weight: 700; font-family: inherit;
+    color: #fff; background: var(--magic-gradient);
+    background-size: 200% 200%;
+    box-shadow: 0 4px 14px rgba(139,92,246,.35), inset 0 1px 0 rgba(255,255,255,.25);
+    white-space: nowrap; letter-spacing: -0.01em;
+    transition: all .2s ease;
+  }
+  .load-btn:hover:not(:disabled) {
+    background-position: 100% 100%;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 22px rgba(139,92,246,.45), inset 0 1px 0 rgba(255,255,255,.3);
+  }
+  .load-btn:disabled { opacity: .5; cursor: not-allowed; }
+  .progress-wrap {
+    flex: 1; min-width: 120px; height: 6px;
+    background: var(--slate-200); border-radius: 99px; overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%; width: 0%;
+    background: var(--magic-gradient);
+    border-radius: 99px; transition: width .3s ease;
+  }
+  .status-text { font-size: 12px; color: var(--slate-500); white-space: nowrap; font-weight: 500; }
+  .debug-toggle {
+    font-size: 11px; color: var(--slate-500); cursor: pointer;
+    background: transparent; border: 1px solid var(--slate-200);
+    padding: 5px 11px; border-radius: 8px; font-weight: 600;
+    font-family: inherit; transition: all .15s;
+  }
+  .debug-toggle:hover { color: var(--indigo); border-color: var(--indigo); background: rgba(99,102,241,.05); }
+
+  .error-box {
+    color: var(--rose); background: rgba(255,255,255,.8); backdrop-filter: blur(10px);
+    border: 1px solid rgba(244,63,94,.25);
+    border-radius: 14px; padding: 14px 18px; font-size: 13px; margin-bottom: 18px;
+    box-shadow: var(--shadow-md);
+  }
+
+  /* ─── Debug log ─── */
+  .debug-log {
+    background: #0f172a; border-radius: 12px;
+    padding: 12px 14px; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: #94a3b8; max-height: 160px; overflow-y: auto; margin-bottom: 18px;
+    display: none; white-space: pre-wrap; word-break: break-all;
+    box-shadow: var(--shadow-lg);
+  }
+  .debug-log.show { display: block; }
+  .debug-log .ok   { color: #34d399; }
+  .debug-log .fail { color: #fb7185; }
+  .debug-log .info { color: #818cf8; }
+
+  /* ─── POS Layout ─── */
+  .pos-container {
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    gap: 20px;
+    min-height: calc(100vh - 120px);
+  }
+  @media (max-width: 960px) {
+    .pos-container { grid-template-columns: 1fr; }
+  }
+
+  .pos-panel {
+    background: rgba(255,255,255,.85);
+    backdrop-filter: blur(20px) saturate(1.5);
+    -webkit-backdrop-filter: blur(20px) saturate(1.5);
+    border: 1px solid rgba(255,255,255,.9);
+    box-shadow: var(--shadow-lg);
+    border-radius: 20px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+  .pos-panel::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--magic-gradient);
+    opacity: .9;
+  }
+
+  .panel-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--slate-500);
+    margin-bottom: 18px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .panel-title .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--magic-gradient);
+  }
+
+  /* ─── Form Fields ─── */
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .form-field { display: flex; flex-direction: column; }
+  .form-field.full { grid-column: 1 / -1; }
+  .form-field label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--slate-500);
+    margin-bottom: 7px;
+    font-weight: 600;
+  }
+  .form-field input, .form-field textarea, .form-field select {
+    background: #fff;
+    border: 1.5px solid var(--slate-200);
+    border-radius: 10px;
+    padding: 11px 14px;
+    color: var(--slate-900);
+    font-size: 14px;
+    font-family: inherit;
+    font-weight: 500;
+    transition: all .15s ease;
+  }
+  .form-field input:focus, .form-field textarea:focus, .form-field select:focus {
+    outline: none;
+    border-color: var(--indigo);
+    box-shadow: 0 0 0 4px rgba(99,102,241,.12);
+  }
+  .form-field input::placeholder { color: var(--slate-400); font-weight: 400; }
+
+  /* ─── Barcode input — hero element ─── */
+  .barcode-wrap {
+    position: relative;
+    margin-bottom: 16px;
+  }
+  .barcode-input {
+    width: 100%;
+    background: #fff !important;
+    border: 2px solid transparent !important;
+    background-image: linear-gradient(#fff, #fff), var(--magic-gradient) !important;
+    background-origin: border-box !important;
+    background-clip: padding-box, border-box !important;
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    padding: 16px 18px !important;
+    padding-left: 50px !important;
+    font-family: 'JetBrains Mono', monospace !important;
+    border-radius: 14px !important;
+    color: var(--slate-900);
+    box-shadow: 0 8px 24px -8px rgba(99,102,241,.2);
+    letter-spacing: 0.02em;
+  }
+  .barcode-input:focus {
+    outline: none;
+    box-shadow: 0 12px 30px -8px rgba(236,72,153,.3), 0 0 0 4px rgba(236,72,153,.08) !important;
+  }
+  .barcode-input::placeholder { color: var(--slate-400); font-weight: 500; letter-spacing: 0; }
+  .barcode-icon {
+    position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+    width: 22px; height: 22px; color: var(--violet);
+    pointer-events: none;
+  }
+
+  .scanner-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--emerald);
+    margin-top: 10px;
+    padding-left: 4px;
+  }
+  .scanner-dot {
+    width: 7px; height: 7px;
+    background: var(--emerald);
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px rgba(16,185,129,.2);
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 3px rgba(16,185,129,.2); }
+    50%      { opacity: .6; box-shadow: 0 0 0 6px rgba(16,185,129,.05); }
+  }
+
+  /* ─── Stats pills ─── */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .stat-box {
+    background: #fff;
+    border: 1px solid var(--slate-200);
+    border-radius: 12px;
+    padding: 12px 10px;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+    transition: all .2s;
+  }
+  .stat-box:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  .stat-box .val {
+    font-size: 20px; font-weight: 800;
+    color: var(--slate-900); letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-box.accent .val {
+    background: var(--success-gradient);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .stat-box .lbl {
+    font-size: 10px; text-transform: uppercase;
+    color: var(--slate-500); letter-spacing: .08em; margin-top: 3px;
+    font-weight: 600;
+  }
+
+  /* ─── Cart Table ─── */
+  .cart-wrap {
+    flex: 1;
+    overflow: auto;
+    border: 1px solid var(--slate-200);
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: var(--shadow-sm);
+  }
+  .cart-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .cart-table thead {
+    background: linear-gradient(180deg, var(--slate-50), #fff);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  .cart-table th {
+    text-align: left;
+    padding: 12px 14px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--slate-500);
+    font-weight: 700;
+    border-bottom: 1px solid var(--slate-200);
+  }
+  .cart-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--slate-100);
+    vertical-align: middle;
+  }
+  .cart-table tbody tr { transition: background .15s; }
+  .cart-table tbody tr:hover { background: var(--slate-50); }
+  .cart-table tbody tr:last-child td { border-bottom: none; }
+  .cart-table tbody tr.new-row { animation: flash .7s ease; }
+  @keyframes flash {
+    0%   { background: rgba(139,92,246,.15); }
+    100% { background: transparent; }
+  }
+
+  .qty-input, .price-input {
+    width: 72px;
+    background: #fff;
+    border: 1.5px solid var(--slate-200);
+    border-radius: 8px;
+    padding: 5px 10px;
+    color: var(--slate-900);
+    font-size: 13px;
+    font-weight: 600;
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    transition: all .15s;
+  }
+  .price-input { width: 90px; }
+  .qty-input:focus, .price-input:focus {
+    outline: none;
+    border-color: var(--indigo);
+    box-shadow: 0 0 0 3px rgba(99,102,241,.12);
+  }
+
+  .line-total {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    color: var(--emerald);
+    font-size: 13px;
+  }
+
+  .remove-btn {
+    background: transparent;
+    border: 1.5px solid var(--slate-200);
+    color: var(--slate-400);
+    border-radius: 8px;
+    padding: 2px 10px;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1.2;
+    font-weight: 600;
+    transition: all .15s;
+    font-family: inherit;
+  }
+  .remove-btn:hover {
+    background: var(--rose);
+    color: #fff;
+    border-color: var(--rose);
+  }
+
+  .empty-cart {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--slate-400);
+  }
+  .empty-cart .big {
+    font-size: 48px; margin-bottom: 12px;
+    display: inline-block;
+    background: var(--magic-gradient);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 4px 10px rgba(139,92,246,.2));
+    line-height: 1;
+  }
+  .empty-cart .main-text {
+    font-size: 14px; color: var(--slate-600); font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .empty-cart .sub-text { font-size: 12px; color: var(--slate-400); }
+
+  /* ─── Summary ─── */
+  .summary {
+    background: linear-gradient(135deg, rgba(99,102,241,.04), rgba(139,92,246,.04), rgba(236,72,153,.04));
+    border: 1px solid rgba(139,92,246,.12);
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+  }
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    font-size: 13px;
+    color: var(--slate-600);
+    font-weight: 500;
+  }
+  .summary-row span:last-child {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    color: var(--slate-900);
+  }
+  .summary-row.total {
+    border-top: 1px dashed rgba(139,92,246,.2);
+    margin-top: 10px;
+    padding-top: 13px;
+  }
+  .summary-row.total span:first-child {
+    font-size: 12px; text-transform: uppercase;
+    letter-spacing: .08em; color: var(--slate-600); font-weight: 700;
+  }
+  .summary-row.total span:last-child {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    background: var(--success-gradient);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* ─── Actions ─── */
+  .actions {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 10px;
+  }
+  .btn {
+    padding: 14px 18px;
+    border: none;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .2s ease;
+    font-family: inherit;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .btn-primary {
+    background: var(--magic-gradient);
+    background-size: 200% 200%;
+    color: #fff;
+    box-shadow: 0 8px 20px -4px rgba(139,92,246,.4), inset 0 1px 0 rgba(255,255,255,.25);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background-position: 100% 100%;
+    transform: translateY(-1px);
+    box-shadow: 0 12px 28px -4px rgba(236,72,153,.5), inset 0 1px 0 rgba(255,255,255,.3);
+  }
+  .btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+  .btn-secondary {
+    background: #fff;
+    color: var(--slate-700);
+    border: 1.5px solid var(--slate-200);
+  }
+  .btn-secondary:hover { background: var(--slate-50); border-color: var(--slate-300); color: var(--slate-900); }
+
+  /* ─── Toast ─── */
+  .toast {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    z-index: 1000;
+    animation: slideIn .35s cubic-bezier(.2,1,.3,1);
+    max-width: 440px;
+    box-shadow: var(--shadow-xl);
+    backdrop-filter: blur(12px);
+  }
+  .toast.success { background: var(--success-gradient); color: #fff; }
+  .toast.error   { background: linear-gradient(135deg, #f43f5e, #ec4899); color: #fff; }
+  .toast.info    { background: var(--magic-gradient); color: #fff; }
+  @keyframes slideIn {
+    from { transform: translateX(500px); opacity: 0; }
+    to   { transform: translateX(0); opacity: 1; }
+  }
+
+  /* ─── Customer badge / section ─── */
+  .customer-display {
+    margin-top: 10px;
+    display: flex; align-items: center; gap: 10px;
+    flex-wrap: wrap;
+  }
+  .customer-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 11px;
+    background: var(--magic-gradient-soft);
+    border: 1px solid rgba(139,92,246,.25);
+    border-radius: 99px;
+    font-size: 12px; font-weight: 700;
+    color: var(--violet);
+    letter-spacing: 0;
+  }
+  .customer-badge .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--magic-gradient);
+  }
+  .clear-link {
+    font-size: 11px; color: var(--rose); font-weight: 600;
+    cursor: pointer; text-decoration: none;
+  }
+  .clear-link:hover { text-decoration: underline; }
+
+  /* ─── Customer suggestions dropdown ─── */
+  .suggest-wrap { position: relative; }
+  .suggest-list {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0; right: 0;
+    background: #fff;
+    border: 1px solid var(--slate-200);
+    border-radius: 12px;
+    max-height: 240px;
+    overflow-y: auto;
+    z-index: 100;
+    display: none;
+    box-shadow: var(--shadow-xl);
+  }
+  .suggest-list.open { display: block; }
+  .suggest-item {
+    padding: 10px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--slate-100);
+    transition: background .1s;
+  }
+  .suggest-item:last-child { border-bottom: none; }
+  .suggest-item:hover, .suggest-item.active {
+    background: var(--magic-gradient-soft);
+  }
+  .suggest-item .name { font-size: 13px; font-weight: 600; color: var(--slate-900); }
+  .suggest-item .code {
+    font-size: 11px; color: var(--slate-500); margin-top: 2px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ─── Walk-in divider ─── */
+  .divider-label {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 10px; text-transform: uppercase;
+    color: var(--slate-400); letter-spacing: .1em;
+    margin: 18px 0 12px; font-weight: 700;
+  }
+  .divider-label::before, .divider-label::after {
+    content: ""; flex: 1; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--slate-200), transparent);
+  }
+
+  /* ─── Reference chip ─── */
+  .ref-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 14px; border-radius: 10px;
+    background: rgba(20,184,166,.08);
+    border: 1.5px solid rgba(20,184,166,.25);
+    color: var(--teal);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; font-weight: 700;
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: var(--slate-200);
+    border-radius: 99px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--slate-300); background-clip: padding-box; border: 2px solid transparent; }
+</style>
+</head>
+<body>
+
+<!-- Control bar -->
+<div class="ctrl-bar">
+  <span class="brand">POS</span>
+  <button class="load-btn" id="load-btn" onclick="loadAllRecords()">Load Items &amp; Customers</button>
+  <div class="progress-wrap"><div class="progress-bar" id="prog-bar"></div></div>
+  <span class="status-text" id="status-text">Press Load to fetch data from Manager</span>
+  <button class="debug-toggle" onclick="toggleDebug()">Debug</button>
+</div>
+<div class="debug-log" id="debug-log"></div>
+
+<div id="app"></div>
+
+<script>
+/* ══════════════════════════════════════════════
+   Capture managerAppContext from parent
+══════════════════════════════════════════════ */
+window.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'manager-context' && event.data.payload) {
+    window.managerAppContext = event.data.payload;
+    debugLog('info', '✓ managerAppContext received: ' +
+      (window.managerAppContext.apiEndpoint || '(no apiEndpoint)'));
+  }
+});
+
+function toggleDebug() {
+  document.getElementById('debug-log').classList.toggle('show');
+}
+function debugLog(type, msg) {
+  const el = document.getElementById('debug-log');
+  if (!el) return;
+  const time = new Date().toLocaleTimeString();
+  const line = document.createElement('div');
+  line.className = type;
+  line.textContent = `[${time}] ${msg}`;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+/* ══════════════════════════════════════════════
+   postMessage helper — DO NOT MODIFY
+══════════════════════════════════════════════ */
+function postMessageWithResponse(message) {
+  return new Promise((resolve, reject) => {
+    const requestId = crypto.randomUUID();
+    const timer = setTimeout(() => {
+      window.removeEventListener('message', handler);
+      reject(new Error('Timeout — is this running inside Manager?'));
+    }, 15000);
+    function handler(event) {
+      if (event.data?.type?.endsWith('-response') && event.data?.requestId === requestId) {
+        clearTimeout(timer);
+        window.removeEventListener('message', handler);
+        if (event.data.error) {
+          reject(new Error(event.data.error));
+        } else {
+          resolve(event.data.body);
+        }
+      }
+    }
+    window.addEventListener('message', handler);
+    window.parent.postMessage({ ...message, requestId }, '*');
+  });
+}
+
+/* ══════════════════════════════════════════════
+   Direct fetch via managerAppContext
+══════════════════════════════════════════════ */
+async function directFetch(method, path, body) {
+  const ctx = window.managerAppContext;
+  if (!ctx || !ctx.apiEndpoint) {
+    throw new Error('managerAppContext not available');
+  }
+  let url;
+  if (path.startsWith('http')) {
+    url = path;
+  } else {
+    const base = ctx.apiEndpoint.replace(/\/+$/, '');
+    url = base + (path.startsWith('/') ? path : '/' + path);
+  }
+  const opts = {
+    method,
+    headers: {
+      'Authorization': 'Bearer ' + ctx.apiAccessToken,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+  };
+  if (body !== undefined && body !== null) {
+    opts.body = typeof body === 'string' ? body : JSON.stringify(body);
+  }
+  debugLog('info', `→ ${method} ${url}`);
+  const resp = await fetch(url, opts);
+  const text = await resp.text();
+  debugLog(resp.ok ? 'ok' : 'fail',
+    `← ${resp.status} ${resp.statusText} · ${text.substring(0, 160)}`);
+  if (!resp.ok) {
+    throw new Error(`HTTP ${resp.status}: ${text.substring(0, 200)}`);
+  }
+  try { return JSON.parse(text); } catch { return text; }
+}
+
+async function apiCall(method, path, body) {
+  // Use ONLY postMessage — no fallback to direct fetch.
+  // The previous fallback was causing duplicate invoices: Manager would
+  // create the invoice successfully via postMessage but occasionally the
+  // response shape didn't match what postMessageWithResponse expected, so
+  // it would throw — triggering the directFetch fallback, which created
+  // a SECOND identical invoice.
+  const msg = { type: 'api-request', method, path };
+  if (body !== undefined && body !== null) msg.body = body;
+  const result = await postMessageWithResponse(msg);
+  debugLog('ok', `postMessage ${method} ${path} succeeded`);
+  return result;
+}
+
+/* ══════════════════════════════════════════════
+   Paginated batch fetch
+══════════════════════════════════════════════ */
+async function getBatchEndpoint(endpointPath, onProgress) {
+  const allItems = [];
+  let nextToken  = null;
+  let pageNum    = 0;
+  let apiTotal   = null;
+
+  do {
+    const path = nextToken
+      ? endpointPath + '?PageSize=99999&next_page_token=' + encodeURIComponent(nextToken)
+      : endpointPath + '?PageSize=99999';
+
+    const data = await postMessageWithResponse({ type: 'api-request', method: 'GET', path });
+
+    const page = Array.isArray(data) ? data : (data.items || []);
+    allItems.push(...page);
+
+    nextToken = data.next_page_token || data.nextPageToken
+      || data._links?.next?.href || null;
+
+    if (apiTotal === null) {
+      apiTotal = data.totalCount ?? data.total ?? data.count
+        ?? data._metadata?.totalCount ?? null;
+    }
+
+    pageNum++;
+    if (onProgress) onProgress(allItems.length, apiTotal, pageNum);
+
+    if (pageNum >= 1000) break;
+
+  } while (nextToken);
+
+  return allItems;
+}
+
+async function getBatchInventoryItem(onProgress) {
+  return getBatchEndpoint('/api4/batch-inventory-item', onProgress);
+}
+
+/* ══════════════════════════════════════════════
+   State
+══════════════════════════════════════════════ */
+const state = {
+  items: [],
+  customers: [],
+  cart: [],
+  selectedCustomer: null,
+  reference: '',
+};
+
+/* ══════════════════════════════════════════════
+   Auto-generate unique reference — POS-YYMMDD-HHMMSS
+══════════════════════════════════════════════ */
+function generateReference() {
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const yy = pad(d.getFullYear() % 100);
+  const mm = pad(d.getMonth() + 1);
+  const dd = pad(d.getDate());
+  const hh = pad(d.getHours());
+  const mi = pad(d.getMinutes());
+  const ss = pad(d.getSeconds());
+  return `POS-${yy}${mm}${dd}-${hh}${mi}${ss}`;
+}
+
+/* ══════════════════════════════════════════════
+   Load
+══════════════════════════════════════════════ */
+async function loadAllRecords() {
+  const btn    = document.getElementById('load-btn');
+  const bar    = document.getElementById('prog-bar');
+  const status = document.getElementById('status-text');
+  const app    = document.getElementById('app');
+
+  btn.disabled = true;
+  btn.textContent = 'Loading…';
+  bar.style.width = '0%';
+  app.innerHTML = '';
+
+  try {
+    status.textContent = 'Fetching inventory items…';
+    const items = await getBatchInventoryItem((loaded, total, page) => {
+      status.textContent = total
+        ? `Items · Page ${page} · ${loaded.toLocaleString()} / ${total.toLocaleString()}`
+        : `Items · Page ${page} · ${loaded.toLocaleString()} loaded…`;
+      if (total) bar.style.width = Math.min(45, Math.round(loaded / total * 45)) + '%';
+    });
+    state.items = items;
+
+    status.textContent = 'Fetching customers…';
+    bar.style.width = '50%';
+    const customers = await getBatchEndpoint('/api4/batch-customer', (loaded, total, page) => {
+      status.textContent = total
+        ? `Customers · Page ${page} · ${loaded.toLocaleString()} / ${total.toLocaleString()}`
+        : `Customers · Page ${page} · ${loaded.toLocaleString()} loaded…`;
+      if (total) bar.style.width = (50 + Math.min(45, Math.round(loaded / total * 45))) + '%';
+    });
+    state.customers = customers;
+
+    bar.style.width = '100%';
+    status.textContent = `✓ ${items.length.toLocaleString()} items · ${customers.length.toLocaleString()} customers loaded`;
+    btn.textContent = '↻ Reload';
+    btn.disabled = false;
+
+    // Auto-select default 999/POS customer
+    const def = getDefaultCustomer();
+    if (def) {
+      state.selectedCustomer = {
+        key: def.key,
+        name: def.item?.name || 'POS',
+        code: def.item?.code || '999',
+      };
+    }
+    // Auto-generate reference
+    state.reference = generateReference();
+
+    render();
+
+  } catch (err) {
+    status.textContent = '⚠ ' + err.message;
+    btn.textContent = '↻ Retry';
+    btn.disabled = false;
+    app.innerHTML = `<div class="error-box">⚠ ${err.message}<br><small>Make sure this extension is running inside Manager.io</small></div>`;
+  }
+}
+
+/* ══════════════════════════════════════════════
+   Helpers
+══════════════════════════════════════════════ */
+const fmt = v => (Number(v) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const todayISO = () => new Date().toISOString().slice(0, 10);
+
+function toast(msg, type = 'info') {
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 5000);
+}
+
+function findItemByBarcode(code) {
+  if (!code) return null;
+  const needle = code.trim().toLowerCase();
+  let found = state.items.find(r => (r.item?.itemCode || '').toLowerCase() === needle);
+  if (found) return found;
+  found = state.items.find(r => (r.item?.itemName || '').toLowerCase() === needle);
+  if (found) return found;
+  found = state.items.find(r => (r.item?.itemCode || '').toLowerCase().startsWith(needle) && needle.length >= 2);
+  return found || null;
+}
+
+function getDefaultCustomer() {
+  return state.customers.find(c =>
+    (c.item?.code || '').trim() === '999' ||
+    (c.item?.code || '').toLowerCase().includes('pos') ||
+    (c.item?.name || '').toLowerCase() === 'pos'
+  );
+}
+
+/* ══════════════════════════════════════════════
+   Cart
+══════════════════════════════════════════════ */
+function addItemToCart(barcode) {
+  const rec = findItemByBarcode(barcode);
+  if (!rec) {
+    toast(`No item matches "${barcode}"`, 'error');
+    return false;
+  }
+  const key = rec.key;
+  const existing = state.cart.find(l => l.key === key);
+  if (existing) {
+    existing.qty = (Number(existing.qty) || 0) + 1;
+    existing.isNew = true;
+  } else {
+    state.cart.push({
+      key,
+      itemCode: rec.item?.itemCode || '',
+      itemName: rec.item?.itemName || 'Item',
+      qty: rec.item?.hasDefaultQty && rec.item?.defaultQty ? rec.item.defaultQty : 1,
+      unitPrice: rec.item?.hasDefaultSalesUnitPrice ? (rec.item.defaultSalesUnitPrice || 0) : 0,
+      description: rec.item?.hasDefaultLineDescription ? (rec.item.defaultLineDescription || '') : '',
+      isNew: true,
+    });
+  }
+  renderCart();
+  return true;
+}
+
+function updateCartQty(key, qty) {
+  const line = state.cart.find(l => l.key === key);
+  if (!line) return;
+  const n = Number(qty);
+  line.qty = isNaN(n) || n < 0 ? 0 : n;
+  renderSummary();
+  const totalCell = document.querySelector(`tr[data-key="${key}"] .line-total`);
+  if (totalCell) totalCell.textContent = '$' + fmt((Number(line.qty) || 0) * (Number(line.unitPrice) || 0));
+}
+
+function updateCartPrice(key, price) {
+  const line = state.cart.find(l => l.key === key);
+  if (!line) return;
+  const n = Number(price);
+  line.unitPrice = isNaN(n) || n < 0 ? 0 : n;
+  renderSummary();
+  const totalCell = document.querySelector(`tr[data-key="${key}"] .line-total`);
+  if (totalCell) totalCell.textContent = '$' + fmt((Number(line.qty) || 0) * (Number(line.unitPrice) || 0));
+}
+
+function removeFromCart(key) {
+  state.cart = state.cart.filter(l => l.key !== key);
+  renderCart();
+}
+
+function clearCart() {
+  if (state.cart.length === 0) return;
+  if (!confirm('Clear all items from the current sale?')) return;
+  state.cart = [];
+  renderCart();
+}
+
+/* ══════════════════════════════════════════════
+   Submit sale
+══════════════════════════════════════════════ */
+// Global flag to prevent double-submit from rapid clicks / reentrance
+let isSubmitting = false;
+
+async function submitSale() {
+  if (isSubmitting) {
+    debugLog('fail', '⚠ Submit already in progress — ignoring duplicate click');
+    return;
+  }
+
+  if (state.cart.length === 0) {
+    toast('Cart is empty — scan items first', 'error');
+    return;
+  }
+
+  let customer = state.selectedCustomer;
+  if (!customer) {
+    const def = getDefaultCustomer();
+    if (def) {
+      customer = { key: def.key, name: def.item?.name || 'POS', code: def.item?.code || '999' };
+    }
+  }
+  if (!customer) {
+    toast('No customer with code "999" or "POS" found. Please create one in Manager.', 'error');
+    return;
+  }
+
+  isSubmitting = true;
+
+  const issueDate = document.getElementById('issue-date').value || todayISO();
+  const custName = document.getElementById('cust-name-free').value.trim();
+  const custPhone = document.getElementById('cust-phone').value.trim();
+
+  let description = '';
+  if (custName || custPhone) {
+    const bits = [];
+    if (custName) bits.push('Name: ' + custName);
+    if (custPhone) bits.push('Phone: ' + custPhone);
+    description = bits.join(' · ');
+  }
+
+  const reference = state.reference || generateReference();
+
+  const payloadCamel = {
+    IssueDate: issueDate,
+    Reference: reference,
+    Customer: customer.key,
+    Description: description || null,
+    Lines: state.cart.map(l => ({
+      Item: l.key,
+      LineDescription: l.description || '',
+      Qty: Number(l.qty) || 0,
+      SalesUnitPrice: Number(l.unitPrice) || 0,
+    })),
+  };
+
+  const payloadLower = {
+    issueDate: issueDate + 'T00:00:00',
+    reference: reference,
+    customer: customer.key,
+    description: description || null,
+    lines: state.cart.map(l => ({
+      item: l.key,
+      lineDescription: l.description || '',
+      qty: Number(l.qty) || 0,
+      salesUnitPrice: Number(l.unitPrice) || 0,
+    })),
+  };
+
+  // ONE UUID generated ONCE — reused across all attempts.
+  // This makes PUT calls IDEMPOTENT: if multiple attempts succeed,
+  // Manager will see the same UUID and update the single record
+  // rather than creating duplicates.
+  const newKey = crypto.randomUUID();
+
+  // Only UUID-based PUT endpoints — NEVER POST without a UUID,
+  // because POST endpoints create a new record every call and
+  // would cause duplicates if we retry after a false-negative.
+  const attempts = [
+    { method: 'PUT', path: `/api2/sales-invoice-form/${newKey}`, body: payloadCamel, label: 'PUT /api2/sales-invoice-form/{uuid}' },
+    { method: 'PUT', path: `/api4/sales-invoice-form/${newKey}`, body: payloadLower, label: 'PUT /api4/sales-invoice-form/{uuid}' },
+    { method: 'PUT', path: `/api4/sales-invoice/${newKey}`,      body: payloadLower, label: 'PUT /api4/sales-invoice/{uuid}' },
+  ];
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Processing…';
+
+  debugLog('info', `═══ Submit sale · ref ${reference} · uuid ${newKey} ═══`);
+
+  let lastErr = null;
+  let success = false;
+
+  for (const attempt of attempts) {
+    try {
+      debugLog('info', `Trying: ${attempt.label}`);
+      await apiCall(attempt.method, attempt.path, attempt.body);
+      success = true;
+      debugLog('ok', `✓ SUCCESS via ${attempt.label}`);
+      break;
+    } catch (err) {
+      lastErr = err;
+      debugLog('fail', `✗ ${attempt.label} → ${err.message.substring(0, 140)}`);
+    }
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Complete Sale';
+  isSubmitting = false;
+
+  if (success) {
+    toast(`✓ Sale saved · ${reference} · $${fmt(cartTotal())}`, 'success');
+    // Reset
+    state.cart = [];
+    // Keep default customer selected, reset walk-in fields
+    const def = getDefaultCustomer();
+    state.selectedCustomer = def ? {
+      key: def.key,
+      name: def.item?.name || 'POS',
+      code: def.item?.code || '999',
+    } : null;
+    // New reference for next sale
+    state.reference = generateReference();
+
+    document.getElementById('cust-name-free').value = '';
+    document.getElementById('cust-phone').value = '';
+    document.getElementById('cust-search').value = '';
+    document.getElementById('issue-date').value = todayISO();
+    renderCart();
+    renderCustomerField();
+    renderReference();
+    document.getElementById('barcode').focus();
+  } else {
+    const msg = lastErr ? lastErr.message : 'Unknown error';
+    toast(`Failed to save sale. ${msg.substring(0, 200)}. Check Debug panel.`, 'error');
+    document.getElementById('debug-log').classList.add('show');
+  }
+}
+
+/* ══════════════════════════════════════════════
+   Totals
+══════════════════════════════════════════════ */
+function cartTotal() {
+  return state.cart.reduce((sum, l) => sum + (Number(l.qty) || 0) * (Number(l.unitPrice) || 0), 0);
+}
+function cartQty() {
+  return state.cart.reduce((sum, l) => sum + (Number(l.qty) || 0), 0);
+}
+
+/* ══════════════════════════════════════════════
+   Render
+══════════════════════════════════════════════ */
+function render() {
+  const app = document.getElementById('app');
+
+  if (state.items.length === 0) {
+    app.innerHTML = `<div class="error-box" style="color:var(--slate-500)">No inventory items loaded. Add items in Manager first, then reload.</div>`;
+    return;
+  }
+
+  app.innerHTML = `
+    <div class="pos-container">
+      <!-- LEFT PANEL -->
+      <div class="pos-panel">
+        <div class="panel-title"><span class="dot"></span> Current Sale</div>
+
+        <div class="form-field full">
+          <label>Barcode Scanner — scan or type &amp; press Enter</label>
+          <div class="barcode-wrap">
+            <svg class="barcode-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="16" rx="2"/>
+              <path d="M7 8v8M10 8v8M13 8v8M16 8v8"/>
+            </svg>
+            <input type="text" id="barcode" class="barcode-input"
+                   placeholder="Scan barcode or type item code / name…"
+                   autocomplete="off" />
+          </div>
+          <div class="scanner-status">
+            <span class="scanner-dot"></span>
+            <span>Scanner ready · ${state.items.length.toLocaleString()} items indexed</span>
+          </div>
+        </div>
+
+        <div class="stats" style="margin-top:16px">
+          <div class="stat-box">
+            <div class="val" id="stat-lines">0</div>
+            <div class="lbl">Lines</div>
+          </div>
+          <div class="stat-box">
+            <div class="val" id="stat-qty">0</div>
+            <div class="lbl">Total Qty</div>
+          </div>
+          <div class="stat-box accent">
+            <div class="val" id="stat-total">$0.00</div>
+            <div class="lbl">Total</div>
+          </div>
+        </div>
+
+        <div class="cart-wrap" id="cart-wrap">
+          <div class="empty-cart">
+            <div class="big">⚡</div>
+            <div class="main-text">Ready for your first scan</div>
+            <div class="sub-text">Items will flash in as they're added</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT PANEL -->
+      <div class="pos-panel">
+        <div class="panel-title"><span class="dot"></span> Sale Details</div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label>Issue Date</label>
+            <input type="date" id="issue-date" value="${todayISO()}" />
+          </div>
+          <div class="form-field">
+            <label>Reference (auto)</label>
+            <div id="ref-display"></div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field full suggest-wrap">
+            <label>Customer</label>
+            <input type="text" id="cust-search"
+                   placeholder="Type to change customer…"
+                   autocomplete="off" />
+            <div class="suggest-list" id="cust-suggest"></div>
+            <div class="customer-display" id="cust-selected"></div>
+          </div>
+        </div>
+
+        <div class="divider-label">Walk-in customer info (saved in description)</div>
+        <div class="form-row">
+          <div class="form-field">
+            <label>Name</label>
+            <input type="text" id="cust-name-free" placeholder="Optional" />
+          </div>
+          <div class="form-field">
+            <label>Phone</label>
+            <input type="tel" id="cust-phone" placeholder="Optional" />
+          </div>
+        </div>
+
+        <div class="summary" id="summary">
+          <div class="summary-row"><span>Items</span><span id="sum-lines">0</span></div>
+          <div class="summary-row"><span>Total Quantity</span><span id="sum-qty">0</span></div>
+          <div class="summary-row total"><span>Total</span><span id="sum-total">$0.00</span></div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-secondary" onclick="clearCart()">Clear</button>
+          <button class="btn btn-primary" id="submit-btn" onclick="submitSale()">Complete Sale</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Barcode input
+  const barcodeEl = document.getElementById('barcode');
+  barcodeEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const val = barcodeEl.value.trim();
+      if (val) {
+        if (addItemToCart(val)) {
+          barcodeEl.value = '';
+        }
+      }
+    }
+  });
+
+  // Customer search
+  const custSearch = document.getElementById('cust-search');
+  const custSuggest = document.getElementById('cust-suggest');
+  let activeIdx = -1;
+
+  custSearch.addEventListener('input', () => {
+    const q = custSearch.value.trim().toLowerCase();
+    if (!q) {
+      custSuggest.classList.remove('open');
+      return;
+    }
+    const matches = state.customers
+      .filter(c => {
+        const name = (c.item?.name || '').toLowerCase();
+        const code = (c.item?.code || '').toLowerCase();
+        return name.includes(q) || code.includes(q);
+      })
+      .slice(0, 8);
+
+    if (matches.length === 0) {
+      custSuggest.classList.remove('open');
+      return;
+    }
+    activeIdx = -1;
+    custSuggest.innerHTML = matches.map((c) => `
+      <div class="suggest-item"
+           data-key="${c.key}"
+           data-name="${(c.item?.name || '').replace(/"/g,'&quot;')}"
+           data-code="${(c.item?.code || '').replace(/"/g,'&quot;')}">
+        <div class="name">${c.item?.name || 'Unnamed'}</div>
+        <div class="code">${c.item?.code || 'no code'}</div>
+      </div>
+    `).join('');
+    custSuggest.classList.add('open');
+    custSuggest.querySelectorAll('.suggest-item').forEach(el => {
+      el.addEventListener('click', () => {
+        state.selectedCustomer = {
+          key: el.dataset.key,
+          name: el.dataset.name,
+          code: el.dataset.code,
+        };
+        custSearch.value = '';
+        custSuggest.classList.remove('open');
+        renderCustomerField();
+      });
+    });
+  });
+
+  custSearch.addEventListener('keydown', (e) => {
+    const items = custSuggest.querySelectorAll('.suggest-item');
+    if (!items.length) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      activeIdx = Math.min(activeIdx + 1, items.length - 1);
+      items.forEach((el, i) => el.classList.toggle('active', i === activeIdx));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      activeIdx = Math.max(activeIdx - 1, 0);
+      items.forEach((el, i) => el.classList.toggle('active', i === activeIdx));
+    } else if (e.key === 'Enter' && activeIdx >= 0) {
+      e.preventDefault();
+      items[activeIdx].click();
+    } else if (e.key === 'Escape') {
+      custSuggest.classList.remove('open');
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!custSearch.contains(e.target) && !custSuggest.contains(e.target)) {
+      custSuggest.classList.remove('open');
+    }
+  });
+
+  renderCustomerField();
+  renderReference();
+  renderCart();
+
+  setTimeout(() => barcodeEl.focus(), 100);
+}
+
+function renderReference() {
+  const el = document.getElementById('ref-display');
+  if (!el) return;
+  el.innerHTML = `<div class="ref-chip">🎫 ${state.reference}</div>`;
+}
+
+function renderCart() {
+  const wrap = document.getElementById('cart-wrap');
+  if (!wrap) return;
+
+  if (state.cart.length === 0) {
+    wrap.innerHTML = `
+      <div class="empty-cart">
+        <div class="big">⚡</div>
+        <div class="main-text">Ready for your first scan</div>
+        <div class="sub-text">Items will flash in as they're added</div>
+      </div>
+    `;
+  } else {
+    wrap.innerHTML = `
+      <table class="cart-table">
+        <thead>
+          <tr>
+            <th style="width:90px">Code</th>
+            <th>Item</th>
+            <th style="width:90px;text-align:right">Qty</th>
+            <th style="width:110px;text-align:right">Price</th>
+            <th style="width:110px;text-align:right">Total</th>
+            <th style="width:54px"></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${state.cart.map(l => {
+            const lineTotal = (Number(l.qty) || 0) * (Number(l.unitPrice) || 0);
+            const newCls = l.isNew ? ' class="new-row"' : '';
+            l.isNew = false;
+            return `
+              <tr${newCls} data-key="${l.key}">
+                <td style="color:var(--slate-500);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600">${l.itemCode || '—'}</td>
+                <td style="font-weight:600;color:var(--slate-900)">${l.itemName}</td>
+                <td style="text-align:right">
+                  <input type="number" class="qty-input" value="${l.qty}" min="0" step="any"
+                         onchange="updateCartQty('${l.key}', this.value)" />
+                </td>
+                <td style="text-align:right">
+                  <input type="number" class="price-input" value="${l.unitPrice}" min="0" step="0.01"
+                         onchange="updateCartPrice('${l.key}', this.value)" />
+                </td>
+                <td class="line-total" style="text-align:right">$${fmt(lineTotal)}</td>
+                <td style="text-align:center">
+                  <button class="remove-btn" onclick="removeFromCart('${l.key}')">×</button>
+                </td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+  renderSummary();
+}
+
+function renderSummary() {
+  const lines = state.cart.length;
+  const qty = cartQty();
+  const total = cartTotal();
+
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  set('stat-lines', lines);
+  set('stat-qty', qty.toLocaleString());
+  set('stat-total', '$' + fmt(total));
+  set('sum-lines', lines);
+  set('sum-qty', qty.toLocaleString());
+  set('sum-total', '$' + fmt(total));
+}
+
+function renderCustomerField() {
+  const el = document.getElementById('cust-selected');
+  if (!el) return;
+  if (state.selectedCustomer) {
+    el.innerHTML = `
+      <span class="customer-badge">
+        <span class="dot"></span>
+        ${state.selectedCustomer.code || ''} · ${state.selectedCustomer.name}
+      </span>
+      <a class="clear-link" href="#" onclick="event.preventDefault();resetToDefaultCustomer()">reset to default</a>
+    `;
+  } else {
+    el.innerHTML = `<span style="color:var(--rose);font-size:12px;font-weight:500">⚠ No customer with code "999" or "POS" found — please create one in Manager</span>`;
+  }
+}
+
+function resetToDefaultCustomer() {
+  const def = getDefaultCustomer();
+  state.selectedCustomer = def ? {
+    key: def.key,
+    name: def.item?.name || 'POS',
+    code: def.item?.code || '999',
+  } : null;
+  const search = document.getElementById('cust-search');
+  if (search) search.value = '';
+  renderCustomerField();
+}
+</script>
+</body>
+</html>
