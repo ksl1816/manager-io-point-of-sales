@@ -759,7 +759,7 @@ async function getBatchEndpoint(endpointPath, onProgress) {
 }
 
 async function getBatchInventoryItem(onProgress) {
-  return getBatchEndpoint('/api4/batch-inventory-item', onProgress);
+  return getBatchEndpoint('/api4/inventory-item-batch', onProgress);
 }
 
 /* ══════════════════════════════════════════════
@@ -814,7 +814,7 @@ async function loadAllRecords() {
 
     status.textContent = 'Fetching customers…';
     bar.style.width = '50%';
-    const customers = await getBatchEndpoint('/api4/batch-customer', (loaded, total, page) => {
+    const customers = await getBatchEndpoint('/api4/customer-batch', (loaded, total, page) => {
       status.textContent = total
         ? `Customers · Page ${page} · ${loaded.toLocaleString()} / ${total.toLocaleString()}`
         : `Customers · Page ${page} · ${loaded.toLocaleString()} loaded…`;
