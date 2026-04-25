@@ -785,6 +785,70 @@ async function getBatchInventoryItem(onProgress) {
 }
 
 /* ══════════════════════════════════════════════
+   Compute qty owned per inventory item key:
+   qtyOwned = startingBalance + totalPurchased - totalSold
+   Sources:
+     - /api4/inventory-item-starting-balance-batch  (startingQty per item key)
+     - /api4/purchase-invoice-batch                 (lines[].item + lines[].qty)
+     - /api4/sales-invoice-batch                    (lines[].item + lines[].qty)
+══════════════════════════════════════════════ */
+async function computeQtyOwned(onProgress) {
+  onProgress && onProgress('Fetching starting balances, purchase & sales invoices…');
+
+  const [startingBalances, purchaseInvoices, salesInvoices] = await Promise.all([
+    getBatchEndpoint('/api4/inventory-item-starting-balance-batch').catch(e => {
+      debugLog('fail', 'Starting balances fetch failed: ' + e.message); return [];
+    }),
+    getBatchEndpoint('/api4/purchase-invoice-batch').catch(e => {
+      debugLog('fail', 'Purchase invoices fetch failed: ' + e.message); return [];
+    }),
+    getBatchEndpoint('/api4/sales-invoice-batch').catch(e => {
+      debugLog('fail', 'Sales invoices fetch failed: ' + e.message); return [];
+    }),
+  ]);
+
+  debugLog('info', `Starting balances: ${startingBalances.length} · Purchase invoices: ${purchaseInvoices.length} · Sales invoices: ${salesInvoices.length}`);
+
+  const qtyMap = {}; // itemKey -> qty
+
+  const add = (itemKey, qty) => {
+    if (!itemKey) return;
+    qtyMap[itemKey] = (qtyMap[itemKey] || 0) + (Number(qty) || 0);
+  };
+  const sub = (itemKey, qty) => {
+    if (!itemKey) return;
+    qtyMap[itemKey] = (qtyMap[itemKey] || 0) - (Number(qty) || 0);
+  };
+
+  // Starting balances
+  for (const rec of startingBalances) {
+    const d = rec.item || rec;
+    const itemKey = d.inventoryItem || d.item || d.inventoryItemKey || null;
+    const qty     = d.qty ?? d.quantity ?? d.startingQty ?? d.startingBalance ?? 0;
+    add(itemKey, qty);
+  }
+
+  // Purchase invoices — add purchased qty per item
+  for (const rec of purchaseInvoices) {
+    const lines = rec.item?.lines || rec.lines || [];
+    for (const line of lines) {
+      if (line.item) add(line.item, line.qty);
+    }
+  }
+
+  // Sales invoices — subtract sold qty per item
+  for (const rec of salesInvoices) {
+    const lines = rec.item?.lines || rec.lines || [];
+    for (const line of lines) {
+      if (line.item) sub(line.item, line.qty);
+    }
+  }
+
+  debugLog('ok', `qtyOwned computed for ${Object.keys(qtyMap).length} unique items`);
+  return qtyMap; // { itemKey: number }
+}
+
+/* ══════════════════════════════════════════════
    State
 ══════════════════════════════════════════════ */
 const state = {
@@ -793,6 +857,7 @@ const state = {
   cart: [],
   selectedCustomer: null,
   reference: '',
+  qtyOwned: {}, // itemKey -> computed stock level
 };
 
 /* ══════════════════════════════════════════════
@@ -830,22 +895,29 @@ async function loadAllRecords() {
       status.textContent = total
         ? `Items · Page ${page} · ${loaded.toLocaleString()} / ${total.toLocaleString()}`
         : `Items · Page ${page} · ${loaded.toLocaleString()} loaded…`;
-      if (total) bar.style.width = Math.min(45, Math.round(loaded / total * 45)) + '%';
+      if (total) bar.style.width = Math.min(25, Math.round(loaded / total * 25)) + '%';
     });
     state.items = items;
 
     status.textContent = 'Fetching customers…';
-    bar.style.width = '50%';
+    bar.style.width = '28%';
     const customers = await getBatchEndpoint('/api4/customer-batch', (loaded, total, page) => {
       status.textContent = total
         ? `Customers · Page ${page} · ${loaded.toLocaleString()} / ${total.toLocaleString()}`
         : `Customers · Page ${page} · ${loaded.toLocaleString()} loaded…`;
-      if (total) bar.style.width = (50 + Math.min(45, Math.round(loaded / total * 45))) + '%';
+      if (total) bar.style.width = (28 + Math.min(12, Math.round(loaded / total * 12))) + '%';
     });
     state.customers = customers;
 
+    // Compute qty owned: starting balances + purchases - sales
+    status.textContent = 'Computing stock levels (starting balances + purchases − sales)…';
+    bar.style.width = '42%';
+    const qtyOwned = await computeQtyOwned(msg => { status.textContent = msg; });
+    state.qtyOwned = qtyOwned; // { itemKey: number }
     bar.style.width = '100%';
-    status.textContent = `✓ ${items.length.toLocaleString()} items · ${customers.length.toLocaleString()} customers loaded`;
+
+    const ownedCount = Object.keys(qtyOwned).length;
+    status.textContent = `✓ ${items.length.toLocaleString()} items · ${customers.length.toLocaleString()} customers · stock computed for ${ownedCount.toLocaleString()} items`;
     btn.textContent = '↻ Reload';
     btn.disabled = false;
 
@@ -926,7 +998,7 @@ function addItemToCart(barcode) {
       qty: rec.item?.hasDefaultQty && rec.item?.defaultQty ? rec.item.defaultQty : 1,
       unitPrice: rec.item?.hasDefaultSalesUnitPrice ? (rec.item.defaultSalesUnitPrice || 0) : 0,
       description: rec.item?.hasDefaultLineDescription ? (rec.item.defaultLineDescription || '') : '',
-      qtyOwned: rec.item?.qtyOwned ?? rec.item?.quantityOwned ?? rec.item?.qty ?? rec.item?.stockOnHand ?? null,
+      qtyOwned: (state.qtyOwned && key in state.qtyOwned) ? state.qtyOwned[key] : null,
       isNew: true,
     });
   }
