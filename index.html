@@ -362,6 +362,32 @@
     border-color: var(--indigo);
     box-shadow: 0 0 0 3px rgba(99,102,241,.12);
   }
+  /* Locked (read-only) price */
+  .price-locked {
+    background: var(--slate-50) !important;
+    color: var(--slate-400) !important;
+    cursor: not-allowed !important;
+    border-color: var(--slate-100) !important;
+    user-select: none;
+  }
+  .price-locked:focus { box-shadow: none !important; border-color: var(--slate-100) !important; }
+  /* Stock badge in cart */
+  .stock-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; font-weight: 700;
+    padding: 3px 8px; border-radius: 6px;
+    display: inline-block; white-space: nowrap;
+  }
+  .stock-ok  { color: var(--emerald); background: rgba(16,185,129,.10); }
+  .stock-low { color: var(--amber);   background: rgba(245,158,11,.10); }
+  .stock-out { color: var(--rose);    background: rgba(244,63,94,.10); }
+  .stock-na  { color: var(--slate-400); background: var(--slate-100); }
+  /* Qty input goes red when exceeding stock */
+  .qty-over {
+    border-color: var(--rose) !important;
+    color: var(--rose) !important;
+    box-shadow: 0 0 0 3px rgba(244,63,94,.12) !important;
+  }
 
   .line-total {
     font-family: 'JetBrains Mono', monospace;
@@ -771,6 +797,7 @@ const state = {
   cart: [],
   selectedCustomer: null,
   reference: '',
+  inventoryQty: {}, // itemKey → qty on hand (null = no inventory tracking)
 };
 
 /* ══════════════════════════════════════════════
@@ -811,6 +838,30 @@ async function loadAllRecords() {
       if (total) bar.style.width = Math.min(45, Math.round(loaded / total * 45)) + '%';
     });
     state.items = items;
+
+    // ── Fetch inventory quantities ──
+    status.textContent = 'Fetching stock quantities…';
+    state.inventoryQty = {};
+    try {
+      const qtyBatch = await getBatchEndpoint('/api4/inventory-quantity-batch', null);
+      qtyBatch.forEach(r => {
+        // Manager API v4: each record may reference the inventory item via different keys
+        const itemKey = r.item?.inventoryItem
+                     || r.item?.inventoryItemKey
+                     || r.item?.item
+                     || r.key;
+        const qty = typeof r.item?.qty       === 'number' ? r.item.qty
+                  : typeof r.item?.quantity  === 'number' ? r.item.quantity
+                  : typeof r.qty             === 'number' ? r.qty
+                  : null;
+        if (itemKey && qty !== null) {
+          state.inventoryQty[itemKey] = (state.inventoryQty[itemKey] || 0) + qty;
+        }
+      });
+      debugLog('ok', `Stock loaded for ${Object.keys(state.inventoryQty).length} items`);
+    } catch (e) {
+      debugLog('fail', 'Stock qty fetch failed (non-critical): ' + e.message);
+    }
 
     status.textContent = 'Fetching customers…';
     bar.style.width = '50%';
@@ -905,6 +956,7 @@ function addItemToCart(barcode) {
       unitPrice: rec.item?.hasDefaultSalesUnitPrice ? (rec.item.defaultSalesUnitPrice || 0) : 0,
       description: rec.item?.hasDefaultLineDescription ? (rec.item.defaultLineDescription || '') : '',
       isNew: true,
+      stockQty: (key in state.inventoryQty) ? state.inventoryQty[key] : null,
     });
   }
   renderCart();
@@ -915,7 +967,20 @@ function updateCartQty(key, qty) {
   const line = state.cart.find(l => l.key === key);
   if (!line) return;
   const n = Number(qty);
-  line.qty = isNaN(n) || n < 0 ? 0 : n;
+  const newQty = isNaN(n) || n < 0 ? 0 : n;
+
+  const input = document.querySelector(`tr[data-key="${key}"] .qty-input`);
+
+  // ── Stock guard ──
+  if (line.stockQty !== null && newQty > line.stockQty) {
+    toast(`⚠ Only ${line.stockQty} in stock for "${line.itemName}"`, 'error');
+    if (input) { input.value = line.qty; input.classList.add('qty-over'); }
+    setTimeout(() => input?.classList.remove('qty-over'), 1500);
+    return;
+  }
+
+  line.qty = newQty;
+  if (input) input.classList.remove('qty-over');
   renderSummary();
   const totalCell = document.querySelector(`tr[data-key="${key}"] .line-total`);
   if (totalCell) totalCell.textContent = '$' + fmt((Number(line.qty) || 0) * (Number(line.unitPrice) || 0));
@@ -957,6 +1022,14 @@ async function submitSale() {
 
   if (state.cart.length === 0) {
     toast('Cart is empty — scan items first', 'error');
+    return;
+  }
+
+  // ── Stock guard — prevent overselling ──
+  const overStock = state.cart.filter(l => l.stockQty !== null && Number(l.qty) > l.stockQty);
+  if (overStock.length > 0) {
+    const detail = overStock.map(l => `${l.itemName} (need ${l.qty}, have ${l.stockQty})`).join('; ');
+    toast(`⚠ Insufficient stock: ${detail}`, 'error');
     return;
   }
 
@@ -1323,6 +1396,7 @@ function renderCart() {
           <tr>
             <th style="width:90px">Code</th>
             <th>Item</th>
+            <th style="width:75px;text-align:right">Stock</th>
             <th style="width:90px;text-align:right">Qty</th>
             <th style="width:110px;text-align:right">Price</th>
             <th style="width:110px;text-align:right">Total</th>
@@ -1334,17 +1408,31 @@ function renderCart() {
             const lineTotal = (Number(l.qty) || 0) * (Number(l.unitPrice) || 0);
             const newCls = l.isNew ? ' class="new-row"' : '';
             l.isNew = false;
+            // ── Stock badge ──
+            let stockDisplay, stockCls;
+            if (l.stockQty === null) {
+              stockDisplay = '—'; stockCls = 'stock-na';
+            } else if (l.stockQty <= 0) {
+              stockDisplay = '0'; stockCls = 'stock-out';
+            } else if (l.stockQty <= 5) {
+              stockDisplay = l.stockQty; stockCls = 'stock-low';
+            } else {
+              stockDisplay = l.stockQty; stockCls = 'stock-ok';
+            }
             return `
               <tr${newCls} data-key="${l.key}">
                 <td style="color:var(--slate-500);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600">${l.itemCode || '—'}</td>
                 <td style="font-weight:600;color:var(--slate-900)">${l.itemName}</td>
                 <td style="text-align:right">
+                  <span class="stock-badge ${stockCls}">${stockDisplay}</span>
+                </td>
+                <td style="text-align:right">
                   <input type="number" class="qty-input" value="${l.qty}" min="0" step="any"
                          onchange="updateCartQty('${l.key}', this.value)" />
                 </td>
                 <td style="text-align:right">
-                  <input type="number" class="price-input" value="${l.unitPrice}" min="0" step="0.01"
-                         onchange="updateCartPrice('${l.key}', this.value)" />
+                  <input type="number" class="price-input price-locked" value="${l.unitPrice}"
+                         readonly tabindex="-1" title="Selling price is locked" />
                 </td>
                 <td class="line-total" style="text-align:right">$${fmt(lineTotal)}</td>
                 <td style="text-align:center">
