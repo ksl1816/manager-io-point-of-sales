@@ -787,19 +787,6 @@ async function submitSale() {
 
   const reference = state.reference || generateReference();
 
-  const payloadCamel = {
-    IssueDate: issueDate,
-    Reference: reference,
-    Customer: customer.key,
-    Description: description || null,
-    Lines: state.cart.map(l => ({
-      Item: l.key,
-      LineDescription: l.description || '',
-      Qty: Number(l.qty) || 0,
-      SalesUnitPrice: Number(l.unitPrice) || 0,
-    })),
-  };
-
   const payloadLower = {
     issueDate: issueDate + 'T00:00:00',
     reference: reference,
@@ -823,7 +810,6 @@ async function submitSale() {
   // because POST endpoints create a new record every call and
   // would cause duplicates if we retry after a false-negative.
   const attempts = [
-    { method: 'PUT', path: `/api2/sales-invoice-form/${newKey}`, body: payloadCamel, label: 'PUT /api2/sales-invoice-form/{uuid}' },
     { method: 'PUT', path: `/api4/sales-invoice-form/${newKey}`, body: payloadLower, label: 'PUT /api4/sales-invoice-form/{uuid}' },
     { method: 'PUT', path: `/api4/sales-invoice/${newKey}`,      body: payloadLower, label: 'PUT /api4/sales-invoice/{uuid}' },
   ];
@@ -1120,7 +1106,7 @@ function render() {
   });
 
   barcodeEl.addEventListener('blur', () => {
-    setTimeout(closeItemSuggest, 150);
+    setTimeout(closeItemSuggest, 1500);
   });
 
   // Customer search
@@ -1200,7 +1186,7 @@ function render() {
   renderReference();
   renderCart();
 
-  setTimeout(() => barcodeEl.focus(), 100);
+  setTimeout(() => barcodeEl.focus(), 1000);
 }
 
 function renderReference() {
