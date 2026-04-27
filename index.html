@@ -368,12 +368,20 @@ async function getBatchEndpoint(endpointPath, onProgress) {
   let pageNum    = 0;
   let apiTotal   = null;
 
+  // For read-only GET requests, prefer directFetch when managerAppContext is
+  // available — it hits the API directly without the postMessage relay, which
+  // is significantly faster for large paginated datasets (100k+ records).
+  // We only avoid directFetch for writes (see apiCall) to prevent duplicates.
+  const canDirect = !!(window.managerAppContext?.apiEndpoint);
+
   do {
     const path = nextToken
       ? endpointPath + '?PageSize=99999&next_page_token=' + encodeURIComponent(nextToken)
       : endpointPath + '?PageSize=99999';
 
-    const data = await postMessageWithResponse({ type: 'api-request', method: 'GET', path });
+    const data = canDirect
+      ? await directFetch('GET', path)
+      : await postMessageWithResponse({ type: 'api-request', method: 'GET', path });
 
     const page = Array.isArray(data) ? data : (data.items || []);
     allItems.push(...page);
@@ -462,12 +470,14 @@ async function computeQtyOwned(onProgress) {
   };
 
   // ── 1. Starting balances ─────────────────────────────────────────────────
-  // The record key IS the inventory item key (one record per inventory item).
+  // rec.key  = the starting-balance record's own UUID  ← NOT the item key
+  // rec.item.key (d.key) = the inventory item UUID     ← correct key to use
   // qtyOnHandLines is an array of { inventoryLocation, qtyOnHand } — sum all.
   for (const rec of startingBalances) {
     const d = rec.item || rec;
-    // rec.key is the inventory item UUID (same as the item's own key)
-    const itemKey = rec.key || d.key || d.inventoryItem || null;
+    // IMPORTANT: do NOT use rec.key here — it is the SB record's own key,
+    // not the inventory item key.  Use d.key (= rec.item.key) first.
+    const itemKey = d.key || d.inventoryItem || null;
     const lines   = d.qtyOnHandLines || [];
     if (lines.length > 0) {
       for (const l of lines) add(itemKey, l.qtyOnHand);
@@ -561,23 +571,28 @@ async function loadAllRecords() {
   app.innerHTML = '';
 
   try {
-    status.textContent = 'Fetching inventory items…';
-    const items = await getBatchInventoryItem((loaded, total, page) => {
-      status.textContent = total
-        ? `Items · Page ${page} · ${loaded.toLocaleString()} / ${total.toLocaleString()}`
-        : `Items · Page ${page} · ${loaded.toLocaleString()} loaded…`;
-      if (total) bar.style.width = Math.min(25, Math.round(loaded / total * 25)) + '%';
-    });
-    state.items = items;
+    // Fetch items and customers in parallel — no dependency between them.
+    status.textContent = 'Fetching items & customers in parallel…';
+    bar.style.width = '5%';
 
-    status.textContent = 'Fetching customers…';
-    bar.style.width = '28%';
-    const customers = await getBatchEndpoint('/api4/customer-batch', (loaded, total, page) => {
+    let itemsDone = false, custsDone = false;
+    const updateParallelStatus = (label, loaded, total) => {
       status.textContent = total
-        ? `Customers · Page ${page} · ${loaded.toLocaleString()} / ${total.toLocaleString()}`
-        : `Customers · Page ${page} · ${loaded.toLocaleString()} loaded…`;
-      if (total) bar.style.width = (28 + Math.min(12, Math.round(loaded / total * 12))) + '%';
-    });
+        ? `${label} · ${loaded.toLocaleString()} / ${total.toLocaleString()}${itemsDone ? ' · items ✓' : ''}${custsDone ? ' · customers ✓' : ''}`
+        : `${label} · ${loaded.toLocaleString()} loaded…`;
+    };
+
+    const [items, customers] = await Promise.all([
+      getBatchInventoryItem((loaded, total, page) => {
+        updateParallelStatus(`Items · Page ${page}`, loaded, total);
+        if (total) bar.style.width = Math.min(20, Math.round(loaded / total * 20)) + '%';
+      }).then(r => { itemsDone = true; return r; }),
+      getBatchEndpoint('/api4/customer-batch', (loaded, total, page) => {
+        updateParallelStatus(`Customers · Page ${page}`, loaded, total);
+      }).then(r => { custsDone = true; return r; }),
+    ]);
+
+    state.items = items;
     state.customers = customers;
 
     // Compute qty owned: starting balances + purchases - sales
