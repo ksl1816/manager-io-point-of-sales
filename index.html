@@ -6,260 +6,558 @@
 <title>POS — Manager.io</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
+/* ─────────── DESIGN TOKENS ─────────── */
 :root{
-  --royal:#1a3a6b;--royal-mid:#1e4d8c;--royal-bright:#2563b8;--royal-light:#3b82d4;
-  --sapphire:#0f2d5e;--cobalt:#1a4fa0;
-  --gold:#c9a84c;--gold-light:#e8c97a;--gold-pale:#f5e6b8;
-  --crimson:#c0392b;--emerald:#0e7c61;--amber:#b8860b;
-  --magic-gradient:linear-gradient(135deg,#1a3a6b 0%,#2563b8 45%,#1a6bb5 100%);
-  --gold-gradient:linear-gradient(135deg,#b8860b 0%,#e8c97a 50%,#c9a84c 100%);
-  --success-gradient:linear-gradient(135deg,#0e7c61,#1a6b9a);
-  --royal-glow:rgba(37,99,184,.35);
+  --accent:#4f8cff;
+  --accent-strong:#3b78ec;
+  --accent-soft:rgba(79,140,255,.12);
+  --accent-glow:rgba(79,140,255,.22);
+  --success:#10b981;
+  --success-soft:rgba(16,185,129,.12);
+  --warn:#f59e0b;
+  --warn-soft:rgba(245,158,11,.12);
+  --danger:#ef4444;
+  --danger-soft:rgba(239,68,68,.12);
+  --radius-sm:8px;
+  --radius:12px;
+  --radius-lg:16px;
+  --radius-xl:20px;
+  --tx-fast:.12s ease;
+  --tx:.18s ease;
 }
 [data-theme="dark"]{
-  --bg-base:#05091a;--bg-card:rgba(255,255,255,.038);--bg-card-hover:rgba(255,255,255,.065);
-  --bg-glass:rgba(5,12,32,.9);--border:rgba(201,168,76,.08);--border-bright:rgba(201,168,76,.16);
-  --text-primary:#e8eef8;--text-secondary:#8fa4c8;--text-muted:#3d5070;
-  --shadow-card:0 4px 32px rgba(0,0,0,.55),0 0 0 1px rgba(201,168,76,.06);
-  --shadow-xl:0 40px 90px rgba(0,0,0,.8),0 0 60px rgba(37,99,184,.1);
-  --scrollbar:rgba(201,168,76,.12);--scrollbar-hover:rgba(201,168,76,.28);
-  --stat-bg:rgba(26,58,107,.18);--stat-border:rgba(201,168,76,.1);
-  --cart-bg:rgba(5,12,32,.4);--cart-row-hover:rgba(37,99,184,.08);--cart-border:rgba(201,168,76,.07);
-  --input-bg:rgba(255,255,255,.05);--input-border:rgba(201,168,76,.14);
-  --suggest-bg:#060c20;--suggest-hover:rgba(37,99,184,.12);
-  --summary-bg:rgba(37,99,184,.07);--summary-border:rgba(201,168,76,.14);
-  --bar-bg:rgba(255,255,255,.07);
-  --body-bg:
-    radial-gradient(ellipse 80% 60% at 20% -10%,rgba(37,99,184,.18),transparent 60%),
-    radial-gradient(ellipse 60% 50% at 85% 15%,rgba(26,58,107,.22),transparent 55%),
-    radial-gradient(ellipse 50% 40% at 10% 90%,rgba(201,168,76,.05),transparent 50%),
-    radial-gradient(ellipse 70% 60% at 90% 95%,rgba(37,99,184,.08),transparent 55%),
-    linear-gradient(180deg,#040816 0%,#060c1e 40%,#050a18 70%,#030710 100%);
+  --bg:#0a0d14;
+  --bg-elevated:#13171f;
+  --panel:#13171f;
+  --panel-hover:#181d27;
+  --border:#232936;
+  --border-strong:#2d3441;
+  --text:#e6eaf2;
+  --text-mute:#8a93a6;
+  --text-dim:#5a6378;
+  --input-bg:#0f131c;
+  --input-border:#252b39;
+  --input-border-focus:var(--accent);
+  --row-hover:rgba(79,140,255,.05);
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 4px 12px rgba(0,0,0,.25);
+  --shadow-lg:0 16px 40px rgba(0,0,0,.5);
+  --scroll:rgba(255,255,255,.1);
+  --scroll-hover:rgba(255,255,255,.18);
+  --header-bg:#10141c;
 }
 [data-theme="light"]{
-  --bg-base:#f0f4fb;--bg-card:rgba(255,255,255,.97);--bg-card-hover:#ffffff;
-  --bg-glass:rgba(255,255,255,.93);--border:rgba(37,99,184,.1);--border-bright:rgba(37,99,184,.2);
-  --text-primary:#0d1f40;--text-secondary:#3a5280;--text-muted:#7a90b8;
-  --shadow-card:0 4px 28px rgba(26,58,107,.1),0 0 0 1px rgba(37,99,184,.06);
-  --shadow-xl:0 40px 80px rgba(26,58,107,.2);
-  --scrollbar:rgba(37,99,184,.14);--scrollbar-hover:rgba(37,99,184,.3);
-  --stat-bg:rgba(240,244,251,.9);--stat-border:rgba(37,99,184,.1);
-  --cart-bg:#ffffff;--cart-row-hover:rgba(37,99,184,.04);--cart-border:rgba(37,99,184,.08);
-  --input-bg:#ffffff;--input-border:rgba(37,99,184,.18);
-  --suggest-bg:#ffffff;--suggest-hover:rgba(37,99,184,.06);
-  --summary-bg:rgba(37,99,184,.04);--summary-border:rgba(37,99,184,.16);
-  --bar-bg:rgba(37,99,184,.1);
-  --body-bg:
-    radial-gradient(ellipse 80% 60% at 15% -5%,rgba(37,99,184,.09),transparent 60%),
-    radial-gradient(ellipse 60% 50% at 90% 10%,rgba(201,168,76,.07),transparent 55%),
-    radial-gradient(ellipse 70% 60% at 50% 100%,rgba(37,99,184,.05),transparent 60%),
-    linear-gradient(180deg,#edf2fb 0%,#f3f7fd 40%,#f8faff 70%,#eef5fb 100%);
+  --bg:#f6f7f9;
+  --bg-elevated:#ffffff;
+  --panel:#ffffff;
+  --panel-hover:#fafbfd;
+  --border:#e5e8ed;
+  --border-strong:#d1d6df;
+  --text:#0f172a;
+  --text-mute:#5b6478;
+  --text-dim:#94a3b8;
+  --input-bg:#ffffff;
+  --input-border:#d8dde5;
+  --input-border-focus:var(--accent);
+  --row-hover:#f5f8fe;
+  --shadow:0 1px 2px rgba(15,23,42,.04),0 4px 12px rgba(15,23,42,.06);
+  --shadow-lg:0 16px 40px rgba(15,23,42,.12);
+  --scroll:rgba(15,23,42,.14);
+  --scroll-hover:rgba(15,23,42,.28);
+  --header-bg:#fafbfd;
 }
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
-body{font-family:'DM Sans',system-ui,sans-serif;color:var(--text-primary);background:var(--body-bg);background-attachment:fixed;min-height:100vh;padding:20px;-webkit-font-smoothing:antialiased;letter-spacing:-0.01em;transition:background .4s,color .3s}
+body{
+  font-family:'IBM Plex Sans',system-ui,-apple-system,sans-serif;
+  font-feature-settings:"tnum","ss01","ss02";
+  color:var(--text);
+  background:var(--bg);
+  min-height:100vh;
+  padding:16px;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  letter-spacing:-0.005em;
+  line-height:1.45;
+  font-size:14px;
+}
 
-/* CTRL BAR */
-.ctrl-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 20px;margin-bottom:20px;background:var(--bg-glass);backdrop-filter:blur(28px) saturate(1.8);-webkit-backdrop-filter:blur(28px) saturate(1.8);border:1px solid var(--border-bright);box-shadow:var(--shadow-card),0 0 0 1px rgba(201,168,76,.05) inset;border-radius:18px;transition:background .3s,border .3s;position:relative;overflow:hidden}
-.ctrl-bar::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(201,168,76,.03) 0%,transparent 60%);pointer-events:none}
-.brand{font-family:'Cormorant Garamond',Georgia,serif;font-weight:700;font-size:20px;letter-spacing:.02em;background:var(--gold-gradient);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;display:inline-flex;align-items:center;gap:10px}
-.brand-gem{width:34px;height:34px;border-radius:10px;background:var(--magic-gradient);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 18px rgba(37,99,184,.5),0 0 0 1px rgba(201,168,76,.2) inset;font-size:16px;flex-shrink:0;animation:gem-float 4s ease-in-out infinite;position:relative}
-.brand-gem::after{content:"";position:absolute;inset:0;border-radius:10px;background:linear-gradient(135deg,rgba(201,168,76,.2),transparent);pointer-events:none}
-@keyframes gem-float{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-3px) rotate(5deg)}}
-.load-btn{padding:9px 22px;border:none;border-radius:10px;cursor:pointer;font-size:12px;font-weight:600;font-family:'DM Sans',inherit;color:#fff;background:var(--magic-gradient);box-shadow:0 4px 18px rgba(37,99,184,.4),inset 0 1px 0 rgba(255,255,255,.18),inset 0 0 0 1px rgba(201,168,76,.1);white-space:nowrap;letter-spacing:.04em;text-transform:uppercase;transition:all .22s ease;position:relative;overflow:hidden}
-.load-btn::before{content:"";position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);transition:left .4s}
-.load-btn:hover:not(:disabled)::before{left:100%}
-.load-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 28px rgba(37,99,184,.55),inset 0 1px 0 rgba(255,255,255,.22)}
-.load-btn:disabled{opacity:.4;cursor:not-allowed}
-.progress-wrap{flex:1;min-width:100px;height:4px;background:var(--bar-bg);border-radius:99px;overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.2)}
-.progress-bar{height:100%;width:0%;background:var(--gold-gradient);border-radius:99px;transition:width .35s ease;box-shadow:0 0 8px rgba(201,168,76,.4)}
-.status-text{font-size:11px;color:var(--text-muted);white-space:nowrap;font-weight:500;font-family:'JetBrains Mono',monospace;max-width:260px;overflow:hidden;text-overflow:ellipsis}
-.theme-toggle{width:38px;height:38px;border-radius:10px;border:1px solid var(--border-bright);background:var(--bg-card);cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;transition:all .25s;flex-shrink:0}
-.theme-toggle:hover{transform:rotate(22deg) scale(1.12);box-shadow:0 0 20px rgba(201,168,76,.25)}
-.debug-toggle{font-size:11px;color:var(--text-muted);cursor:pointer;background:var(--bg-card);border:1px solid var(--border);padding:6px 12px;border-radius:8px;font-weight:600;font-family:inherit;transition:all .15s;letter-spacing:.03em}
-.debug-toggle:hover{color:var(--gold);border-color:rgba(201,168,76,.35)}
+/* ─────────── TOP BAR ─────────── */
+.topbar{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  padding:12px 16px;margin-bottom:14px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow);
+}
+.brand{
+  display:inline-flex;align-items:center;gap:10px;
+  font-weight:700;font-size:15px;letter-spacing:-0.01em;
+  color:var(--text);
+}
+.brand-mark{
+  width:28px;height:28px;border-radius:8px;
+  background:var(--accent);
+  display:grid;place-items:center;
+  color:#fff;font-weight:700;font-size:13px;
+  box-shadow:0 0 0 1px var(--accent-strong) inset, 0 4px 10px var(--accent-glow);
+  letter-spacing:0;
+}
+.brand-sub{font-size:11px;color:var(--text-mute);font-weight:500;letter-spacing:.02em}
+.divider-v{width:1px;height:22px;background:var(--border)}
 
-/* DEBUG */
-.debug-log{background:#06080f;border-radius:12px;padding:12px 16px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#64748b;max-height:140px;overflow-y:auto;margin-bottom:16px;display:none;white-space:pre-wrap;word-break:break-all;border:1px solid rgba(255,255,255,.05);box-shadow:0 4px 20px rgba(0,0,0,.4)}
+.load-btn{
+  padding:8px 16px;border:none;border-radius:var(--radius-sm);
+  cursor:pointer;font:600 12px/1 'IBM Plex Sans',sans-serif;
+  color:#fff;background:var(--accent);
+  letter-spacing:.02em;text-transform:uppercase;
+  transition:background var(--tx-fast),transform var(--tx-fast);
+  box-shadow:0 1px 2px rgba(0,0,0,.15),0 0 0 1px var(--accent-strong) inset;
+  white-space:nowrap;
+}
+.load-btn:hover:not(:disabled){background:var(--accent-strong)}
+.load-btn:active:not(:disabled){transform:translateY(1px)}
+.load-btn:disabled{opacity:.5;cursor:not-allowed}
+
+.progress-wrap{
+  flex:1;min-width:120px;height:3px;
+  background:var(--border);border-radius:99px;overflow:hidden;
+}
+.progress-bar{
+  height:100%;width:0%;background:var(--accent);
+  border-radius:99px;transition:width .3s ease;
+}
+.status-text{
+  font:500 11px/1.2 'IBM Plex Mono',monospace;
+  color:var(--text-mute);white-space:nowrap;
+  max-width:340px;overflow:hidden;text-overflow:ellipsis;
+}
+.icon-btn{
+  width:32px;height:32px;border-radius:var(--radius-sm);
+  border:1px solid var(--border);background:transparent;cursor:pointer;
+  display:grid;place-items:center;color:var(--text-mute);
+  transition:all var(--tx-fast);font-size:14px;
+}
+.icon-btn:hover{background:var(--panel-hover);border-color:var(--border-strong);color:var(--text)}
+.debug-toggle{
+  font:600 10px/1 'IBM Plex Sans';color:var(--text-mute);
+  background:transparent;border:1px solid var(--border);
+  padding:7px 11px;border-radius:var(--radius-sm);cursor:pointer;
+  text-transform:uppercase;letter-spacing:.06em;
+  transition:all var(--tx-fast);
+}
+.debug-toggle:hover{color:var(--text);border-color:var(--border-strong)}
+
+/* ─────────── DEBUG ─────────── */
+.debug-log{
+  background:#06080d;border:1px solid var(--border);border-radius:var(--radius);
+  padding:10px 14px;font-family:'IBM Plex Mono',monospace;font-size:11px;
+  color:#94a3b8;max-height:160px;overflow-y:auto;margin-bottom:12px;
+  display:none;white-space:pre-wrap;word-break:break-all;line-height:1.5;
+}
 .debug-log.show{display:block}
-.debug-log .ok{color:#34d399}.debug-log .fail{color:#fb7185}.debug-log .info{color:#818cf8}
+.debug-log .ok{color:#10b981}
+.debug-log .fail{color:#f87171}
+.debug-log .info{color:#7da4ff}
 
-/* LAYOUT */
-.pos-container{display:grid;grid-template-columns:1fr 430px;gap:18px;min-height:calc(100vh - 120px)}
-@media(max-width:960px){.pos-container{grid-template-columns:1fr}}
+/* ─────────── LAYOUT ─────────── */
+.pos-grid{
+  display:grid;grid-template-columns:1fr 420px;gap:14px;
+  min-height:calc(100vh - 100px);
+}
+@media(max-width:980px){.pos-grid{grid-template-columns:1fr}}
 
-/* PANEL */
-.pos-panel{background:var(--bg-card);backdrop-filter:blur(24px) saturate(1.5);-webkit-backdrop-filter:blur(24px) saturate(1.5);border:1px solid var(--border);box-shadow:var(--shadow-card);border-radius:22px;padding:24px;display:flex;flex-direction:column;position:relative;overflow:hidden;transition:background .3s,border .3s}
-.pos-panel::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:var(--magic-gradient);opacity:.8}
-.pos-panel::after{content:"";position:absolute;top:-80px;right:-80px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(139,92,246,.07),transparent 70%);pointer-events:none}
-.panel-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--text-muted);margin-bottom:20px;display:flex;align-items:center;gap:8px}
-.panel-title .dot{width:5px;height:5px;border-radius:50%;background:var(--magic-gradient);box-shadow:0 0 8px rgba(139,92,246,.6)}
+.panel{
+  background:var(--panel);border:1px solid var(--border);
+  border-radius:var(--radius-xl);padding:20px;
+  display:flex;flex-direction:column;
+  box-shadow:var(--shadow);
+}
+.panel-title{
+  font:700 10px/1 'IBM Plex Sans';
+  text-transform:uppercase;letter-spacing:.12em;
+  color:var(--text-mute);margin-bottom:16px;
+  display:flex;align-items:center;gap:8px;
+}
+.panel-title::before{
+  content:"";width:4px;height:4px;border-radius:50%;
+  background:var(--accent);
+}
 
-/* FORM */
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+/* ─────────── FORM ─────────── */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
 .form-field{display:flex;flex-direction:column}
 .form-field.full{grid-column:1/-1}
-.form-field label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin-bottom:6px;font-weight:700}
-.form-field input,.form-field textarea,.form-field select{background:var(--input-bg);border:1.5px solid var(--input-border);border-radius:11px;padding:11px 14px;color:var(--text-primary);font-size:13px;font-family:inherit;font-weight:500;transition:all .15s ease}
-.form-field input:focus,.form-field textarea:focus,.form-field select:focus{outline:none;border-color:var(--indigo);box-shadow:0 0 0 3px rgba(99,102,241,.13)}
-.form-field input::placeholder{color:var(--text-muted);font-weight:400}
+.form-field label{
+  font:600 10px/1 'IBM Plex Sans';text-transform:uppercase;
+  letter-spacing:.08em;color:var(--text-mute);margin-bottom:6px;
+}
+.form-field input,.form-field textarea,.form-field select{
+  background:var(--input-bg);border:1px solid var(--input-border);
+  border-radius:var(--radius-sm);padding:9px 12px;
+  color:var(--text);font:500 13px/1.4 'IBM Plex Sans',sans-serif;
+  transition:border-color var(--tx-fast),box-shadow var(--tx-fast);
+}
+.form-field input:focus,.form-field textarea:focus,.form-field select:focus{
+  outline:none;border-color:var(--accent);
+  box-shadow:0 0 0 3px var(--accent-soft);
+}
+.form-field input::placeholder{color:var(--text-dim);font-weight:400}
 
-/* BARCODE */
-.barcode-wrap{position:relative;margin-bottom:14px}
-.barcode-input{width:100%;font-size:17px!important;font-weight:600!important;padding:15px 18px 15px 52px!important;font-family:'JetBrains Mono',monospace!important;border-radius:15px!important;letter-spacing:.02em;color:var(--text-primary);box-shadow:0 6px 24px rgba(99,102,241,.1);transition:all .2s}
-[data-theme="dark"] .barcode-input{background:rgba(255,255,255,.06)!important;border:2px solid rgba(139,92,246,.35)!important}
-[data-theme="light"] .barcode-input{background:#fff!important;border:2px solid transparent!important;background-image:linear-gradient(#fff,#fff),var(--magic-gradient)!important;background-origin:padding-box,border-box!important;background-clip:padding-box,border-box!important}
-.barcode-input:focus{outline:none;box-shadow:0 10px 32px rgba(236,72,153,.22),0 0 0 4px rgba(236,72,153,.07)!important}
-[data-theme="dark"] .barcode-input:focus{border-color:rgba(236,72,153,.6)!important}
-.barcode-input::placeholder{color:var(--text-muted);font-weight:500;letter-spacing:0}
-.barcode-icon{position:absolute;left:16px;top:50%;transform:translateY(-50%);width:22px;height:22px;color:var(--violet);pointer-events:none;opacity:.7}
-.scanner-status{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;color:var(--emerald);margin-top:8px;padding-left:4px}
-.scanner-dot{width:7px;height:7px;background:var(--emerald);border-radius:50%;box-shadow:0 0 0 3px rgba(16,185,129,.2);animation:pulse 1.8s infinite}
-@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 3px rgba(16,185,129,.2)}50%{opacity:.5;box-shadow:0 0 0 7px rgba(16,185,129,.04)}}
+/* ─────────── BARCODE INPUT ─────────── */
+.barcode-wrap{position:relative;margin-bottom:10px}
+.barcode-input{
+  width:100%;
+  font:600 16px/1.2 'IBM Plex Mono',monospace !important;
+  padding:14px 16px 14px 46px !important;
+  background:var(--input-bg) !important;
+  border:1.5px solid var(--input-border) !important;
+  border-radius:var(--radius) !important;
+  color:var(--text);
+  letter-spacing:.02em;
+  transition:border-color var(--tx-fast),box-shadow var(--tx-fast) !important;
+}
+.barcode-input:focus{
+  outline:none !important;
+  border-color:var(--accent) !important;
+  box-shadow:0 0 0 4px var(--accent-soft) !important;
+}
+.barcode-input::placeholder{color:var(--text-dim);font-weight:500;letter-spacing:0;font-family:'IBM Plex Sans',sans-serif}
+.barcode-icon{
+  position:absolute;left:14px;top:50%;transform:translateY(-50%);
+  width:20px;height:20px;color:var(--text-mute);pointer-events:none;
+}
+.scanner-status{
+  display:flex;align-items:center;gap:8px;
+  font:500 11px/1 'IBM Plex Sans';color:var(--text-mute);
+  margin-top:8px;padding-left:2px;
+}
+.scanner-dot{
+  width:6px;height:6px;background:var(--success);border-radius:50%;
+  box-shadow:0 0 0 3px var(--success-soft);
+}
+.indexed-count{font-weight:600;color:var(--text);font-family:'IBM Plex Mono',monospace}
 
-/* STATS */
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
-.stat-box{background:var(--stat-bg);border:1px solid var(--stat-border);border-radius:14px;padding:14px 10px;text-align:center;transition:all .2s;position:relative;overflow:hidden;cursor:default}
-.stat-box::before{content:"";position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--magic-gradient);opacity:0;transition:opacity .2s}
-.stat-box:hover{transform:translateY(-2px);box-shadow:0 0 30px rgba(139,92,246,.15)}
-.stat-box:hover::before{opacity:.7}
-.stat-box .val{font-size:22px;font-weight:800;color:var(--text-primary);letter-spacing:-0.03em;font-variant-numeric:tabular-nums}
-.stat-box.accent .val{background:var(--success-gradient);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-.stat-box .lbl{font-size:9px;text-transform:uppercase;color:var(--text-muted);letter-spacing:.12em;margin-top:4px;font-weight:700}
+/* ─────────── STATS ─────────── */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.stat{
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--radius);padding:12px 14px;
+}
+.stat .val{
+  font:700 22px/1.1 'IBM Plex Sans';color:var(--text);
+  font-variant-numeric:tabular-nums;letter-spacing:-0.02em;
+}
+.stat .lbl{
+  font:600 10px/1 'IBM Plex Sans';text-transform:uppercase;
+  letter-spacing:.08em;color:var(--text-mute);margin-top:6px;
+}
+.stat.accent .val{color:var(--success)}
 
-/* CART TABLE */
-.cart-wrap{flex:1;overflow:auto;border:1px solid var(--cart-border);border-radius:16px;background:var(--cart-bg);box-shadow:0 2px 12px rgba(0,0,0,.06);transition:background .3s,border .3s}
+/* ─────────── CART TABLE ─────────── */
+.cart-wrap{
+  flex:1;overflow:auto;
+  border:1px solid var(--border);border-radius:var(--radius);
+  background:var(--bg);
+  min-height:280px;
+}
 .cart-table{width:100%;border-collapse:collapse;font-size:13px}
-.cart-table thead{background:var(--bg-glass);backdrop-filter:blur(12px);position:sticky;top:0;z-index:2}
-.cart-table th{text-align:left;padding:11px 14px;font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--text-muted);font-weight:700;border-bottom:1px solid var(--cart-border)}
-.cart-table td{padding:11px 14px;border-bottom:1px solid var(--cart-border);vertical-align:middle}
-.cart-table tbody tr{transition:background .12s}
-.cart-table tbody tr:hover{background:var(--cart-row-hover)}
+.cart-table thead{
+  background:var(--header-bg);
+  position:sticky;top:0;z-index:2;
+}
+.cart-table th{
+  text-align:left;padding:10px 12px;
+  font:600 10px/1 'IBM Plex Sans';text-transform:uppercase;
+  letter-spacing:.08em;color:var(--text-mute);
+  border-bottom:1px solid var(--border);
+}
+.cart-table td{
+  padding:9px 12px;border-bottom:1px solid var(--border);
+  vertical-align:middle;
+}
+.cart-table tbody tr{transition:background var(--tx-fast)}
+.cart-table tbody tr:hover{background:var(--row-hover)}
 .cart-table tbody tr:last-child td{border-bottom:none}
-.cart-table tbody tr.new-row{animation:flash .8s ease}
-@keyframes flash{0%{background:rgba(139,92,246,.2)}100%{background:transparent}}
-.qty-input,.price-input{width:72px;background:var(--input-bg);border:1.5px solid var(--input-border);border-radius:8px;padding:5px 9px;color:var(--text-primary);font-size:13px;font-weight:600;text-align:right;font-family:'JetBrains Mono',monospace;transition:all .15s}
+.cart-table tbody tr.flash{animation:rowFlash .7s ease}
+@keyframes rowFlash{
+  0%{background:var(--accent-soft)}
+  100%{background:transparent}
+}
+
+.code-cell{
+  font:600 11px/1 'IBM Plex Mono',monospace;
+  color:var(--text-mute);letter-spacing:.02em;
+}
+.name-cell{font-weight:500;color:var(--text)}
+
+.qty-input,.price-input{
+  width:74px;
+  background:var(--input-bg);border:1px solid var(--input-border);
+  border-radius:6px;padding:5px 9px;
+  color:var(--text);
+  font:600 13px/1.2 'IBM Plex Mono',monospace;
+  text-align:right;
+  font-variant-numeric:tabular-nums;
+  transition:border-color var(--tx-fast),box-shadow var(--tx-fast);
+}
 .price-input{width:90px}
-.qty-input:focus{outline:none;border-color:var(--indigo);box-shadow:0 0 0 3px rgba(99,102,241,.12)}
-.price-input[readonly]{background:var(--bg-card);color:var(--text-muted);cursor:not-allowed;border-color:var(--border)}
-.price-input[readonly]:focus{box-shadow:none;border-color:var(--border)}
-.qty-owned-cell{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;text-align:right;padding:11px 10px!important}
-.qty-owned-ok{color:var(--emerald)}
-.qty-owned-warn{color:var(--amber)}
-.qty-owned-over{color:var(--rose);background:rgba(244,63,94,.1);border-radius:6px;padding:2px 6px!important}
-.qty-owned-na{color:var(--text-muted)}
-.qty-over-row td{background:rgba(244,63,94,.04)!important}
-.line-total{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--emerald);font-size:13px}
-.remove-btn{background:transparent;border:1.5px solid var(--border);color:var(--text-muted);border-radius:8px;padding:3px 10px;cursor:pointer;font-size:16px;line-height:1.2;font-weight:600;transition:all .15s;font-family:inherit}
-.remove-btn:hover{background:var(--rose);color:#fff;border-color:var(--rose);transform:scale(1.05)}
-.empty-cart{text-align:center;padding:60px 20px;color:var(--text-muted)}
-.empty-cart .big{font-size:52px;margin-bottom:14px;display:inline-block;background:var(--magic-gradient);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 4px 12px rgba(139,92,246,.25));line-height:1;animation:float 3s ease-in-out infinite}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
-.empty-cart .main-text{font-size:14px;color:var(--text-secondary);font-weight:700;margin-bottom:4px}
-.empty-cart .sub-text{font-size:12px;color:var(--text-muted)}
+.qty-input:focus{
+  outline:none;border-color:var(--accent);
+  box-shadow:0 0 0 2px var(--accent-soft);
+}
+.price-input[readonly]{
+  background:transparent;color:var(--text-mute);
+  cursor:not-allowed;border-color:transparent;
+}
 
-/* SUMMARY */
-.summary{background:var(--summary-bg);border:1px solid var(--summary-border);border-radius:16px;padding:16px 20px;margin-bottom:14px;position:relative;overflow:hidden;transition:background .3s,border .3s}
-.summary::before{content:"";position:absolute;top:0;right:0;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(139,92,246,.08),transparent 70%);pointer-events:none}
-.summary-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:13px;color:var(--text-secondary);font-weight:500}
-.summary-row span:last-child{font-variant-numeric:tabular-nums;font-weight:700;color:var(--text-primary);font-family:'JetBrains Mono',monospace}
-.summary-row.total{border-top:1px dashed var(--summary-border);margin-top:10px;padding-top:14px}
-.summary-row.total span:first-child{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);font-weight:700}
-.summary-row.total span:last-child{font-size:28px;font-weight:800;letter-spacing:-0.04em;background:var(--success-gradient);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;font-family:'Syne',sans-serif}
+.qty-owned{
+  font:600 12px/1 'IBM Plex Mono',monospace;
+  text-align:right;font-variant-numeric:tabular-nums;
+}
+.qty-owned.ok{color:var(--success)}
+.qty-owned.warn{color:var(--warn)}
+.qty-owned.over{
+  color:var(--danger);background:var(--danger-soft);
+  border-radius:6px;padding:3px 7px;display:inline-block;
+}
+.qty-owned.na{color:var(--text-dim)}
+tr.over-row td{background:rgba(239,68,68,.04) !important}
 
-/* ACTIONS */
+.line-total{
+  font:600 13px/1.2 'IBM Plex Mono',monospace;
+  text-align:right;color:var(--success);
+  font-variant-numeric:tabular-nums;
+}
+
+.remove-btn{
+  background:transparent;border:1px solid var(--border);
+  color:var(--text-mute);border-radius:6px;
+  width:26px;height:26px;cursor:pointer;
+  display:grid;place-items:center;
+  font:600 16px/1 'IBM Plex Sans';
+  transition:all var(--tx-fast);
+}
+.remove-btn:hover{
+  background:var(--danger);color:#fff;border-color:var(--danger);
+}
+
+.empty-cart{
+  text-align:center;padding:60px 20px;color:var(--text-mute);
+}
+.empty-cart-icon{
+  width:48px;height:48px;border-radius:14px;
+  background:var(--accent-soft);
+  display:grid;place-items:center;margin:0 auto 14px;
+  color:var(--accent);
+}
+.empty-cart-title{font-size:14px;color:var(--text);font-weight:600;margin-bottom:4px}
+.empty-cart-sub{font-size:12px;color:var(--text-mute)}
+
+/* ─────────── SUMMARY ─────────── */
+.summary{
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px 18px;margin-bottom:12px;
+}
+.summary-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:4px 0;font-size:13px;color:var(--text-mute);font-weight:500;
+}
+.summary-row .v{
+  font-family:'IBM Plex Mono',monospace;font-weight:600;
+  color:var(--text);font-variant-numeric:tabular-nums;
+}
+.summary-row.grand{
+  border-top:1px solid var(--border);margin-top:10px;padding-top:12px;
+}
+.summary-row.grand .l{
+  font:700 11px/1 'IBM Plex Sans';text-transform:uppercase;
+  letter-spacing:.08em;color:var(--text-mute);
+}
+.summary-row.grand .v{
+  font:700 26px/1 'IBM Plex Sans';
+  color:var(--success);letter-spacing:-0.02em;
+  font-variant-numeric:tabular-nums;
+  font-feature-settings:"tnum";
+}
+
+/* ─────────── ACTIONS ─────────── */
 .actions{display:grid;grid-template-columns:1fr 2fr;gap:10px}
-.btn{padding:14px 18px;border:none;border-radius:13px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s ease;font-family:inherit;text-transform:uppercase;letter-spacing:.06em;position:relative;overflow:hidden}
-.btn::after{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.12),transparent);opacity:0;transition:opacity .2s}
-.btn:hover::after{opacity:1}
-.btn-primary{background:var(--magic-gradient);color:#fff;box-shadow:0 8px 22px -4px rgba(139,92,246,.45),inset 0 1px 0 rgba(255,255,255,.2)}
-.btn-primary:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 14px 30px -4px rgba(236,72,153,.5),inset 0 1px 0 rgba(255,255,255,.25)}
-.btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none}
-.btn-secondary{background:var(--bg-card);color:var(--text-secondary);border:1.5px solid var(--border-bright)}
-.btn-secondary:hover{background:var(--bg-card-hover);border-color:var(--rose);color:var(--rose)}
+.btn{
+  padding:13px 18px;border:none;border-radius:var(--radius);
+  font:700 12px/1 'IBM Plex Sans';cursor:pointer;
+  text-transform:uppercase;letter-spacing:.06em;
+  transition:background var(--tx-fast),transform var(--tx-fast),opacity var(--tx-fast);
+}
+.btn:active:not(:disabled){transform:translateY(1px)}
+.btn-primary{
+  background:var(--accent);color:#fff;
+  box-shadow:0 0 0 1px var(--accent-strong) inset, 0 2px 8px var(--accent-glow);
+}
+.btn-primary:hover:not(:disabled){background:var(--accent-strong)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-secondary{
+  background:transparent;color:var(--text-mute);
+  border:1px solid var(--border);
+}
+.btn-secondary:hover{
+  background:var(--panel-hover);color:var(--text);
+  border-color:var(--border-strong);
+}
 
-/* TOAST */
-.toast{position:fixed;top:22px;right:22px;padding:14px 20px;border-radius:14px;font-size:13px;font-weight:600;z-index:9999;animation:slideIn .35s cubic-bezier(.2,1,.3,1);max-width:440px;box-shadow:var(--shadow-xl);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.12)}
-.toast.success{background:linear-gradient(135deg,rgba(16,185,129,.96),rgba(20,184,166,.96));color:#fff}
-.toast.error{background:linear-gradient(135deg,rgba(244,63,94,.96),rgba(236,72,153,.96));color:#fff}
-.toast.info{background:linear-gradient(135deg,rgba(99,102,241,.96),rgba(139,92,246,.96));color:#fff}
-@keyframes slideIn{from{transform:translateX(500px) scale(.85);opacity:0}to{transform:translateX(0) scale(1);opacity:1}}
+/* ─────────── TOAST ─────────── */
+.toast{
+  position:fixed;top:18px;right:18px;
+  padding:12px 16px;border-radius:var(--radius);
+  font:600 13px/1.4 'IBM Plex Sans';z-index:9999;
+  animation:toastIn .25s ease;max-width:420px;
+  box-shadow:var(--shadow-lg);
+  border:1px solid;display:flex;align-items:center;gap:10px;
+}
+.toast.success{background:var(--success-soft);color:var(--success);border-color:rgba(16,185,129,.3)}
+.toast.error{background:var(--danger-soft);color:var(--danger);border-color:rgba(239,68,68,.3)}
+.toast.info{background:var(--accent-soft);color:var(--accent);border-color:rgba(79,140,255,.3)}
+[data-theme="dark"] .toast{
+  background:var(--panel);
+}
+[data-theme="dark"] .toast.success{color:#34d399;border-color:rgba(16,185,129,.4)}
+[data-theme="dark"] .toast.error{color:#fca5a5;border-color:rgba(239,68,68,.4)}
+[data-theme="dark"] .toast.info{color:#93b8ff;border-color:rgba(79,140,255,.4)}
+@keyframes toastIn{
+  from{transform:translateX(20px);opacity:0}
+  to{transform:translateX(0);opacity:1}
+}
 
-/* CUSTOMER */
-.customer-display{margin-top:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.customer-badge{display:inline-flex;align-items:center;gap:7px;padding:5px 12px;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.22);border-radius:99px;font-size:12px;font-weight:700;color:var(--violet)}
-.customer-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--magic-gradient);box-shadow:0 0 8px rgba(139,92,246,.5)}
-.clear-link{font-size:11px;color:var(--rose);font-weight:600;cursor:pointer;text-decoration:none}
-.clear-link:hover{text-decoration:underline}
+/* ─────────── CUSTOMER BADGE ─────────── */
+.customer-display{margin-top:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.customer-badge{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:5px 11px;background:var(--accent-soft);
+  border:1px solid rgba(79,140,255,.25);
+  border-radius:99px;font-size:12px;font-weight:600;color:var(--accent);
+}
+.customer-badge .dot{
+  width:5px;height:5px;border-radius:50%;background:var(--accent);
+}
+.clear-link{
+  font:600 11px/1 'IBM Plex Sans';color:var(--text-mute);
+  cursor:pointer;text-decoration:none;
+}
+.clear-link:hover{color:var(--danger);text-decoration:underline}
 
-/* SUGGEST */
+/* ─────────── SUGGEST ─────────── */
 .suggest-wrap{position:relative}
-.suggest-list{position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--suggest-bg);border:1px solid var(--border-bright);border-radius:14px;max-height:260px;overflow-y:auto;z-index:200;display:none;box-shadow:var(--shadow-xl);backdrop-filter:blur(20px)}
+.suggest-list{
+  position:absolute;top:calc(100% + 4px);left:0;right:0;
+  background:var(--bg-elevated);border:1px solid var(--border-strong);
+  border-radius:var(--radius);max-height:300px;overflow-y:auto;
+  z-index:200;display:none;box-shadow:var(--shadow-lg);
+}
 .suggest-list.open{display:block}
-.suggest-item{padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .1s}
+.suggest-item{
+  padding:9px 14px;cursor:pointer;
+  border-bottom:1px solid var(--border);
+  transition:background var(--tx-fast);
+}
 .suggest-item:last-child{border-bottom:none}
-.suggest-item:hover,.suggest-item.active{background:var(--suggest-hover)}
-.suggest-item .name{font-size:13px;font-weight:600;color:var(--text-primary)}
-.suggest-item .code{font-size:11px;color:var(--text-muted);margin-top:2px;font-family:'JetBrains Mono',monospace}
-.item-suggest-list{max-height:340px}
-.item-suggest-list .suggest-item{display:grid;grid-template-columns:90px 1fr 70px;align-items:center;gap:8px;padding:9px 14px}
-.item-suggest-list .suggest-item-low{opacity:.55}
-.si-code{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--indigo);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.si-name{font-size:13px;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.si-stock{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--emerald);text-align:right}
-.item-suggest-list .suggest-item-low .si-stock{color:var(--rose)}
+.suggest-item:hover,.suggest-item.active{background:var(--row-hover)}
+.suggest-item .name{font-size:13px;font-weight:500;color:var(--text)}
+.suggest-item .code{font-size:11px;color:var(--text-mute);margin-top:2px;font-family:'IBM Plex Mono',monospace}
 
-/* DIVIDER & CHIPS */
-.divider-label{display:flex;align-items:center;gap:10px;font-size:9px;text-transform:uppercase;color:var(--text-muted);letter-spacing:.12em;margin:18px 0 12px;font-weight:700}
-.divider-label::before,.divider-label::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border-bright),transparent)}
-.ref-chip{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:11px;background:rgba(20,184,166,.08);border:1.5px solid rgba(20,184,166,.22);color:var(--teal);font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;width:100%;justify-content:flex-start}
-.error-box{color:var(--rose);background:var(--bg-card);border:1px solid rgba(244,63,94,.22);border-radius:14px;padding:14px 18px;font-size:13px;margin-bottom:18px;box-shadow:var(--shadow-card)}
+.item-suggest .suggest-item{
+  display:grid;grid-template-columns:90px 1fr 70px;
+  align-items:center;gap:10px;padding:9px 14px;
+}
+.item-suggest .suggest-item.low{opacity:.55}
+.si-code{
+  font:600 11px/1 'IBM Plex Mono',monospace;
+  color:var(--accent);white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;
+}
+.si-name{
+  font-size:13px;font-weight:500;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.si-stock{
+  font:600 11px/1 'IBM Plex Mono',monospace;
+  color:var(--success);text-align:right;
+  font-variant-numeric:tabular-nums;
+}
+.item-suggest .suggest-item.low .si-stock{color:var(--danger)}
 
-/* SCROLLBARS */
-::-webkit-scrollbar{width:6px;height:6px}
+/* ─────────── DIVIDER & CHIPS ─────────── */
+.divider{
+  display:flex;align-items:center;gap:10px;
+  font:600 9px/1 'IBM Plex Sans';text-transform:uppercase;
+  color:var(--text-mute);letter-spacing:.1em;
+  margin:14px 0 10px;
+}
+.divider::before,.divider::after{
+  content:"";flex:1;height:1px;background:var(--border);
+}
+.ref-chip{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:9px 14px;border-radius:var(--radius-sm);
+  background:var(--bg);border:1px solid var(--border);
+  color:var(--text);font:600 12px/1 'IBM Plex Mono',monospace;
+  width:100%;justify-content:flex-start;
+}
+.ref-chip::before{
+  content:"#";color:var(--text-mute);font-weight:500;
+}
+.error-box{
+  color:var(--danger);background:var(--danger-soft);
+  border:1px solid rgba(239,68,68,.25);
+  border-radius:var(--radius);padding:14px 18px;
+  font-size:13px;margin-bottom:14px;font-weight:500;
+}
+.warning-banner{
+  background:var(--warn-soft);border:1px solid rgba(245,158,11,.25);
+  border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;
+  color:var(--warn);font-size:12px;font-weight:500;
+}
+
+/* ─────────── SCROLLBARS ─────────── */
+::-webkit-scrollbar{width:8px;height:8px}
 ::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--scrollbar);border-radius:99px}
-::-webkit-scrollbar-thumb:hover{background:var(--scrollbar-hover)}
+::-webkit-scrollbar-thumb{background:var(--scroll);border-radius:99px}
+::-webkit-scrollbar-thumb:hover{background:var(--scroll-hover)}
+
+/* ─────────── KBD HINT ─────────── */
+.kbd{
+  font:600 10px/1 'IBM Plex Mono',monospace;
+  background:var(--bg);border:1px solid var(--border);
+  border-bottom-width:2px;border-radius:4px;
+  padding:2px 5px;color:var(--text-mute);
+}
 </style>
 </head>
 <body>
 
-<!-- Ambient glow orbs (purely decorative) -->
-<div aria-hidden="true" style="position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden">
-  <div style="position:absolute;top:-100px;left:-80px;width:480px;height:480px;border-radius:50%;background:radial-gradient(circle,rgba(99,102,241,.06),transparent 70%);animation:orb1 9s ease-in-out infinite"></div>
-  <div style="position:absolute;bottom:-100px;right:-60px;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(236,72,153,.05),transparent 70%);animation:orb2 11s ease-in-out infinite"></div>
-  <div style="position:absolute;top:40%;left:50%;width:600px;height:300px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(ellipse,rgba(20,184,166,.03),transparent 70%);animation:orb3 14s ease-in-out infinite"></div>
-</div>
-<style>
-@keyframes orb1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(40px,30px) scale(1.1)}}
-@keyframes orb2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-30px,-20px) scale(1.09)}}
-@keyframes orb3{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.15)}}
-</style>
-
-<div style="position:relative;z-index:1">
-
-<!-- Control bar -->
-<div class="ctrl-bar">
-  <span class="brand"><span class="brand-gem">🛒</span>POS</span>
-  <button class="load-btn" id="load-btn" onclick="loadAllRecords()">⟳ Load Items &amp; Customers</button>
+<!-- TOP BAR -->
+<div class="topbar">
+  <span class="brand">
+    <span class="brand-mark">P</span>
+    <span>POS<br><span class="brand-sub">Manager.io</span></span>
+  </span>
+  <span class="divider-v"></span>
+  <button class="load-btn" id="load-btn" onclick="loadAllRecords()">Load Items &amp; Customers</button>
   <div class="progress-wrap"><div class="progress-bar" id="prog-bar"></div></div>
   <span class="status-text" id="status-text">Press Load to fetch data from Manager</span>
-  <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()" title="Toggle light / dark theme">🌙</button>
+  <button class="icon-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
   <button class="debug-toggle" onclick="toggleDebug()">Debug</button>
 </div>
 <div class="debug-log" id="debug-log"></div>
 
 <div id="app"></div>
 
-</div>
-
 <script>
-
-/* ══════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════
    Capture managerAppContext from parent
-══════════════════════════════════════════════ */
+══════════════════════════════════════════════════════ */
 window.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'manager-context' && event.data.payload) {
     window.managerAppContext = event.data.payload;
@@ -282,16 +580,16 @@ function debugLog(type, msg) {
   el.scrollTop = el.scrollHeight;
 }
 
-/* ══════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════
    postMessage helper — DO NOT MODIFY
-══════════════════════════════════════════════ */
+══════════════════════════════════════════════════════ */
 function postMessageWithResponse(message) {
   return new Promise((resolve, reject) => {
     const requestId = crypto.randomUUID();
     const timer = setTimeout(() => {
       window.removeEventListener('message', handler);
       reject(new Error('Timeout — is this running inside Manager?'));
-    }, 15000);
+    }, 30000);
     function handler(event) {
       if (event.data?.type?.endsWith('-response') && event.data?.requestId === requestId) {
         clearTimeout(timer);
@@ -308,14 +606,12 @@ function postMessageWithResponse(message) {
   });
 }
 
-/* ══════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════
    Direct fetch via managerAppContext
-══════════════════════════════════════════════ */
+══════════════════════════════════════════════════════ */
 async function directFetch(method, path, body) {
   const ctx = window.managerAppContext;
-  if (!ctx || !ctx.apiEndpoint) {
-    throw new Error('managerAppContext not available');
-  }
+  if (!ctx || !ctx.apiEndpoint) throw new Error('managerAppContext not available');
   let url;
   if (path.startsWith('http')) {
     url = path;
@@ -339,19 +635,12 @@ async function directFetch(method, path, body) {
   const text = await resp.text();
   debugLog(resp.ok ? 'ok' : 'fail',
     `← ${resp.status} ${resp.statusText} · ${text.substring(0, 160)}`);
-  if (!resp.ok) {
-    throw new Error(`HTTP ${resp.status}: ${text.substring(0, 200)}`);
-  }
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${text.substring(0, 200)}`);
   try { return JSON.parse(text); } catch { return text; }
 }
 
 async function apiCall(method, path, body) {
-  // Use ONLY postMessage — no fallback to direct fetch.
-  // The previous fallback was causing duplicate invoices: Manager would
-  // create the invoice successfully via postMessage but occasionally the
-  // response shape didn't match what postMessageWithResponse expected, so
-  // it would throw — triggering the directFetch fallback, which created
-  // a SECOND identical invoice.
+  // postMessage only — never directFetch for writes (would cause duplicates).
   const msg = { type: 'api-request', method, path };
   if (body !== undefined && body !== null) msg.body = body;
   const result = await postMessageWithResponse(msg);
@@ -359,32 +648,36 @@ async function apiCall(method, path, body) {
   return result;
 }
 
-/* ══════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════
    Paginated batch fetch
-══════════════════════════════════════════════ */
+   FIX: never use spread (`...page`) on a large array — it
+   blows up at ~100k args with "Maximum call stack size
+   exceeded". Use a plain index loop instead so 100k+ rows
+   never get silently dropped.
+══════════════════════════════════════════════════════ */
 async function getBatchEndpoint(endpointPath, onProgress) {
   const allItems = [];
   let nextToken  = null;
   let pageNum    = 0;
   let apiTotal   = null;
 
-  // For read-only GET requests, prefer directFetch when managerAppContext is
-  // available — it hits the API directly without the postMessage relay, which
-  // is significantly faster for large paginated datasets (100k+ records).
-  // We only avoid directFetch for writes (see apiCall) to prevent duplicates.
+  // For read-only GETs, prefer directFetch when we have a context — it skips
+  // the postMessage relay and is much faster on large paginated datasets.
   const canDirect = !!(window.managerAppContext?.apiEndpoint);
 
   do {
     const path = nextToken
-      ? endpointPath + '?PageSize=99999&next_page_token=' + encodeURIComponent(nextToken)
-      : endpointPath + '?PageSize=99999';
+      ? endpointPath + '?PageSize=10000&next_page_token=' + encodeURIComponent(nextToken)
+      : endpointPath + '?PageSize=10000';
 
     const data = canDirect
       ? await directFetch('GET', path)
       : await postMessageWithResponse({ type: 'api-request', method: 'GET', path });
 
     const page = Array.isArray(data) ? data : (data.items || []);
-    allItems.push(...page);
+
+    // SAFE append — index loop instead of spread, so 100k+ rows never crash.
+    for (let i = 0; i < page.length; i++) allItems.push(page[i]);
 
     nextToken = data.next_page_token || data.nextPageToken
       || data._links?.next?.href || null;
@@ -397,6 +690,7 @@ async function getBatchEndpoint(endpointPath, onProgress) {
     pageNum++;
     if (onProgress) onProgress(allItems.length, apiTotal, pageNum);
 
+    // Hard cap as safety; 1000 pages × 10k = 10M records.
     if (pageNum >= 1000) break;
 
   } while (nextToken);
@@ -408,31 +702,43 @@ async function getBatchInventoryItem(onProgress) {
   return getBatchEndpoint('/api4/inventory-item-batch', onProgress);
 }
 
-/* ══════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════
+   Yield to UI between heavy chunks (so the page doesn't
+   freeze when summing 100k+ transaction lines).
+══════════════════════════════════════════════════════ */
+const yieldToUI = () => new Promise(r => setTimeout(r, 0));
+
+async function chunkProcess(arr, fn, chunkSize = 5000) {
+  const len = arr.length;
+  for (let i = 0; i < len; i += chunkSize) {
+    const end = Math.min(i + chunkSize, len);
+    for (let j = i; j < end; j++) fn(arr[j]);
+    if (end < len) await yieldToUI();
+  }
+}
+
+/* ══════════════════════════════════════════════════════
    Compute qty owned per inventory item key.
+   Uses INTEGER accumulator (qty × 1e6) to avoid IEEE-754
+   drift when adding 100k+ floating-point quantities.
+   Sources:
+     + Starting balances    (rec.item.qtyOnHandLines[].qtyOnHand)
+     + Purchase invoices    (rec.item.lines[].qty)
+     − Debit notes          (returns to supplier)
+     − Sales invoices       (rec.item.lines[].qty)
+     + Credit notes         (returns from customer)
+     − Inventory write-offs (rec.item.items[].qty)
+══════════════════════════════════════════════════════ */
+const SCALE = 1e6;
 
-   Formula (matches Manager's internal calculation):
-     qtyOwned
-       + Starting Balance  → item-starting-balance-batch
-                             rec.item.key (= the inventory item key)
-                             rec.item.qtyOnHandLines[].qtyOnHand  (sum all locations)
-       + Purchase Invoices → purchase-invoice-batch
-                             lines[].item (uuid) + lines[].qty
-       - Debit Notes       → debit-note-batch (returns TO supplier, stock goes OUT)
-                             lines[].item (uuid) + lines[].qty
-       - Sales Invoices    → sales-invoice-batch
-                             lines[].item (uuid) + lines[].qty
-       + Credit Notes      → credit-note-batch (returns FROM customer, stock comes BACK)
-                             lines[].item (uuid) + lines[].qty
-       - Inventory Write-offs → inventory-write-off-batch
-                             items[].inventoryItem (uuid) + items[].qty
-══════════════════════════════════════════════ */
 async function computeQtyOwned(onProgress) {
-  onProgress && onProgress('Fetching stock data (6 sources)…');
+  onProgress && onProgress('Fetching stock sources (6 batches)…');
 
+  const errors = [];
   const fetchBatch = (path, label) =>
     getBatchEndpoint(path).catch(e => {
       debugLog('fail', `${label} fetch failed: ${e.message}`);
+      errors.push(`${label}: ${e.message}`);
       return [];
     });
 
@@ -446,10 +752,10 @@ async function computeQtyOwned(onProgress) {
   ] = await Promise.all([
     fetchBatch('/api4/inventory-item-starting-balance-batch', 'Starting balances'),
     fetchBatch('/api4/purchase-invoice-batch',                'Purchase invoices'),
-    fetchBatch('/api4/debit-note-batch',                     'Debit notes'),
-    fetchBatch('/api4/sales-invoice-batch',                  'Sales invoices'),
-    fetchBatch('/api4/credit-note-batch',                    'Credit notes'),
-    fetchBatch('/api4/inventory-write-off-batch',            'Write-offs'),
+    fetchBatch('/api4/debit-note-batch',                      'Debit notes'),
+    fetchBatch('/api4/sales-invoice-batch',                   'Sales invoices'),
+    fetchBatch('/api4/credit-note-batch',                     'Credit notes'),
+    fetchBatch('/api4/inventory-write-off-batch',             'Write-offs'),
   ]);
 
   debugLog('info',
@@ -458,110 +764,146 @@ async function computeQtyOwned(onProgress) {
     `sales:${salesInvoices.length} creditNotes:${creditNotes.length} writeOffs:${writeOffs.length}`
   );
 
-  const qtyMap = {}; // itemKey -> qty
-
-  const add = (itemKey, qty) => {
-    if (!itemKey) return;
-    qtyMap[itemKey] = (qtyMap[itemKey] || 0) + (Number(qty) || 0);
+  // Integer accumulator — no float drift.
+  const microMap = Object.create(null);
+  const addMicro = (k, qty) => {
+    if (!k) return;
+    const n = Number(qty);
+    if (!n) return; // skip 0 / NaN / null
+    microMap[k] = (microMap[k] || 0) + Math.round(n * SCALE);
   };
-  const sub = (itemKey, qty) => {
-    if (!itemKey) return;
-    qtyMap[itemKey] = (qtyMap[itemKey] || 0) - (Number(qty) || 0);
+  const subMicro = (k, qty) => {
+    if (!k) return;
+    const n = Number(qty);
+    if (!n) return;
+    microMap[k] = (microMap[k] || 0) - Math.round(n * SCALE);
   };
 
-  // ── 1. Starting balances ─────────────────────────────────────────────────
-  // API response shape (confirmed):
-  //   rec.key          = SB record UUID        e.g. "019dc87b-…"  ← WRONG (not the item)
-  //   rec.item.key     = also SB record UUID   e.g. "019dc87b-…"  ← also WRONG
-  //   rec.item.inventoryItem = inventory item UUID  e.g. "e3dd729d-…"  ← CORRECT ✓
-  //   rec.item.qtyOnHandLines[].qtyOnHand  = qty per location — sum all.
-  for (const rec of startingBalances) {
+  // ── 1. Starting balances ──
+  onProgress && onProgress(`Computing stock · starting balances (${startingBalances.length.toLocaleString()})…`);
+  await chunkProcess(startingBalances, rec => {
     const d = rec.item || rec;
-    // Use ONLY inventoryItem — both rec.key and rec.item.key point to the SB
-    // record itself, not the inventory item, so they would key the qty under a
-    // UUID that matches nothing in the items list.
     const itemKey = d.inventoryItem || null;
-    const lines   = d.qtyOnHandLines || [];
+    const lines = d.qtyOnHandLines || [];
     if (lines.length > 0) {
-      for (const l of lines) add(itemKey, l.qtyOnHand);
+      for (let i = 0; i < lines.length; i++) addMicro(itemKey, lines[i].qtyOnHand);
     } else {
-      // Fallback: older API versions may expose qtyOwned directly
-      const qty = d.qtyOwned ?? 0;
-      add(itemKey, qty);
+      addMicro(itemKey, d.qtyOwned ?? 0);
     }
-  }
+  });
 
-  // ── 2. Purchase invoices — stock IN ─────────────────────────────────────
-  for (const rec of purchaseInvoices) {
-    for (const line of (rec.item?.lines || [])) {
-      if (line.item) add(line.item, line.qty);
+  // ── 2. Purchase invoices (IN) ──
+  onProgress && onProgress(`Computing stock · purchase invoices (${purchaseInvoices.length.toLocaleString()})…`);
+  await chunkProcess(purchaseInvoices, rec => {
+    const lines = rec.item?.lines;
+    if (!lines) return;
+    for (let i = 0; i < lines.length; i++) {
+      const ln = lines[i];
+      if (ln.item) addMicro(ln.item, ln.qty);
     }
-  }
+  });
 
-  // ── 3. Debit notes — returns TO supplier, stock OUT ──────────────────────
-  for (const rec of debitNotes) {
-    for (const line of (rec.item?.lines || [])) {
-      if (line.item) sub(line.item, line.qty);
+  // ── 3. Debit notes (OUT) ──
+  onProgress && onProgress(`Computing stock · debit notes (${debitNotes.length.toLocaleString()})…`);
+  await chunkProcess(debitNotes, rec => {
+    const lines = rec.item?.lines;
+    if (!lines) return;
+    for (let i = 0; i < lines.length; i++) {
+      const ln = lines[i];
+      if (ln.item) subMicro(ln.item, ln.qty);
     }
-  }
+  });
 
-  // ── 4. Sales invoices — stock OUT ────────────────────────────────────────
-  for (const rec of salesInvoices) {
-    for (const line of (rec.item?.lines || [])) {
-      if (line.item) sub(line.item, line.qty);
+  // ── 4. Sales invoices (OUT) ──
+  onProgress && onProgress(`Computing stock · sales invoices (${salesInvoices.length.toLocaleString()})…`);
+  await chunkProcess(salesInvoices, rec => {
+    const lines = rec.item?.lines;
+    if (!lines) return;
+    for (let i = 0; i < lines.length; i++) {
+      const ln = lines[i];
+      if (ln.item) subMicro(ln.item, ln.qty);
     }
-  }
+  });
 
-  // ── 5. Credit notes — returns FROM customer, stock IN ───────────────────
-  for (const rec of creditNotes) {
-    for (const line of (rec.item?.lines || [])) {
-      if (line.item) add(line.item, line.qty);
+  // ── 5. Credit notes (IN) ──
+  onProgress && onProgress(`Computing stock · credit notes (${creditNotes.length.toLocaleString()})…`);
+  await chunkProcess(creditNotes, rec => {
+    const lines = rec.item?.lines;
+    if (!lines) return;
+    for (let i = 0; i < lines.length; i++) {
+      const ln = lines[i];
+      if (ln.item) addMicro(ln.item, ln.qty);
     }
-  }
+  });
 
-  // ── 6. Inventory write-offs — stock OUT ─────────────────────────────────
-  // Write-off structure: rec.item.items[] → { inventoryItem, qty }
-  // (NOT lines[].item — different schema)
-  for (const rec of writeOffs) {
-    for (const entry of (rec.item?.items || [])) {
-      if (entry.inventoryItem) sub(entry.inventoryItem, entry.qty);
+  // ── 6. Write-offs (OUT) ──
+  onProgress && onProgress(`Computing stock · write-offs (${writeOffs.length.toLocaleString()})…`);
+  await chunkProcess(writeOffs, rec => {
+    const items = rec.item?.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      const e = items[i];
+      if (e.inventoryItem) subMicro(e.inventoryItem, e.qty);
     }
-  }
+  });
 
-  debugLog('ok', `qtyOwned computed for ${Object.keys(qtyMap).length} unique items`);
-  return qtyMap; // { itemKey: number }
+  // Convert integer accumulator back to floats.
+  const qtyMap = Object.create(null);
+  for (const k in microMap) qtyMap[k] = microMap[k] / SCALE;
+
+  debugLog('ok', `qtyOwned computed for ${Object.keys(qtyMap).length.toLocaleString()} unique items`);
+
+  return { qtyMap, errors };
 }
 
-/* ══════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════
    State
-══════════════════════════════════════════════ */
+══════════════════════════════════════════════════════ */
 const state = {
   items: [],
   customers: [],
   cart: [],
   selectedCustomer: null,
   reference: '',
-  qtyOwned: {}, // itemKey -> computed stock level
+  qtyOwned: Object.create(null),
+
+  // Search indexes — built once after load for fast lookup.
+  itemIndex: [],            // [{rec, key, codeLower, nameLower}, ...]
+  itemByCodeExact: new Map(), // codeLower -> rec  (O(1) scanner lookup)
 };
 
-/* ══════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════
+   Build search indexes after items load.
+══════════════════════════════════════════════════════ */
+function buildItemIndexes() {
+  const items = state.items;
+  const idx = new Array(items.length);
+  const exact = new Map();
+  for (let i = 0; i < items.length; i++) {
+    const r = items[i];
+    const it = r.item || {};
+    const codeLower = (it.itemCode || '').toLowerCase();
+    const nameLower = (it.itemName || '').toLowerCase();
+    idx[i] = { rec: r, key: r.key, codeLower, nameLower };
+    if (codeLower) exact.set(codeLower, r);
+  }
+  state.itemIndex = idx;
+  state.itemByCodeExact = exact;
+  debugLog('ok', `Indexed ${items.length.toLocaleString()} items for fast search`);
+}
+
+/* ══════════════════════════════════════════════════════
    Auto-generate unique reference — POS-YYMMDD-HHMMSS
-══════════════════════════════════════════════ */
+══════════════════════════════════════════════════════ */
 function generateReference() {
   const d = new Date();
   const pad = n => String(n).padStart(2, '0');
-  const yy = pad(d.getFullYear() % 100);
-  const mm = pad(d.getMonth() + 1);
-  const dd = pad(d.getDate());
-  const hh = pad(d.getHours());
-  const mi = pad(d.getMinutes());
-  const ss = pad(d.getSeconds());
-  return `POS-${yy}${mm}${dd}-${hh}${mi}${ss}`;
+  return `POS-${pad(d.getFullYear()%100)}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
 }
 
-/* ══════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════
    Load
-══════════════════════════════════════════════ */
+══════════════════════════════════════════════════════ */
 async function loadAllRecords() {
   const btn    = document.getElementById('load-btn');
   const bar    = document.getElementById('prog-bar');
@@ -574,43 +916,47 @@ async function loadAllRecords() {
   app.innerHTML = '';
 
   try {
-    // Fetch items and customers in parallel — no dependency between them.
     status.textContent = 'Fetching items & customers in parallel…';
     bar.style.width = '5%';
 
     let itemsDone = false, custsDone = false;
     const updateParallelStatus = (label, loaded, total) => {
       status.textContent = total
-        ? `${label} · ${loaded.toLocaleString()} / ${total.toLocaleString()}${itemsDone ? ' · items ✓' : ''}${custsDone ? ' · customers ✓' : ''}`
+        ? `${label} · ${loaded.toLocaleString()}/${total.toLocaleString()}${itemsDone?' · items ✓':''}${custsDone?' · customers ✓':''}`
         : `${label} · ${loaded.toLocaleString()} loaded…`;
     };
 
     const [items, customers] = await Promise.all([
       getBatchInventoryItem((loaded, total, page) => {
-        updateParallelStatus(`Items · Page ${page}`, loaded, total);
-        if (total) bar.style.width = Math.min(20, Math.round(loaded / total * 20)) + '%';
+        updateParallelStatus(`Items · pg ${page}`, loaded, total);
+        if (total) bar.style.width = Math.min(20, Math.round(loaded/total*20)) + '%';
       }).then(r => { itemsDone = true; return r; }),
       getBatchEndpoint('/api4/customer-batch', (loaded, total, page) => {
-        updateParallelStatus(`Customers · Page ${page}`, loaded, total);
+        updateParallelStatus(`Customers · pg ${page}`, loaded, total);
       }).then(r => { custsDone = true; return r; }),
     ]);
 
     state.items = items;
     state.customers = customers;
 
-    // Compute qty owned: starting balances + purchases - sales
-    status.textContent = 'Computing stock levels (starting balances + purchases − sales)…';
-    bar.style.width = '42%';
-    const qtyOwned = await computeQtyOwned(msg => { status.textContent = msg; });
-    state.qtyOwned = qtyOwned; // { itemKey: number }
+    // Build search indexes once — this is the key perf fix for 100k+ items.
+    status.textContent = `Indexing ${items.length.toLocaleString()} items…`;
+    bar.style.width = '38%';
+    await yieldToUI();
+    buildItemIndexes();
+
+    // Compute qty owned (chunked + integer accumulator)
+    bar.style.width = '50%';
+    const { qtyMap, errors } = await computeQtyOwned(msg => { status.textContent = msg; });
+    state.qtyOwned = qtyMap;
     bar.style.width = '100%';
 
-    const ownedCount = Object.keys(qtyOwned).length;
-    status.textContent = `✓ ${items.length.toLocaleString()} items · ${customers.length.toLocaleString()} customers · stock computed for ${ownedCount.toLocaleString()} items`;
+    const ownedCount = Object.keys(qtyMap).length;
+    status.textContent = `✓ ${items.length.toLocaleString()} items · ${customers.length.toLocaleString()} customers · stock for ${ownedCount.toLocaleString()}`;
     btn.textContent = '↻ Reload';
     btn.disabled = false;
 
-    // Auto-select default 999/POS customer
+    // Default 999/POS customer
     const def = getDefaultCustomer();
     if (def) {
       state.selectedCustomer = {
@@ -619,10 +965,17 @@ async function loadAllRecords() {
         code: def.item?.code || '999',
       };
     }
-    // Auto-generate reference
     state.reference = generateReference();
 
     render();
+
+    // Surface any partial-fetch errors so user knows totals may be off
+    if (errors.length) {
+      const banner = document.createElement('div');
+      banner.className = 'warning-banner';
+      banner.innerHTML = `⚠ Some stock sources failed to load — qty owned may be inaccurate. Reload to retry.<br><small style="opacity:.8">${errors.join(' · ')}</small>`;
+      app.insertBefore(banner, app.firstChild);
+    }
 
   } catch (err) {
     status.textContent = '⚠ ' + err.message;
@@ -632,29 +985,44 @@ async function loadAllRecords() {
   }
 }
 
-/* ══════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════
    Helpers
-══════════════════════════════════════════════ */
+══════════════════════════════════════════════════════ */
 const fmt = v => (Number(v) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtQty = v => (Number(v) || 0).toLocaleString(undefined, { maximumFractionDigits: 4 });
 const todayISO = () => new Date().toISOString().slice(0, 10);
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c =>
+    ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
+}
 
 function toast(msg, type = 'info') {
   const t = document.createElement('div');
   t.className = 'toast ' + type;
   t.textContent = msg;
   document.body.appendChild(t);
-  setTimeout(() => t.remove(), 5000);
+  setTimeout(() => t.remove(), 4500);
 }
 
+/* O(1) exact-code lookup → fallback to single-pass partial match. */
 function findItemByBarcode(code) {
   if (!code) return null;
   const needle = code.trim().toLowerCase();
-  let found = state.items.find(r => (r.item?.itemCode || '').toLowerCase() === needle);
-  if (found) return found;
-  found = state.items.find(r => (r.item?.itemName || '').toLowerCase() === needle);
-  if (found) return found;
-  found = state.items.find(r => (r.item?.itemCode || '').toLowerCase().startsWith(needle) && needle.length >= 2);
-  return found || null;
+  if (!needle) return null;
+
+  const exact = state.itemByCodeExact.get(needle);
+  if (exact) return exact;
+
+  // Single pass for prefix / name match — early exit on first hit.
+  const idx = state.itemIndex;
+  for (let i = 0; i < idx.length; i++) {
+    if (idx[i].codeLower.startsWith(needle) && needle.length >= 2) return idx[i].rec;
+  }
+  for (let i = 0; i < idx.length; i++) {
+    if (idx[i].nameLower === needle) return idx[i].rec;
+  }
+  return null;
 }
 
 function getDefaultCustomer() {
@@ -665,18 +1033,51 @@ function getDefaultCustomer() {
   );
 }
 
-/* ══════════════════════════════════════════════
-   Cart
-══════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════
+   FAST search — single pass, early termination, ranked.
+══════════════════════════════════════════════════════ */
+function searchItems(needle, limit = 12) {
+  needle = needle.toLowerCase();
+  if (!needle) return [];
+  const idx = state.itemIndex;
+  const out = [];
+  const seen = new Set();
+
+  // Tier 1: exact code (single map lookup)
+  const ex = state.itemByCodeExact.get(needle);
+  if (ex) { out.push(ex); seen.add(ex.key); }
+
+  // Tier 2: code starts-with  (single pass, early exit)
+  for (let i = 0; i < idx.length && out.length < limit; i++) {
+    const e = idx[i];
+    if (!seen.has(e.key) && e.codeLower && e.codeLower.startsWith(needle)) {
+      out.push(e.rec); seen.add(e.key);
+    }
+  }
+  if (out.length >= limit) return out;
+
+  // Tier 3: name contains  (single pass, early exit)
+  for (let i = 0; i < idx.length && out.length < limit; i++) {
+    const e = idx[i];
+    if (!seen.has(e.key) && e.nameLower && e.nameLower.includes(needle)) {
+      out.push(e.rec); seen.add(e.key);
+    }
+  }
+  return out;
+}
+
+/* ══════════════════════════════════════════════════════
+   Cart  —  incremental DOM updates (no full re-render)
+══════════════════════════════════════════════════════ */
 function addItemToCartByRecord(rec) {
   if (!rec) return false;
   const key = rec.key;
   const existing = state.cart.find(l => l.key === key);
   if (existing) {
     existing.qty = (Number(existing.qty) || 0) + 1;
-    existing.isNew = true;
+    updateCartRowDOM(existing, true);
   } else {
-    state.cart.push({
+    const line = {
       key,
       itemCode: rec.item?.itemCode || '',
       itemName: rec.item?.itemName || 'Item',
@@ -684,10 +1085,11 @@ function addItemToCartByRecord(rec) {
       unitPrice: rec.item?.hasDefaultSalesUnitPrice ? (rec.item.defaultSalesUnitPrice || 0) : 0,
       description: rec.item?.hasDefaultLineDescription ? (rec.item.defaultLineDescription || '') : '',
       qtyOwned: (state.qtyOwned && key in state.qtyOwned) ? state.qtyOwned[key] : null,
-      isNew: true,
-    });
+    };
+    state.cart.push(line);
+    appendCartRow(line);
   }
-  renderCart();
+  renderSummary();
   return true;
 }
 
@@ -705,7 +1107,8 @@ function updateCartQty(key, qty) {
   if (!line) return;
   const n = Number(qty);
   line.qty = isNaN(n) || n < 0 ? 0 : n;
-  renderCart();
+  updateCartRowDOM(line, false);
+  renderSummary();
 }
 
 function updateCartPrice(key, price) {
@@ -713,27 +1116,32 @@ function updateCartPrice(key, price) {
   if (!line) return;
   const n = Number(price);
   line.unitPrice = isNaN(n) || n < 0 ? 0 : n;
+  updateCartRowDOM(line, false);
   renderSummary();
-  const totalCell = document.querySelector(`tr[data-key="${key}"] .line-total`);
-  if (totalCell) totalCell.textContent = fmt((Number(line.qty) || 0) * (Number(line.unitPrice) || 0));
 }
 
 function removeFromCart(key) {
   state.cart = state.cart.filter(l => l.key !== key);
-  renderCart();
+  const row = document.querySelector(`tr[data-key="${cssEscape(key)}"]`);
+  if (row) row.remove();
+  if (state.cart.length === 0) renderEmptyCart();
+  renderSummary();
 }
 
 function clearCart() {
   if (state.cart.length === 0) return;
   if (!confirm('Clear all items from the current sale?')) return;
   state.cart = [];
-  renderCart();
+  renderEmptyCart();
+  renderSummary();
 }
 
-/* ══════════════════════════════════════════════
+/* CSS.escape polyfill-lite (UUIDs only contain - and hex, but be safe) */
+function cssEscape(s) { return String(s).replace(/[^a-zA-Z0-9_-]/g, c => '\\' + c); }
+
+/* ══════════════════════════════════════════════════════
    Submit sale
-══════════════════════════════════════════════ */
-// Global flag to prevent double-submit from rapid clicks / reentrance
+══════════════════════════════════════════════════════ */
 let isSubmitting = false;
 
 async function submitSale() {
@@ -747,7 +1155,7 @@ async function submitSale() {
     return;
   }
 
-  // ── Stock validation: block if any item exceeds qty owned ──
+  // Stock validation
   const overStockLines = state.cart.filter(l => {
     const owned = l.qtyOwned;
     return owned !== null && (Number(l.qty) || 0) > owned;
@@ -762,9 +1170,7 @@ async function submitSale() {
   let customer = state.selectedCustomer;
   if (!customer) {
     const def = getDefaultCustomer();
-    if (def) {
-      customer = { key: def.key, name: def.item?.name || 'POS', code: def.item?.code || '999' };
-    }
+    if (def) customer = { key: def.key, name: def.item?.name || 'POS', code: def.item?.code || '999' };
   }
   if (!customer) {
     toast('No customer with code "999" or "POS" found. Please create one in Manager.', 'error');
@@ -774,20 +1180,20 @@ async function submitSale() {
   isSubmitting = true;
 
   const issueDate = document.getElementById('issue-date').value || todayISO();
-  const custName = document.getElementById('cust-name-free').value.trim();
+  const custName  = document.getElementById('cust-name-free').value.trim();
   const custPhone = document.getElementById('cust-phone').value.trim();
 
   let description = '';
   if (custName || custPhone) {
     const bits = [];
-    if (custName) bits.push('Name: ' + custName);
+    if (custName)  bits.push('Name: '  + custName);
     if (custPhone) bits.push('Phone: ' + custPhone);
     description = bits.join(' · ');
   }
 
   const reference = state.reference || generateReference();
 
-  const payloadLower = {
+  const payload = {
     issueDate: issueDate + 'T00:00:00',
     reference: reference,
     customer: customer.key,
@@ -800,29 +1206,20 @@ async function submitSale() {
     })),
   };
 
-  // ONE UUID generated ONCE — reused across all attempts.
-  // This makes PUT calls IDEMPOTENT: if multiple attempts succeed,
-  // Manager will see the same UUID and update the single record
-  // rather than creating duplicates.
+  // Single UUID reused across attempts — makes PUTs idempotent.
   const newKey = crypto.randomUUID();
-
-  // Only UUID-based PUT endpoints — NEVER POST without a UUID,
-  // because POST endpoints create a new record every call and
-  // would cause duplicates if we retry after a false-negative.
   const attempts = [
-    { method: 'PUT', path: `/api4/sales-invoice-form/${newKey}`, body: payloadLower, label: 'PUT /api4/sales-invoice-form/{uuid}' },
-    { method: 'PUT', path: `/api4/sales-invoice/${newKey}`,      body: payloadLower, label: 'PUT /api4/sales-invoice/{uuid}' },
+    { method: 'PUT', path: `/api4/sales-invoice-form/${newKey}`, body: payload, label: 'PUT /api4/sales-invoice-form/{uuid}' },
+    { method: 'PUT', path: `/api4/sales-invoice/${newKey}`,      body: payload, label: 'PUT /api4/sales-invoice/{uuid}' },
   ];
 
   const btn = document.getElementById('submit-btn');
   btn.disabled = true;
   btn.textContent = 'Processing…';
 
-  debugLog('info', `═══ Submit sale · ref ${reference} · uuid ${newKey} ═══`);
+  debugLog('info', `═══ Submit · ref ${reference} · uuid ${newKey} ═══`);
 
-  let lastErr = null;
-  let success = false;
-
+  let lastErr = null, success = false;
   for (const attempt of attempts) {
     try {
       debugLog('info', `Trying: ${attempt.label}`);
@@ -843,31 +1240,28 @@ async function submitSale() {
   if (success) {
     toast(`✓ Sale saved · ${reference} · ${fmt(cartTotal())}`, 'success');
 
-    // ── Update stock levels locally (subtract sold qty from qtyOwned map) ──
+    // Update local stock levels
     for (const line of state.cart) {
-      const soldQty = Number(line.qty) || 0;
-      if (line.key && state.qtyOwned && line.key in state.qtyOwned) {
-        state.qtyOwned[line.key] = (state.qtyOwned[line.key] || 0) - soldQty;
+      const sold = Number(line.qty) || 0;
+      if (line.key && line.key in state.qtyOwned) {
+        state.qtyOwned[line.key] = (state.qtyOwned[line.key] || 0) - sold;
       }
     }
-    debugLog('ok', `Stock levels updated locally after sale ${reference}`);
+
     // Reset
     state.cart = [];
-    // Keep default customer selected, reset walk-in fields
     const def = getDefaultCustomer();
     state.selectedCustomer = def ? {
-      key: def.key,
-      name: def.item?.name || 'POS',
-      code: def.item?.code || '999',
+      key: def.key, name: def.item?.name || 'POS', code: def.item?.code || '999',
     } : null;
-    // New reference for next sale
     state.reference = generateReference();
 
     document.getElementById('cust-name-free').value = '';
     document.getElementById('cust-phone').value = '';
     document.getElementById('cust-search').value = '';
     document.getElementById('issue-date').value = todayISO();
-    renderCart();
+    renderEmptyCart();
+    renderSummary();
     renderCustomerField();
     renderReference();
     document.getElementById('barcode').focus();
@@ -878,78 +1272,70 @@ async function submitSale() {
   }
 }
 
-/* ══════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════
    Totals
-══════════════════════════════════════════════ */
+══════════════════════════════════════════════════════ */
 function cartTotal() {
-  return state.cart.reduce((sum, l) => sum + (Number(l.qty) || 0) * (Number(l.unitPrice) || 0), 0);
+  let s = 0;
+  for (let i = 0; i < state.cart.length; i++) {
+    const l = state.cart[i];
+    s += (Number(l.qty) || 0) * (Number(l.unitPrice) || 0);
+  }
+  return s;
 }
 function cartQty() {
-  return state.cart.reduce((sum, l) => sum + (Number(l.qty) || 0), 0);
+  let s = 0;
+  for (let i = 0; i < state.cart.length; i++) s += (Number(state.cart[i].qty) || 0);
+  return s;
 }
 
-/* ══════════════════════════════════════════════
-   Render
-══════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════
+   Render — main shell (called once after load)
+══════════════════════════════════════════════════════ */
 function render() {
   const app = document.getElementById('app');
 
   if (state.items.length === 0) {
-    app.innerHTML = `<div class="error-box" style="color:var(--slate-500)">No inventory items loaded. Add items in Manager first, then reload.</div>`;
+    app.innerHTML = `<div class="error-box">No inventory items loaded. Add items in Manager first, then reload.</div>`;
     return;
   }
 
   app.innerHTML = `
-    <div class="pos-container">
-      <!-- LEFT PANEL -->
-      <div class="pos-panel">
-        <div class="panel-title"><span class="dot"></span> Current Sale</div>
+    <div class="pos-grid">
+      <!-- LEFT -->
+      <div class="panel">
+        <div class="panel-title">Current Sale</div>
 
         <div class="form-field full">
-          <label>Barcode / Item Search — scan, type code or name, then Enter or select</label>
-          <div class="barcode-wrap suggest-wrap" style="position:relative">
-            <svg class="barcode-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <label>Barcode / Search — scan, type code or name</label>
+          <div class="barcode-wrap suggest-wrap">
+            <svg class="barcode-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="4" width="18" height="16" rx="2"/>
               <path d="M7 8v8M10 8v8M13 8v8M16 8v8"/>
             </svg>
             <input type="text" id="barcode" class="barcode-input"
-                   placeholder="Scan barcode or type item code / name…"
+                   placeholder="Scan or type code / name…"
                    autocomplete="off" />
-            <div class="suggest-list item-suggest-list" id="item-suggest"></div>
+            <div class="suggest-list item-suggest" id="item-suggest"></div>
           </div>
           <div class="scanner-status">
             <span class="scanner-dot"></span>
-            <span>Scanner ready · ${state.items.length.toLocaleString()} items indexed</span>
+            <span>Scanner ready · <span class="indexed-count">${state.items.length.toLocaleString()}</span> items indexed</span>
           </div>
         </div>
 
-        <div class="stats" style="margin-top:16px">
-          <div class="stat-box">
-            <div class="val" id="stat-lines">0</div>
-            <div class="lbl">Lines</div>
-          </div>
-          <div class="stat-box">
-            <div class="val" id="stat-qty">0</div>
-            <div class="lbl">Total Qty</div>
-          </div>
-          <div class="stat-box accent">
-            <div class="val" id="stat-total">$0.00</div>
-            <div class="lbl">Total</div>
-          </div>
+        <div class="stats" style="margin-top:14px">
+          <div class="stat"><div class="val" id="stat-lines">0</div><div class="lbl">Lines</div></div>
+          <div class="stat"><div class="val" id="stat-qty">0</div><div class="lbl">Total Qty</div></div>
+          <div class="stat accent"><div class="val" id="stat-total">0.00</div><div class="lbl">Total</div></div>
         </div>
 
-        <div class="cart-wrap" id="cart-wrap">
-          <div class="empty-cart">
-            <div class="big">⚡</div>
-            <div class="main-text">Ready for your first scan</div>
-            <div class="sub-text">Items will flash in as they're added</div>
-          </div>
-        </div>
+        <div class="cart-wrap" id="cart-wrap"></div>
       </div>
 
-      <!-- RIGHT PANEL -->
-      <div class="pos-panel">
-        <div class="panel-title"><span class="dot"></span> Sale Details</div>
+      <!-- RIGHT -->
+      <div class="panel">
+        <div class="panel-title">Sale Details</div>
 
         <div class="form-row">
           <div class="form-field">
@@ -957,7 +1343,7 @@ function render() {
             <input type="date" id="issue-date" value="${todayISO()}" />
           </div>
           <div class="form-field">
-            <label>Reference (auto)</label>
+            <label>Reference</label>
             <div id="ref-display"></div>
           </div>
         </div>
@@ -965,30 +1351,22 @@ function render() {
         <div class="form-row">
           <div class="form-field full suggest-wrap">
             <label>Customer</label>
-            <input type="text" id="cust-search"
-                   placeholder="Type to change customer…"
-                   autocomplete="off" />
+            <input type="text" id="cust-search" placeholder="Type to change customer…" autocomplete="off" />
             <div class="suggest-list" id="cust-suggest"></div>
             <div class="customer-display" id="cust-selected"></div>
           </div>
         </div>
 
-        <div class="divider-label">Walk-in customer info (saved in description)</div>
+        <div class="divider">Walk-in info (saved in description)</div>
         <div class="form-row">
-          <div class="form-field">
-            <label>Name</label>
-            <input type="text" id="cust-name-free" placeholder="Optional" />
-          </div>
-          <div class="form-field">
-            <label>Phone</label>
-            <input type="tel" id="cust-phone" placeholder="Optional" />
-          </div>
+          <div class="form-field"><label>Name</label><input type="text" id="cust-name-free" placeholder="Optional" /></div>
+          <div class="form-field"><label>Phone</label><input type="tel" id="cust-phone" placeholder="Optional" /></div>
         </div>
 
-        <div class="summary" id="summary">
-          <div class="summary-row"><span>Items</span><span id="sum-lines">0</span></div>
-          <div class="summary-row"><span>Total Quantity</span><span id="sum-qty">0</span></div>
-          <div class="summary-row total"><span>Total</span><span id="sum-total">0.00</span></div>
+        <div class="summary">
+          <div class="summary-row"><span>Items</span><span class="v" id="sum-lines">0</span></div>
+          <div class="summary-row"><span>Total Quantity</span><span class="v" id="sum-qty">0</span></div>
+          <div class="summary-row grand"><span class="l">Total</span><span class="v" id="sum-total">0.00</span></div>
         </div>
 
         <div class="actions">
@@ -999,57 +1377,216 @@ function render() {
     </div>
   `;
 
-  // ── Item search with dropdown ─────────────────────────────────────────
+  attachBarcodeHandlers();
+  attachCustomerSearch();
+
+  renderCustomerField();
+  renderReference();
+  renderEmptyCart();
+  renderSummary();
+
+  setTimeout(() => document.getElementById('barcode').focus(), 80);
+}
+
+/* ══════════════════════════════════════════════════════
+   Cart rendering — incremental
+══════════════════════════════════════════════════════ */
+function renderEmptyCart() {
+  const wrap = document.getElementById('cart-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = `
+    <div class="empty-cart">
+      <div class="empty-cart-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+        </svg>
+      </div>
+      <div class="empty-cart-title">Ready for your first scan</div>
+      <div class="empty-cart-sub">Items will appear here as they're added</div>
+    </div>
+  `;
+}
+
+function ensureCartTable() {
+  let wrap = document.getElementById('cart-wrap');
+  if (!wrap) return null;
+  let tbody = wrap.querySelector('tbody');
+  if (!tbody) {
+    wrap.innerHTML = `
+      <table class="cart-table">
+        <thead>
+          <tr>
+            <th style="width:90px">Code</th>
+            <th>Item</th>
+            <th style="width:80px;text-align:right">Owned</th>
+            <th style="width:90px;text-align:right">Qty</th>
+            <th style="width:104px;text-align:right">Price</th>
+            <th style="width:104px;text-align:right">Total</th>
+            <th style="width:46px"></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    `;
+    tbody = wrap.querySelector('tbody');
+  }
+  return tbody;
+}
+
+function rowHTML(line) {
+  const lineTotal = (Number(line.qty) || 0) * (Number(line.unitPrice) || 0);
+  const owned = line.qtyOwned;
+  const qty = Number(line.qty) || 0;
+  const isOver = owned !== null && qty > owned;
+  const isWarn = owned !== null && qty === owned && qty > 0;
+  let ownedCls = 'na', ownedLbl = '—';
+  if (owned !== null) {
+    ownedLbl = fmtQty(owned);
+    ownedCls = isOver ? 'over' : isWarn ? 'warn' : 'ok';
+  }
+  const trCls = isOver ? 'over-row' : '';
+  const k = escapeHtml(line.key);
+  return `
+    <tr data-key="${k}" class="${trCls}">
+      <td class="code-cell">${escapeHtml(line.itemCode || '—')}</td>
+      <td class="name-cell">${escapeHtml(line.itemName)}</td>
+      <td style="text-align:right"><span class="qty-owned ${ownedCls}">${ownedLbl}</span></td>
+      <td style="text-align:right">
+        <input type="number" class="qty-input" value="${line.qty}" min="0" step="any"
+               onchange="updateCartQty('${k}', this.value)" />
+      </td>
+      <td style="text-align:right">
+        <input type="number" class="price-input" value="${line.unitPrice}" readonly
+               title="Selling price is fixed" />
+      </td>
+      <td class="line-total">${fmt(lineTotal)}</td>
+      <td style="text-align:center">
+        <button class="remove-btn" onclick="removeFromCart('${k}')" title="Remove">×</button>
+      </td>
+    </tr>
+  `;
+}
+
+function appendCartRow(line) {
+  const tbody = ensureCartTable();
+  if (!tbody) return;
+  const tmp = document.createElement('tbody');
+  tmp.innerHTML = rowHTML(line);
+  const newRow = tmp.firstElementChild;
+  newRow.classList.add('flash');
+  tbody.appendChild(newRow);
+  // Scroll into view
+  const wrap = document.getElementById('cart-wrap');
+  if (wrap) wrap.scrollTop = wrap.scrollHeight;
+}
+
+function updateCartRowDOM(line, isIncrement) {
+  const row = document.querySelector(`tr[data-key="${cssEscape(line.key)}"]`);
+  if (!row) {
+    // Row missing — fallback to append (e.g. empty-cart was rendered)
+    if (state.cart.length === 1) appendCartRow(line);
+    return;
+  }
+  // Replace just this row — keeps focus elsewhere intact.
+  const tmp = document.createElement('tbody');
+  tmp.innerHTML = rowHTML(line);
+  const newRow = tmp.firstElementChild;
+  if (isIncrement) newRow.classList.add('flash');
+  row.replaceWith(newRow);
+}
+
+function renderSummary() {
+  const lines = state.cart.length;
+  const qty = cartQty();
+  const total = cartTotal();
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  set('stat-lines', lines.toLocaleString());
+  set('stat-qty', fmtQty(qty));
+  set('stat-total', fmt(total));
+  set('sum-lines', lines.toLocaleString());
+  set('sum-qty', fmtQty(qty));
+  set('sum-total', fmt(total));
+}
+
+function renderReference() {
+  const el = document.getElementById('ref-display');
+  if (!el) return;
+  el.innerHTML = `<div class="ref-chip">${escapeHtml(state.reference)}</div>`;
+}
+
+function renderCustomerField() {
+  const el = document.getElementById('cust-selected');
+  if (!el) return;
+  if (state.selectedCustomer) {
+    el.innerHTML = `
+      <span class="customer-badge">
+        <span class="dot"></span>
+        ${escapeHtml(state.selectedCustomer.code || '')} · ${escapeHtml(state.selectedCustomer.name)}
+      </span>
+      <a class="clear-link" href="#" onclick="event.preventDefault();resetToDefaultCustomer()">reset to default</a>
+    `;
+  } else {
+    el.innerHTML = `<span style="color:var(--danger);font-size:12px;font-weight:500">⚠ No customer with code "999" or "POS" found — please create one in Manager</span>`;
+  }
+}
+
+function resetToDefaultCustomer() {
+  const def = getDefaultCustomer();
+  state.selectedCustomer = def ? {
+    key: def.key, name: def.item?.name || 'POS', code: def.item?.code || '999',
+  } : null;
+  const search = document.getElementById('cust-search');
+  if (search) search.value = '';
+  renderCustomerField();
+}
+
+/* ══════════════════════════════════════════════════════
+   Barcode + item search handlers (debounced)
+══════════════════════════════════════════════════════ */
+let _searchTimer = null;
+let _itemMatches = [];
+let _itemActiveIdx = -1;
+
+function attachBarcodeHandlers() {
   const barcodeEl   = document.getElementById('barcode');
   const itemSuggest = document.getElementById('item-suggest');
-  let itemActiveIdx = -1;
-  let itemMatches   = [];
 
   function closeItemSuggest() {
     itemSuggest.classList.remove('open');
-    itemActiveIdx = -1;
-    itemMatches   = [];
+    _itemActiveIdx = -1;
+    _itemMatches = [];
   }
 
   function renderItemSuggest(q) {
     if (!q) { closeItemSuggest(); return; }
-    const needle = q.toLowerCase();
-    // Exact code match first, then startsWith code, then name contains
-    const exact   = state.items.filter(r => (r.item?.itemCode || '').toLowerCase() === needle);
-    const codeStart = state.items.filter(r => {
-      const c = (r.item?.itemCode || '').toLowerCase();
-      return c !== needle && c.startsWith(needle);
-    });
-    const nameHit = state.items.filter(r => {
-      const n = (r.item?.itemName || '').toLowerCase();
-      const c = (r.item?.itemCode || '').toLowerCase();
-      return !c.startsWith(needle) && n.includes(needle);
-    });
-    itemMatches = [...exact, ...codeStart, ...nameHit].slice(0, 12);
+    _itemMatches = searchItems(q, 12);
+    if (_itemMatches.length === 0) { closeItemSuggest(); return; }
 
-    if (itemMatches.length === 0) { closeItemSuggest(); return; }
-
-    itemSuggest.innerHTML = itemMatches.map((r, i) => {
-      const code  = r.item?.itemCode  || '';
-      const name  = r.item?.itemName  || '';
-      const owned = (state.qtyOwned && r.key in state.qtyOwned)
-        ? state.qtyOwned[r.key].toLocaleString(undefined, {maximumFractionDigits:2})
-        : '—';
-      const isLow = (state.qtyOwned && r.key in state.qtyOwned && state.qtyOwned[r.key] <= 0);
-      return `<div class="suggest-item ${isLow ? 'suggest-item-low' : ''}" data-idx="${i}">
-        <span class="si-code">${code}</span>
-        <span class="si-name">${name}</span>
-        <span class="si-stock" title="Stock on hand">${owned}</span>
+    const qtyMap = state.qtyOwned;
+    let html = '';
+    for (let i = 0; i < _itemMatches.length; i++) {
+      const r = _itemMatches[i];
+      const code = r.item?.itemCode || '';
+      const name = r.item?.itemName || '';
+      const has = qtyMap && (r.key in qtyMap);
+      const ownedNum = has ? qtyMap[r.key] : null;
+      const owned = has ? fmtQty(ownedNum) : '—';
+      const isLow = has && ownedNum <= 0;
+      html += `<div class="suggest-item ${isLow?'low':''}" data-idx="${i}">
+        <span class="si-code">${escapeHtml(code)}</span>
+        <span class="si-name">${escapeHtml(name)}</span>
+        <span class="si-stock" title="In stock">${owned}</span>
       </div>`;
-    }).join('');
+    }
+    itemSuggest.innerHTML = html;
     itemSuggest.classList.add('open');
-    itemActiveIdx = -1;
+    _itemActiveIdx = -1;
 
     itemSuggest.querySelectorAll('.suggest-item').forEach((el, idx) => {
       el.addEventListener('mousedown', (e) => {
         e.preventDefault();
-        const rec = itemMatches[idx];
-        addItemToCartByRecord(rec);
+        addItemToCartByRecord(_itemMatches[idx]);
         barcodeEl.value = '';
         closeItemSuggest();
         barcodeEl.focus();
@@ -1058,34 +1595,36 @@ function render() {
   }
 
   barcodeEl.addEventListener('input', () => {
-    renderItemSuggest(barcodeEl.value.trim());
+    const v = barcodeEl.value.trim();
+    clearTimeout(_searchTimer);
+    // Debounce — keeps the UI responsive at 100k+ items.
+    _searchTimer = setTimeout(() => renderItemSuggest(v), 60);
   });
 
   barcodeEl.addEventListener('keydown', (e) => {
     if (itemSuggest.classList.contains('open')) {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        itemActiveIdx = Math.min(itemActiveIdx + 1, itemMatches.length - 1);
+        _itemActiveIdx = Math.min(_itemActiveIdx + 1, _itemMatches.length - 1);
         itemSuggest.querySelectorAll('.suggest-item').forEach((el, i) =>
-          el.classList.toggle('active', i === itemActiveIdx));
+          el.classList.toggle('active', i === _itemActiveIdx));
         return;
       }
       if (e.key === 'ArrowUp') {
         e.preventDefault();
-        itemActiveIdx = Math.max(itemActiveIdx - 1, 0);
+        _itemActiveIdx = Math.max(_itemActiveIdx - 1, 0);
         itemSuggest.querySelectorAll('.suggest-item').forEach((el, i) =>
-          el.classList.toggle('active', i === itemActiveIdx));
+          el.classList.toggle('active', i === _itemActiveIdx));
         return;
       }
       if (e.key === 'Escape') { closeItemSuggest(); return; }
       if (e.key === 'Enter') {
         e.preventDefault();
-        if (itemActiveIdx >= 0 && itemMatches[itemActiveIdx]) {
-          addItemToCartByRecord(itemMatches[itemActiveIdx]);
+        if (_itemActiveIdx >= 0 && _itemMatches[_itemActiveIdx]) {
+          addItemToCartByRecord(_itemMatches[_itemActiveIdx]);
           barcodeEl.value = '';
           closeItemSuggest();
         } else {
-          // No selection — try exact barcode match (scanner path)
           const val = barcodeEl.value.trim();
           if (val && addItemToCart(val)) {
             barcodeEl.value = '';
@@ -1094,54 +1633,54 @@ function render() {
         }
         return;
       }
-    } else {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        const val = barcodeEl.value.trim();
-        if (val && addItemToCart(val)) {
-          barcodeEl.value = '';
-        }
-      }
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const val = barcodeEl.value.trim();
+      if (val && addItemToCart(val)) barcodeEl.value = '';
     }
   });
 
   barcodeEl.addEventListener('blur', () => {
-    setTimeout(closeItemSuggest, 1500);
+    setTimeout(closeItemSuggest, 150);
   });
+}
 
-  // Customer search
-  const custSearch = document.getElementById('cust-search');
+/* ══════════════════════════════════════════════════════
+   Customer search (debounced)
+══════════════════════════════════════════════════════ */
+let _custTimer = null;
+let _custActiveIdx = -1;
+
+function attachCustomerSearch() {
+  const custSearch  = document.getElementById('cust-search');
   const custSuggest = document.getElementById('cust-suggest');
-  let activeIdx = -1;
 
-  custSearch.addEventListener('input', () => {
+  function doRender() {
     const q = custSearch.value.trim().toLowerCase();
-    if (!q) {
-      custSuggest.classList.remove('open');
-      return;
+    if (!q) { custSuggest.classList.remove('open'); return; }
+    const matches = [];
+    const limit = 8;
+    for (let i = 0; i < state.customers.length && matches.length < limit; i++) {
+      const c = state.customers[i];
+      const name = (c.item?.name || '').toLowerCase();
+      const code = (c.item?.code || '').toLowerCase();
+      if (name.includes(q) || code.includes(q)) matches.push(c);
     }
-    const matches = state.customers
-      .filter(c => {
-        const name = (c.item?.name || '').toLowerCase();
-        const code = (c.item?.code || '').toLowerCase();
-        return name.includes(q) || code.includes(q);
-      })
-      .slice(0, 8);
+    if (matches.length === 0) { custSuggest.classList.remove('open'); return; }
 
-    if (matches.length === 0) {
-      custSuggest.classList.remove('open');
-      return;
+    _custActiveIdx = -1;
+    let html = '';
+    for (let i = 0; i < matches.length; i++) {
+      const c = matches[i];
+      html += `<div class="suggest-item"
+           data-key="${escapeHtml(c.key)}"
+           data-name="${escapeHtml(c.item?.name || '')}"
+           data-code="${escapeHtml(c.item?.code || '')}">
+        <div class="name">${escapeHtml(c.item?.name || 'Unnamed')}</div>
+        <div class="code">${escapeHtml(c.item?.code || 'no code')}</div>
+      </div>`;
     }
-    activeIdx = -1;
-    custSuggest.innerHTML = matches.map((c) => `
-      <div class="suggest-item"
-           data-key="${c.key}"
-           data-name="${(c.item?.name || '').replace(/"/g,'&quot;')}"
-           data-code="${(c.item?.code || '').replace(/"/g,'&quot;')}">
-        <div class="name">${c.item?.name || 'Unnamed'}</div>
-        <div class="code">${c.item?.code || 'no code'}</div>
-      </div>
-    `).join('');
+    custSuggest.innerHTML = html;
     custSuggest.classList.add('open');
     custSuggest.querySelectorAll('.suggest-item').forEach(el => {
       el.addEventListener('click', () => {
@@ -1155,6 +1694,11 @@ function render() {
         renderCustomerField();
       });
     });
+  }
+
+  custSearch.addEventListener('input', () => {
+    clearTimeout(_custTimer);
+    _custTimer = setTimeout(doRender, 60);
   });
 
   custSearch.addEventListener('keydown', (e) => {
@@ -1162,15 +1706,15 @@ function render() {
     if (!items.length) return;
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      activeIdx = Math.min(activeIdx + 1, items.length - 1);
-      items.forEach((el, i) => el.classList.toggle('active', i === activeIdx));
+      _custActiveIdx = Math.min(_custActiveIdx + 1, items.length - 1);
+      items.forEach((el, i) => el.classList.toggle('active', i === _custActiveIdx));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      activeIdx = Math.max(activeIdx - 1, 0);
-      items.forEach((el, i) => el.classList.toggle('active', i === activeIdx));
-    } else if (e.key === 'Enter' && activeIdx >= 0) {
+      _custActiveIdx = Math.max(_custActiveIdx - 1, 0);
+      items.forEach((el, i) => el.classList.toggle('active', i === _custActiveIdx));
+    } else if (e.key === 'Enter' && _custActiveIdx >= 0) {
       e.preventDefault();
-      items[activeIdx].click();
+      items[_custActiveIdx].click();
     } else if (e.key === 'Escape') {
       custSuggest.classList.remove('open');
     }
@@ -1181,135 +1725,11 @@ function render() {
       custSuggest.classList.remove('open');
     }
   });
-
-  renderCustomerField();
-  renderReference();
-  renderCart();
-
-  setTimeout(() => barcodeEl.focus(), 1000);
 }
 
-function renderReference() {
-  const el = document.getElementById('ref-display');
-  if (!el) return;
-  el.innerHTML = `<div class="ref-chip">🎫 ${state.reference}</div>`;
-}
-
-function renderCart() {
-  const wrap = document.getElementById('cart-wrap');
-  if (!wrap) return;
-
-  if (state.cart.length === 0) {
-    wrap.innerHTML = `
-      <div class="empty-cart">
-        <div class="big">⚡</div>
-        <div class="main-text">Ready for your first scan</div>
-        <div class="sub-text">Items will flash in as they're added</div>
-      </div>
-    `;
-  } else {
-    wrap.innerHTML = `
-      <table class="cart-table">
-        <thead>
-          <tr>
-            <th style="width:90px">Code</th>
-            <th>Item</th>
-            <th style="width:80px;text-align:right">Owned</th>
-            <th style="width:90px;text-align:right">Qty</th>
-            <th style="width:110px;text-align:right">Price</th>
-            <th style="width:110px;text-align:right">Total</th>
-            <th style="width:54px"></th>
-          </tr>
-        </thead>
-        <tbody>
-          ${state.cart.map(l => {
-            const lineTotal = (Number(l.qty) || 0) * (Number(l.unitPrice) || 0);
-            const qtyOwned = l.qtyOwned;
-            const qtySold  = Number(l.qty) || 0;
-            const isOver   = qtyOwned !== null && qtySold > qtyOwned;
-            const isWarn   = qtyOwned !== null && qtySold === qtyOwned;
-            let ownedClass = 'qty-owned-na', ownedLabel = '—';
-            if (qtyOwned !== null) {
-              ownedLabel = qtyOwned.toLocaleString(undefined, {maximumFractionDigits: 2});
-              if (isOver)       ownedClass = 'qty-owned-over';
-              else if (isWarn)  ownedClass = 'qty-owned-warn';
-              else              ownedClass = 'qty-owned-ok';
-            }
-            const overCls  = isOver ? ' qty-over-row' : '';
-            const newCls = l.isNew ? `class="new-row${overCls}"` : (overCls ? `class="${overCls.trim()}"` : '');
-            l.isNew = false;
-            return `
-              <tr ${newCls} data-key="${l.key}">
-                <td style="color:var(--slate-500);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600">${l.itemCode || '—'}</td>
-                <td style="font-weight:600;color:var(--slate-900)">${l.itemName}</td>
-                <td class="qty-owned-cell ${ownedClass}" title="Quantity currently in stock">${ownedLabel}</td>
-                <td style="text-align:right">
-                  <input type="number" class="qty-input" value="${l.qty}" min="0" step="any"
-                         onchange="updateCartQty('${l.key}', this.value)" />
-                </td>
-                <td style="text-align:right">
-                  <input type="number" class="price-input" value="${l.unitPrice}" readonly
-                         title="Selling price is fixed and cannot be changed" />
-                </td>
-                <td class="line-total" style="text-align:right">${fmt(lineTotal)}</td>
-                <td style="text-align:center">
-                  <button class="remove-btn" onclick="removeFromCart('${l.key}')">×</button>
-                </td>
-              </tr>
-            `;
-          }).join('')}
-        </tbody>
-      </table>
-    `;
-  }
-  renderSummary();
-}
-
-function renderSummary() {
-  const lines = state.cart.length;
-  const qty = cartQty();
-  const total = cartTotal();
-
-  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-  set('stat-lines', lines);
-  set('stat-qty', qty.toLocaleString());
-  set('stat-total', fmt(total));
-  set('sum-lines', lines);
-  set('sum-qty', qty.toLocaleString());
-  set('sum-total', fmt(total));
-}
-
-function renderCustomerField() {
-  const el = document.getElementById('cust-selected');
-  if (!el) return;
-  if (state.selectedCustomer) {
-    el.innerHTML = `
-      <span class="customer-badge">
-        <span class="dot"></span>
-        ${state.selectedCustomer.code || ''} · ${state.selectedCustomer.name}
-      </span>
-      <a class="clear-link" href="#" onclick="event.preventDefault();resetToDefaultCustomer()">reset to default</a>
-    `;
-  } else {
-    el.innerHTML = `<span style="color:var(--rose);font-size:12px;font-weight:500">⚠ No customer with code "999" or "POS" found — please create one in Manager</span>`;
-  }
-}
-
-function resetToDefaultCustomer() {
-  const def = getDefaultCustomer();
-  state.selectedCustomer = def ? {
-    key: def.key,
-    name: def.item?.name || 'POS',
-    code: def.item?.code || '999',
-  } : null;
-  const search = document.getElementById('cust-search');
-  if (search) search.value = '';
-  renderCustomerField();
-}
-
-/* ═══════════════════════════════════════════
-   THEME TOGGLE
-═══════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════
+   Theme
+══════════════════════════════════════════════════════ */
 function toggleTheme() {
   const html = document.documentElement;
   const going = html.dataset.theme === 'dark' ? 'light' : 'dark';
@@ -1318,7 +1738,6 @@ function toggleTheme() {
   try { localStorage.setItem('pos-theme', going); } catch(e) {}
 }
 
-// Restore saved theme on load
 (function() {
   try {
     const saved = localStorage.getItem('pos-theme');
