@@ -1375,131 +1375,96 @@ function cssEscape(s) { return String(s).replace(/[^a-zA-Z0-9_-]/g, c => '\\' + 
 let isSubmitting = false;
 
 async function submitSale() {
-  if (isSubmitting) {
-    debugLog('fail', '⚠ Submit already in progress — ignoring duplicate click');
-    return;
-  }
+  if (isSubmitting) return;
 
   if (state.cart.length === 0) {
     toast('Cart is empty — scan items first', 'error');
     return;
   }
 
-  // Stock validation
-  const overStockLines = state.cart.filter(l => {
-    const owned = l.qtyOwned;
-    return owned !== null && (Number(l.qty) || 0) > owned;
-  });
-  if (overStockLines.length > 0) {
-    const names = overStockLines.map(l => `"${l.itemName}" (selling ${l.qty}, owned ${l.qtyOwned})`).join(', ');
-    toast(`⚠ Cannot complete sale — quantity exceeds stock for: ${names}`, 'error');
-    debugLog('fail', `Stock overrun blocked: ${names}`);
-    return;
-  }
-
   let customer = state.selectedCustomer;
   if (!customer) {
     const def = getDefaultCustomer();
-    if (def) customer = { key: def.key, name: def.item?.name || 'POS', code: def.item?.code || '999' };
+    if (def) {
+      customer = {
+        key: def.key,
+        name: def.item?.name || 'POS',
+        code: def.item?.code || '999'
+      };
+    }
   }
+
   if (!customer) {
-    toast('No customer with code "999" or "POS" found. Please create one in Manager.', 'error');
+    toast('No POS customer found.', 'error');
     return;
   }
 
   isSubmitting = true;
 
-  const issueDate = document.getElementById('issue-date').value || todayISO();
-  const custName  = document.getElementById('cust-name-free').value.trim();
-  const custPhone = document.getElementById('cust-phone').value.trim();
-
-  let description = '';
-  if (custName || custPhone) {
-    const bits = [];
-    if (custName)  bits.push('Name: '  + custName);
-    if (custPhone) bits.push('Phone: ' + custPhone);
-    description = bits.join(' · ');
-  }
-
-  const reference = state.reference || generateReference();
-
-  const payload = {
-    issueDate: issueDate + 'T00:00:00',
-    reference: reference,
-    customer: customer.key,
-    description: description || null,
-    lines: state.cart.map(l => ({
-      item: l.key,
-      lineDescription: l.description || '',
-      qty: Number(l.qty) || 0,
-      salesUnitPrice: Number(l.unitPrice) || 0,
-    })),
-  };
-
-  // Single UUID reused across attempts — makes PUTs idempotent.
-  const newKey = crypto.randomUUID();
-  const attempts = [
-    { method: 'PUT', path: `/api4/sales-invoice-form/${newKey}`, body: payload, label: 'PUT /api4/sales-invoice-form/{uuid}' },
-    { method: 'PUT', path: `/api4/sales-invoice/${newKey}`,      body: payload, label: 'PUT /api4/sales-invoice/{uuid}' },
-  ];
-
   const btn = document.getElementById('submit-btn');
   btn.disabled = true;
   btn.textContent = 'Processing…';
 
-  debugLog('info', `═══ Submit · ref ${reference} · uuid ${newKey} ═══`);
+  try {
+    const issueDate = document.getElementById('issue-date').value || todayISO();
+    const custName  = document.getElementById('cust-name-free').value.trim();
+    const custPhone = document.getElementById('cust-phone').value.trim();
 
-  let lastErr = null, success = false;
-  for (const attempt of attempts) {
-    try {
-      debugLog('info', `Trying: ${attempt.label}`);
-      await apiCall(attempt.method, attempt.path, attempt.body);
-      success = true;
-      debugLog('ok', `✓ SUCCESS via ${attempt.label}`);
-      break;
-    } catch (err) {
-      lastErr = err;
-      debugLog('fail', `✗ ${attempt.label} → ${err.message.substring(0, 140)}`);
-    }
+    let description = '';
+    if (custName) description += `Name: ${custName} `;
+    if (custPhone) description += `Phone: ${custPhone}`;
+
+    const reference = state.reference || generateReference();
+
+    const payload = {
+      value: {
+        issueDate: issueDate + 'T00:00:00',
+        reference: reference,
+        customer: customer.key,
+        description: description || null,
+        lines: state.cart.map((l, i) => ({
+          lineNumber: i + 1,
+          item: l.key,
+          lineDescription: l.description || '',
+          qty: Number(l.qty) || 0,
+          salesUnitPrice: Number(l.unitPrice) || 0
+        })),
+        automaticReference: false,
+        hasLineNumber: false,
+        hasLineDescription: true,
+        discount: false,
+        amountsIncludeTax: false
+      }
+    };
+
+    debugLog('info', 'Submitting invoice...');
+    debugLog('info', JSON.stringify(payload));
+
+    const result = await apiCall('POST', '/api4/sales-invoice', payload);
+
+    debugLog('ok', 'Invoice saved: ' + result);
+
+    toast(`✓ Sale saved · ${reference}`, 'success');
+
+    state.cart = [];
+    state.reference = generateReference();
+
+    renderEmptyCart();
+    renderSummary();
+    renderReference();
+
+    document.getElementById('cust-name-free').value = '';
+    document.getElementById('cust-phone').value = '';
+    document.getElementById('barcode').focus();
+
+  } catch (err) {
+    debugLog('fail', err.message);
+    toast('Failed: ' + err.message, 'error');
   }
 
   btn.disabled = false;
   btn.textContent = 'Complete Sale';
   isSubmitting = false;
-
-  if (success) {
-    toast(`✓ Sale saved · ${reference} · ${fmt(cartTotal())}`, 'success');
-
-    // Update local stock levels
-    for (const line of state.cart) {
-      const sold = Number(line.qty) || 0;
-      if (line.key && line.key in state.qtyOwned) {
-        state.qtyOwned[line.key] = (state.qtyOwned[line.key] || 0) - sold;
-      }
-    }
-
-    // Reset
-    state.cart = [];
-    const def = getDefaultCustomer();
-    state.selectedCustomer = def ? {
-      key: def.key, name: def.item?.name || 'POS', code: def.item?.code || '999',
-    } : null;
-    state.reference = generateReference();
-
-    document.getElementById('cust-name-free').value = '';
-    document.getElementById('cust-phone').value = '';
-    document.getElementById('cust-search').value = '';
-    document.getElementById('issue-date').value = todayISO();
-    renderEmptyCart();
-    renderSummary();
-    renderCustomerField();
-    renderReference();
-    document.getElementById('barcode').focus();
-  } else {
-    const msg = lastErr ? lastErr.message : 'Unknown error';
-    toast(`Failed to save sale. ${msg.substring(0, 200)}. Check Debug panel.`, 'error');
-    document.getElementById('debug-log').classList.add('show');
-  }
 }
 
 /* ══════════════════════════════════════════════════════
