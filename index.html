@@ -685,41 +685,98 @@ async function fetchOnePage(canDirect, path) {
 
 async function getBatchEndpoint(endpointPath, onProgress) {
   const allItems = [];
-  let nextToken  = null;
-  let pageNum    = 0;
-  let apiTotal   = null;
+  let nextToken     = null;
+  let pageNum       = 0;
+  let apiTotal      = null;
+  let useSkip       = false;   // fallback to offset-based when no token returned
+  let lastFirstKey  = null;    // detect "same page returned twice" infinite loops
 
   // For read-only GETs, prefer directFetch when we have a context — it skips
   // the postMessage relay and is much faster on large paginated datasets.
   const canDirect = !!(window.managerAppContext?.apiEndpoint);
 
-  do {
-    const path = nextToken
-      ? endpointPath + '?PageSize=' + BATCH_PAGE_SIZE + '&next_page_token=' + encodeURIComponent(nextToken)
-      : endpointPath + '?PageSize=' + BATCH_PAGE_SIZE;
+  while (true) {
+    let path;
+    if (useSkip) {
+      // Offset-based pagination — Manager.io accepts Skip= for batch endpoints
+      path = endpointPath + '?PageSize=' + BATCH_PAGE_SIZE + '&Skip=' + allItems.length;
+    } else if (nextToken) {
+      path = endpointPath + '?PageSize=' + BATCH_PAGE_SIZE
+           + '&next_page_token=' + encodeURIComponent(nextToken)
+           + '&NextPageToken='   + encodeURIComponent(nextToken);  // hedge: try both casings
+    } else {
+      path = endpointPath + '?PageSize=' + BATCH_PAGE_SIZE;
+    }
 
     const data = await fetchOnePage(canDirect, path);
 
-    const page = Array.isArray(data) ? data : (data.items || []);
+    // Tolerant items-array extraction — try every field name we've seen.
+    let page;
+    if (Array.isArray(data))                   page = data;
+    else if (Array.isArray(data.items))        page = data.items;
+    else if (Array.isArray(data.Items))        page = data.Items;
+    else if (Array.isArray(data.results))      page = data.results;
+    else if (Array.isArray(data.records))      page = data.records;
+    else if (Array.isArray(data.data))         page = data.data;
+    else                                        page = [];
+
+    // First-page diagnostic — log all top-level keys so we can see what
+    // pagination fields the API actually exposes (only logs once per source).
+    if (pageNum === 0 && !Array.isArray(data)) {
+      const keys = Object.keys(data).slice(0, 14);
+      debugLog('info', `${endpointPath} first-page keys: {${keys.join(', ')}}`);
+    }
+
+    if (page.length === 0) break;
+
+    // Detect stuck loops — if the API ignores both our token AND our Skip,
+    // we'd otherwise re-fetch the same page forever.
+    const firstKey = page[0]?.key || page[0]?.Key || null;
+    if (firstKey && firstKey === lastFirstKey) {
+      debugLog('fail', `${endpointPath}: pagination not advancing (same first key '${firstKey}'). Stopping at ${allItems.length}.`);
+      break;
+    }
+    lastFirstKey = firstKey;
 
     // SAFE append — index loop instead of spread, so 100k+ rows never crash.
     for (let i = 0; i < page.length; i++) allItems.push(page[i]);
 
-    nextToken = data.next_page_token || data.nextPageToken
-      || data._links?.next?.href || null;
-
     if (apiTotal === null) {
       apiTotal = data.totalCount ?? data.total ?? data.count
+        ?? data.TotalCount ?? data.Total ?? data.Count
         ?? data._metadata?.totalCount ?? null;
     }
 
     pageNum++;
     if (onProgress) onProgress(allItems.length, apiTotal, pageNum);
 
-    // Hard cap as safety; 5000 pages × 2000 = 10M records.
-    if (pageNum >= 5000) break;
+    // Decide how to fetch the next page.
+    const newToken = data.next_page_token || data.nextPageToken
+      || data.NextPageToken || data.nextPage
+      || data._links?.next?.href || null;
 
-  } while (nextToken);
+    if (newToken) {
+      nextToken = newToken;
+      useSkip = false; // tokens work, prefer them
+    } else if (page.length >= BATCH_PAGE_SIZE) {
+      // Page came back FULL but server didn't give us a token —
+      // switch to Skip/offset pagination so we keep going.
+      if (!useSkip) {
+        debugLog('info', `${endpointPath}: no next_page_token but page is full · switching to Skip-based pagination at offset ${allItems.length}`);
+        useSkip = true;
+      }
+      nextToken = null;
+    } else {
+      // Page wasn't full and no token — we're done.
+      break;
+    }
+
+    // Stop if we know the total and we've reached it.
+    if (apiTotal !== null && allItems.length >= apiTotal) break;
+
+    // Hard cap: 5000 pages × 2000 = 10M records.
+    if (pageNum >= 5000) break;
+  }
 
   return allItems;
 }
