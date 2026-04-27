@@ -583,13 +583,13 @@ function debugLog(type, msg) {
 /* ══════════════════════════════════════════════════════
    postMessage helper — DO NOT MODIFY
 ══════════════════════════════════════════════════════ */
-function postMessageWithResponse(message) {
+function postMessageWithResponse(message, timeoutMs = 30000) {
   return new Promise((resolve, reject) => {
     const requestId = crypto.randomUUID();
     const timer = setTimeout(() => {
       window.removeEventListener('message', handler);
-      reject(new Error('Timeout — is this running inside Manager?'));
-    }, 30000);
+      reject(new Error(`Timeout after ${Math.round(timeoutMs/1000)}s — server taking too long`));
+    }, timeoutMs);
     function handler(event) {
       if (event.data?.type?.endsWith('-response') && event.data?.requestId === requestId) {
         clearTimeout(timer);
@@ -649,12 +649,40 @@ async function apiCall(method, path, body) {
 }
 
 /* ══════════════════════════════════════════════════════
-   Paginated batch fetch
+   Paginated batch fetch  —  resilient version
    FIX: never use spread (`...page`) on a large array — it
    blows up at ~100k args with "Maximum call stack size
-   exceeded". Use a plain index loop instead so 100k+ rows
-   never get silently dropped.
+   exceeded". Use a plain index loop instead.
+   FIX: per-page timeout is generous (3 min) and each page
+   retries up to 2 times with backoff so a slow sales-invoice
+   batch doesn't silently return [] and ruin stock totals.
 ══════════════════════════════════════════════════════ */
+const BATCH_PAGE_SIZE   = 2000;     // smaller pages = faster per call, more reliable
+const BATCH_TIMEOUT_MS  = 180000;   // 3 minutes per page
+const BATCH_RETRIES     = 2;        // 3 attempts total per page
+
+async function fetchOnePage(canDirect, path) {
+  let lastErr;
+  for (let attempt = 0; attempt <= BATCH_RETRIES; attempt++) {
+    try {
+      return canDirect
+        ? await directFetch('GET', path)
+        : await postMessageWithResponse(
+            { type: 'api-request', method: 'GET', path },
+            BATCH_TIMEOUT_MS
+          );
+    } catch (e) {
+      lastErr = e;
+      if (attempt < BATCH_RETRIES) {
+        const wait = 1500 * (attempt + 1);
+        debugLog('info', `↻ retry ${attempt+1}/${BATCH_RETRIES} for ${path} in ${wait}ms · ${e.message.substring(0,80)}`);
+        await new Promise(r => setTimeout(r, wait));
+      }
+    }
+  }
+  throw lastErr;
+}
+
 async function getBatchEndpoint(endpointPath, onProgress) {
   const allItems = [];
   let nextToken  = null;
@@ -667,12 +695,10 @@ async function getBatchEndpoint(endpointPath, onProgress) {
 
   do {
     const path = nextToken
-      ? endpointPath + '?PageSize=10000&next_page_token=' + encodeURIComponent(nextToken)
-      : endpointPath + '?PageSize=10000';
+      ? endpointPath + '?PageSize=' + BATCH_PAGE_SIZE + '&next_page_token=' + encodeURIComponent(nextToken)
+      : endpointPath + '?PageSize=' + BATCH_PAGE_SIZE;
 
-    const data = canDirect
-      ? await directFetch('GET', path)
-      : await postMessageWithResponse({ type: 'api-request', method: 'GET', path });
+    const data = await fetchOnePage(canDirect, path);
 
     const page = Array.isArray(data) ? data : (data.items || []);
 
@@ -690,8 +716,8 @@ async function getBatchEndpoint(endpointPath, onProgress) {
     pageNum++;
     if (onProgress) onProgress(allItems.length, apiTotal, pageNum);
 
-    // Hard cap as safety; 1000 pages × 10k = 10M records.
-    if (pageNum >= 1000) break;
+    // Hard cap as safety; 5000 pages × 2000 = 10M records.
+    if (pageNum >= 5000) break;
 
   } while (nextToken);
 
@@ -732,31 +758,37 @@ async function chunkProcess(arr, fn, chunkSize = 5000) {
 const SCALE = 1e6;
 
 async function computeQtyOwned(onProgress) {
-  onProgress && onProgress('Fetching stock sources (6 batches)…');
-
   const errors = [];
-  const fetchBatch = (path, label) =>
-    getBatchEndpoint(path).catch(e => {
+
+  // ── Sequential fetch with per-page progress ─────────────────────────
+  // Why sequential? The parent frame serializes postMessage requests
+  // anyway, so parallel just means later requests sit in a queue burning
+  // their timeout clock while earlier ones run. Sequential = predictable
+  // progress + each fetch gets the full timeout window for itself.
+  const fetchSource = async (path, label) => {
+    onProgress && onProgress(`${label} · fetching…`);
+    try {
+      const data = await getBatchEndpoint(path, (loaded, total, page) => {
+        const totalStr = total
+          ? `${loaded.toLocaleString()} / ${total.toLocaleString()}`
+          : `${loaded.toLocaleString()} loaded`;
+        onProgress && onProgress(`${label} · page ${page} · ${totalStr}`);
+      });
+      debugLog('ok', `${label}: ${data.length.toLocaleString()} records`);
+      return data;
+    } catch (e) {
       debugLog('fail', `${label} fetch failed: ${e.message}`);
       errors.push(`${label}: ${e.message}`);
       return [];
-    });
+    }
+  };
 
-  const [
-    startingBalances,
-    purchaseInvoices,
-    debitNotes,
-    salesInvoices,
-    creditNotes,
-    writeOffs,
-  ] = await Promise.all([
-    fetchBatch('/api4/inventory-item-starting-balance-batch', 'Starting balances'),
-    fetchBatch('/api4/purchase-invoice-batch',                'Purchase invoices'),
-    fetchBatch('/api4/debit-note-batch',                      'Debit notes'),
-    fetchBatch('/api4/sales-invoice-batch',                   'Sales invoices'),
-    fetchBatch('/api4/credit-note-batch',                     'Credit notes'),
-    fetchBatch('/api4/inventory-write-off-batch',             'Write-offs'),
-  ]);
+  const startingBalances = await fetchSource('/api4/inventory-item-starting-balance-batch', 'Starting balances');
+  const purchaseInvoices = await fetchSource('/api4/purchase-invoice-batch',                'Purchase invoices');
+  const debitNotes       = await fetchSource('/api4/debit-note-batch',                      'Debit notes');
+  const salesInvoices    = await fetchSource('/api4/sales-invoice-batch',                   'Sales invoices');
+  const creditNotes      = await fetchSource('/api4/credit-note-batch',                     'Credit notes');
+  const writeOffs        = await fetchSource('/api4/inventory-write-off-batch',             'Write-offs');
 
   debugLog('info',
     `Stock sources — starting:${startingBalances.length} ` +
@@ -952,7 +984,11 @@ async function loadAllRecords() {
     bar.style.width = '100%';
 
     const ownedCount = Object.keys(qtyMap).length;
-    status.textContent = `✓ ${items.length.toLocaleString()} items · ${customers.length.toLocaleString()} customers · stock for ${ownedCount.toLocaleString()}`;
+    if (errors.length) {
+      status.textContent = `⚠ ${errors.length} source(s) failed — stock may be inaccurate · ${items.length.toLocaleString()} items · ${customers.length.toLocaleString()} customers`;
+    } else {
+      status.textContent = `✓ ${items.length.toLocaleString()} items · ${customers.length.toLocaleString()} customers · stock for ${ownedCount.toLocaleString()}`;
+    }
     btn.textContent = '↻ Reload';
     btn.disabled = false;
 
@@ -973,7 +1009,7 @@ async function loadAllRecords() {
     if (errors.length) {
       const banner = document.createElement('div');
       banner.className = 'warning-banner';
-      banner.innerHTML = `⚠ Some stock sources failed to load — qty owned may be inaccurate. Reload to retry.<br><small style="opacity:.8">${errors.join(' · ')}</small>`;
+      banner.innerHTML = `<strong>⚠ Stock totals may be inaccurate.</strong> ${errors.length} of 6 stock source(s) failed to load. Press <strong>↻ Reload</strong> to retry — slow endpoints are retried automatically up to 3 times per page.<br><small style="opacity:.8;display:block;margin-top:6px">${errors.map(e => escapeHtml(e)).join(' · ')}</small>`;
       app.insertBefore(banner, app.firstChild);
     }
 
