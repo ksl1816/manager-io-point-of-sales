@@ -470,14 +470,17 @@ async function computeQtyOwned(onProgress) {
   };
 
   // ── 1. Starting balances ─────────────────────────────────────────────────
-  // rec.key  = the starting-balance record's own UUID  ← NOT the item key
-  // rec.item.key (d.key) = the inventory item UUID     ← correct key to use
-  // qtyOnHandLines is an array of { inventoryLocation, qtyOnHand } — sum all.
+  // API response shape (confirmed):
+  //   rec.key          = SB record UUID        e.g. "019dc87b-…"  ← WRONG (not the item)
+  //   rec.item.key     = also SB record UUID   e.g. "019dc87b-…"  ← also WRONG
+  //   rec.item.inventoryItem = inventory item UUID  e.g. "e3dd729d-…"  ← CORRECT ✓
+  //   rec.item.qtyOnHandLines[].qtyOnHand  = qty per location — sum all.
   for (const rec of startingBalances) {
     const d = rec.item || rec;
-    // IMPORTANT: do NOT use rec.key here — it is the SB record's own key,
-    // not the inventory item key.  Use d.key (= rec.item.key) first.
-    const itemKey = d.key || d.inventoryItem || null;
+    // Use ONLY inventoryItem — both rec.key and rec.item.key point to the SB
+    // record itself, not the inventory item, so they would key the qty under a
+    // UUID that matches nothing in the items list.
+    const itemKey = d.inventoryItem || null;
     const lines   = d.qtyOnHandLines || [];
     if (lines.length > 0) {
       for (const l of lines) add(itemKey, l.qtyOnHand);
