@@ -2,11 +2,11 @@
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>POS — Manager.io</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Roboto+Mono:wght@400;500;600;700&family=Noto+Nastaliq+Urdu:wght@400;600;700&family=Noto+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 /* ─────────── DESIGN TOKENS ─────────── */
 :root{
@@ -69,72 +69,66 @@
 }
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%}
+html,body{height:100%;overflow:hidden}
 body{
   font-family:'IBM Plex Sans',system-ui,-apple-system,sans-serif;
   font-feature-settings:"tnum","ss01","ss02";
   color:var(--text);
   background:var(--bg);
   min-height:100vh;
-  padding:16px;
+  padding:0;
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
   letter-spacing:-0.005em;
   line-height:1.45;
   font-size:14px;
+  /* Touch-friendly: prevent pull-to-refresh etc */
+  overscroll-behavior:none;
+  -webkit-user-select:none;
+  user-select:none;
+  touch-action:manipulation;
 }
+input,textarea,select{-webkit-user-select:text;user-select:text}
 
-/* ─────────── APP HEADER (identity + badges + CTA) ─────────── */
+/* ─────────── APP HEADER ─────────── */
 .app-header{
-  display:flex;align-items:center;gap:18px;flex-wrap:wrap;
-  padding:14px 18px;margin-bottom:12px;
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:10px 14px;margin:8px 8px 6px;
   background:var(--panel);
   border:1px solid var(--border);
-  border-radius:var(--radius-xl);
+  border-radius:var(--radius-lg);
   box-shadow:var(--shadow);
 }
-.app-brand{display:flex;align-items:center;gap:12px;flex-shrink:0}
+.app-brand{display:flex;align-items:center;gap:10px;flex-shrink:0}
 .app-logo{
-  width:38px;height:38px;border-radius:10px;
+  width:34px;height:34px;border-radius:9px;
   background:linear-gradient(135deg,#4f8cff 0%,#3b78ec 100%);
   display:grid;place-items:center;color:#fff;
   box-shadow:0 4px 12px rgba(79,140,255,.3),inset 0 1px 0 rgba(255,255,255,.18);
 }
 .app-title{display:flex;flex-direction:column;gap:1px;line-height:1.15}
-.app-name{
-  font:700 16px/1.15 'IBM Plex Sans';
-  letter-spacing:-0.015em;color:var(--text);
-}
-.app-sub{
-  font:500 11px/1 'IBM Plex Sans';
-  color:var(--text-mute);letter-spacing:.01em;
-}
-.app-badges{
-  display:flex;align-items:center;gap:6px;flex-wrap:wrap;flex:1;min-width:0;
-}
+.app-name{font:700 15px/1.15 'IBM Plex Sans';letter-spacing:-0.015em;color:var(--text)}
+.app-sub{font:500 10px/1 'IBM Plex Sans';color:var(--text-mute);letter-spacing:.01em}
+.app-badges{display:flex;align-items:center;gap:5px;flex-wrap:wrap;flex:1;min-width:0}
 .app-badge{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:5px 11px;border-radius:99px;
-  font:600 10px/1 'IBM Plex Sans';
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 9px;border-radius:99px;
+  font:600 9px/1 'IBM Plex Sans';
   letter-spacing:.06em;text-transform:uppercase;
   border:1px solid;white-space:nowrap;
 }
-.app-badge .b-icon{width:11px;height:11px;flex-shrink:0}
+.app-badge .b-icon{width:10px;height:10px;flex-shrink:0}
 .b-blue   {background:rgba(79,140,255,.1); color:#4f8cff;border-color:rgba(79,140,255,.28)}
 .b-green  {background:rgba(16,185,129,.1); color:#10b981;border-color:rgba(16,185,129,.28)}
 .b-purple {background:rgba(139,92,246,.1); color:#a78bfa;border-color:rgba(139,92,246,.28)}
 .b-mode   {background:rgba(239,68,68,.1);  color:#ef4444;border-color:rgba(239,68,68,.28)}
 .b-mode.live{background:rgba(16,185,129,.1);color:#10b981;border-color:rgba(16,185,129,.28)}
-.b-dot{
-  width:6px;height:6px;border-radius:50%;background:currentColor;
-  box-shadow:0 0 0 3px currentColor;opacity:.85;
-}
+.b-dot{width:6px;height:6px;border-radius:50%;background:currentColor;box-shadow:0 0 0 3px currentColor;opacity:.85}
 .b-mode.live .b-dot{animation:b-pulse 2s ease-in-out infinite}
 @keyframes b-pulse{
   0%,100%{box-shadow:0 0 0 3px currentColor;opacity:.85}
-  50%    {box-shadow:0 0 0 6px transparent;opacity:.4}
+  50%{box-shadow:0 0 0 6px transparent;opacity:.4}
 }
-
 [data-theme="light"] .b-blue  {background:#e8f0ff;color:#1e5fcf;border-color:rgba(30,95,207,.2)}
 [data-theme="light"] .b-green {background:#dcf5e7;color:#0a8447;border-color:rgba(10,132,71,.2)}
 [data-theme="light"] .b-purple{background:#ece7fa;color:#6b4ee6;border-color:rgba(107,78,230,.2)}
@@ -143,61 +137,29 @@ body{
 
 .app-cta{
   margin-left:auto;
-  display:inline-flex;align-items:center;gap:8px;
-  padding:9px 16px;border-radius:99px;
-  background:#fef0c0;color:#7c5410;
-  border:1px solid rgba(124,84,16,.25);
-  font:600 12px/1 'IBM Plex Sans';letter-spacing:.01em;
-  text-decoration:none;cursor:pointer;
-  transition:background var(--tx-fast),border-color var(--tx-fast),transform var(--tx-fast),box-shadow var(--tx-fast);
-  white-space:nowrap;flex-shrink:0;
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 14px;border-radius:99px;
+  font:600 11px/1 'IBM Plex Sans';letter-spacing:.01em;
+  text-decoration:none;cursor:pointer;white-space:nowrap;flex-shrink:0;
+  transition:background var(--tx-fast),border-color var(--tx-fast),transform var(--tx-fast);
 }
-.app-cta:hover{
-  background:#fce58a;border-color:rgba(124,84,16,.4);
-  transform:translateY(-1px);
-  box-shadow:0 4px 12px rgba(124,84,16,.18);
-}
-[data-theme="dark"] .app-cta{
-  background:rgba(245,158,11,.12);color:#fbbf24;
-  border-color:rgba(245,158,11,.3);
-}
-[data-theme="dark"] .app-cta:hover{
-  background:rgba(245,158,11,.18);border-color:rgba(245,158,11,.5);
-  box-shadow:0 4px 14px rgba(245,158,11,.25);
-}
-@media(max-width:720px){
-  .app-cta{margin-left:0;width:100%;justify-content:center}
-  .app-badges{order:3;width:100%}
-}
+[data-theme="dark"] .app-cta{background:rgba(245,158,11,.12);color:#fbbf24;border:1px solid rgba(245,158,11,.3)}
+[data-theme="dark"] .app-cta:hover{background:rgba(245,158,11,.18);border-color:rgba(245,158,11,.5)}
+[data-theme="light"] .app-cta{background:#fef0c0;color:#7c5410;border:1px solid rgba(124,84,16,.25)}
+[data-theme="light"] .app-cta:hover{background:#fce58a;border-color:rgba(124,84,16,.4)}
 
 /* ─────────── TOP BAR ─────────── */
 .topbar{
-  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
-  padding:12px 16px;margin-bottom:14px;
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:8px 12px;margin:0 8px 6px;
   background:var(--panel);
   border:1px solid var(--border);
   border-radius:var(--radius-lg);
   box-shadow:var(--shadow);
 }
-.brand{
-  display:inline-flex;align-items:center;gap:10px;
-  font-weight:700;font-size:15px;letter-spacing:-0.01em;
-  color:var(--text);
-}
-.brand-mark{
-  width:28px;height:28px;border-radius:8px;
-  background:var(--accent);
-  display:grid;place-items:center;
-  color:#fff;font-weight:700;font-size:13px;
-  box-shadow:0 0 0 1px var(--accent-strong) inset, 0 4px 10px var(--accent-glow);
-  letter-spacing:0;
-}
-.brand-sub{font-size:11px;color:var(--text-mute);font-weight:500;letter-spacing:.02em}
-.divider-v{width:1px;height:22px;background:var(--border)}
-
 .load-btn{
-  padding:8px 16px;border:none;border-radius:var(--radius-sm);
-  cursor:pointer;font:600 12px/1 'IBM Plex Sans',sans-serif;
+  padding:7px 14px;border:none;border-radius:var(--radius-sm);
+  cursor:pointer;font:600 11px/1 'IBM Plex Sans',sans-serif;
   color:#fff;background:var(--accent);
   letter-spacing:.02em;text-transform:uppercase;
   transition:background var(--tx-fast),transform var(--tx-fast);
@@ -208,30 +170,24 @@ body{
 .load-btn:active:not(:disabled){transform:translateY(1px)}
 .load-btn:disabled{opacity:.5;cursor:not-allowed}
 
-.progress-wrap{
-  flex:1;min-width:120px;height:3px;
-  background:var(--border);border-radius:99px;overflow:hidden;
-}
-.progress-bar{
-  height:100%;width:0%;background:var(--accent);
-  border-radius:99px;transition:width .3s ease;
-}
+.progress-wrap{flex:1;min-width:80px;height:3px;background:var(--border);border-radius:99px;overflow:hidden}
+.progress-bar{height:100%;width:0%;background:var(--accent);border-radius:99px;transition:width .3s ease}
 .status-text{
-  font:500 11px/1.2 'IBM Plex Mono',monospace;
+  font:500 10px/1.2 'IBM Plex Mono',monospace;
   color:var(--text-mute);white-space:nowrap;
-  max-width:340px;overflow:hidden;text-overflow:ellipsis;
+  max-width:280px;overflow:hidden;text-overflow:ellipsis;
 }
 .icon-btn{
-  width:32px;height:32px;border-radius:var(--radius-sm);
+  width:30px;height:30px;border-radius:var(--radius-sm);
   border:1px solid var(--border);background:transparent;cursor:pointer;
   display:grid;place-items:center;color:var(--text-mute);
-  transition:all var(--tx-fast);font-size:14px;
+  transition:all var(--tx-fast);font-size:13px;
 }
 .icon-btn:hover{background:var(--panel-hover);border-color:var(--border-strong);color:var(--text)}
 .debug-toggle{
-  font:600 10px/1 'IBM Plex Sans';color:var(--text-mute);
+  font:600 9px/1 'IBM Plex Sans';color:var(--text-mute);
   background:transparent;border:1px solid var(--border);
-  padding:7px 11px;border-radius:var(--radius-sm);cursor:pointer;
+  padding:6px 10px;border-radius:var(--radius-sm);cursor:pointer;
   text-transform:uppercase;letter-spacing:.06em;
   transition:all var(--tx-fast);
 }
@@ -240,8 +196,8 @@ body{
 /* ─────────── DEBUG ─────────── */
 .debug-log{
   background:#06080d;border:1px solid var(--border);border-radius:var(--radius);
-  padding:10px 14px;font-family:'IBM Plex Mono',monospace;font-size:11px;
-  color:#94a3b8;max-height:160px;overflow-y:auto;margin-bottom:12px;
+  padding:8px 12px;font-family:'IBM Plex Mono',monospace;font-size:10px;
+  color:#94a3b8;max-height:140px;overflow-y:auto;margin:0 8px 6px;
   display:none;white-space:pre-wrap;word-break:break-all;line-height:1.5;
 }
 .debug-log.show{display:block}
@@ -249,41 +205,42 @@ body{
 .debug-log .fail{color:#f87171}
 .debug-log .info{color:#7da4ff}
 
-/* ─────────── LAYOUT ─────────── */
+/* ─────────── POS LAYOUT ─────────── */
 .pos-grid{
-  display:grid;grid-template-columns:1fr 420px;gap:14px;
-  min-height:calc(100vh - 100px);
+  display:grid;grid-template-columns:1fr 380px;gap:8px;
+  height:calc(100vh - 110px);
+  padding:0 8px 8px;
 }
-@media(max-width:980px){.pos-grid{grid-template-columns:1fr}}
+@media(max-width:980px){
+  .pos-grid{grid-template-columns:1fr;height:auto;overflow-y:auto}
+}
 
 .panel{
   background:var(--panel);border:1px solid var(--border);
-  border-radius:var(--radius-xl);padding:20px;
+  border-radius:var(--radius-xl);padding:14px;
   display:flex;flex-direction:column;
   box-shadow:var(--shadow);
+  overflow:hidden;
 }
 .panel-title{
-  font:700 10px/1 'IBM Plex Sans';
+  font:700 9px/1 'IBM Plex Sans';
   text-transform:uppercase;letter-spacing:.12em;
-  color:var(--text-mute);margin-bottom:16px;
+  color:var(--text-mute);margin-bottom:10px;
   display:flex;align-items:center;gap:8px;
 }
-.panel-title::before{
-  content:"";width:4px;height:4px;border-radius:50%;
-  background:var(--accent);
-}
+.panel-title::before{content:"";width:4px;height:4px;border-radius:50%;background:var(--accent)}
 
 /* ─────────── FORM ─────────── */
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
 .form-field{display:flex;flex-direction:column}
 .form-field.full{grid-column:1/-1}
 .form-field label{
-  font:600 10px/1 'IBM Plex Sans';text-transform:uppercase;
-  letter-spacing:.08em;color:var(--text-mute);margin-bottom:6px;
+  font:600 9px/1 'IBM Plex Sans';text-transform:uppercase;
+  letter-spacing:.08em;color:var(--text-mute);margin-bottom:5px;
 }
 .form-field input,.form-field textarea,.form-field select{
   background:var(--input-bg);border:1px solid var(--input-border);
-  border-radius:var(--radius-sm);padding:9px 12px;
+  border-radius:var(--radius-sm);padding:8px 10px;
   color:var(--text);font:500 13px/1.4 'IBM Plex Sans',sans-serif;
   transition:border-color var(--tx-fast),box-shadow var(--tx-fast);
 }
@@ -293,14 +250,14 @@ body{
 }
 .form-field input::placeholder{color:var(--text-dim);font-weight:400}
 
-/* ─────────── BARCODE INPUT ─────────── */
-.barcode-wrap{position:relative;margin-bottom:10px}
+/* ─────────── BARCODE INPUT (TOUCH OPTIMIZED) ─────────── */
+.barcode-wrap{position:relative;margin-bottom:8px}
 .barcode-input{
   width:100%;
-  font:600 16px/1.2 'IBM Plex Mono',monospace !important;
-  padding:14px 16px 14px 46px !important;
+  font:600 18px/1.2 'IBM Plex Mono',monospace !important;
+  padding:16px 16px 16px 46px !important;
   background:var(--input-bg) !important;
-  border:1.5px solid var(--input-border) !important;
+  border:2px solid var(--input-border) !important;
   border-radius:var(--radius) !important;
   color:var(--text);
   letter-spacing:.02em;
@@ -311,35 +268,50 @@ body{
   border-color:var(--accent) !important;
   box-shadow:0 0 0 4px var(--accent-soft) !important;
 }
-.barcode-input::placeholder{color:var(--text-dim);font-weight:500;letter-spacing:0;font-family:'IBM Plex Sans',sans-serif}
+.barcode-input::placeholder{color:var(--text-dim);font-weight:500;letter-spacing:0;font-family:'IBM Plex Sans',sans-serif;font-size:14px}
 .barcode-icon{
   position:absolute;left:14px;top:50%;transform:translateY(-50%);
   width:20px;height:20px;color:var(--text-mute);pointer-events:none;
 }
 .scanner-status{
   display:flex;align-items:center;gap:8px;
-  font:500 11px/1 'IBM Plex Sans';color:var(--text-mute);
-  margin-top:8px;padding-left:2px;
+  font:500 10px/1 'IBM Plex Sans';color:var(--text-mute);
+  margin-top:6px;padding-left:2px;
 }
-.scanner-dot{
-  width:6px;height:6px;background:var(--success);border-radius:50%;
-  box-shadow:0 0 0 3px var(--success-soft);
-}
+.scanner-dot{width:6px;height:6px;background:var(--success);border-radius:50%;box-shadow:0 0 0 3px var(--success-soft)}
 .indexed-count{font-weight:600;color:var(--text);font-family:'IBM Plex Mono',monospace}
 
+/* ─────────── QUICK-ADD GRID (touch-friendly item buttons) ─────────── */
+.quick-add-section{margin:8px 0}
+.quick-add-label{font:600 9px/1 'IBM Plex Sans';text-transform:uppercase;letter-spacing:.08em;color:var(--text-mute);margin-bottom:6px}
+.quick-add-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px;
+  max-height:120px;overflow-y:auto;
+}
+.quick-item{
+  padding:10px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);
+  background:var(--bg);cursor:pointer;text-align:center;
+  transition:all var(--tx-fast);
+  -webkit-tap-highlight-color:transparent;
+}
+.quick-item:hover,.quick-item:active{background:var(--accent-soft);border-color:var(--accent)}
+.quick-item .qi-name{font:600 11px/1.3 'IBM Plex Sans';color:var(--text);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.quick-item .qi-price{font:500 10px/1 'IBM Plex Mono',monospace;color:var(--success);margin-top:3px;display:block}
+.quick-item .qi-code{font:500 9px/1 'IBM Plex Mono',monospace;color:var(--text-mute);margin-top:2px;display:block}
+
 /* ─────────── STATS ─────────── */
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}
 .stat{
   background:var(--bg);border:1px solid var(--border);
-  border-radius:var(--radius);padding:12px 14px;
+  border-radius:var(--radius);padding:10px 12px;
 }
 .stat .val{
-  font:700 22px/1.1 'IBM Plex Sans';color:var(--text);
+  font:700 20px/1.1 'IBM Plex Sans';color:var(--text);
   font-variant-numeric:tabular-nums;letter-spacing:-0.02em;
 }
 .stat .lbl{
-  font:600 10px/1 'IBM Plex Sans';text-transform:uppercase;
-  letter-spacing:.08em;color:var(--text-mute);margin-top:6px;
+  font:600 9px/1 'IBM Plex Sans';text-transform:uppercase;
+  letter-spacing:.08em;color:var(--text-mute);margin-top:4px;
 }
 .stat.accent .val{color:var(--success)}
 
@@ -348,73 +320,71 @@ body{
   flex:1;overflow:auto;
   border:1px solid var(--border);border-radius:var(--radius);
   background:var(--bg);
-  min-height:280px;
+  min-height:180px;
+  -webkit-overflow-scrolling:touch;
 }
-.cart-table{width:100%;border-collapse:collapse;font-size:13px}
+.cart-table{width:100%;border-collapse:collapse;font-size:12px}
 .cart-table thead{
   background:var(--header-bg);
   position:sticky;top:0;z-index:2;
 }
 .cart-table th{
-  text-align:left;padding:10px 12px;
-  font:600 10px/1 'IBM Plex Sans';text-transform:uppercase;
+  text-align:left;padding:8px 8px;
+  font:600 9px/1 'IBM Plex Sans';text-transform:uppercase;
   letter-spacing:.08em;color:var(--text-mute);
   border-bottom:1px solid var(--border);
 }
 .cart-table td{
-  padding:9px 12px;border-bottom:1px solid var(--border);
+  padding:7px 8px;border-bottom:1px solid var(--border);
   vertical-align:middle;
 }
 .cart-table tbody tr{transition:background var(--tx-fast)}
 .cart-table tbody tr:hover{background:var(--row-hover)}
 .cart-table tbody tr:last-child td{border-bottom:none}
 .cart-table tbody tr.flash{animation:rowFlash .7s ease}
-@keyframes rowFlash{
-  0%{background:var(--accent-soft)}
-  100%{background:transparent}
-}
+@keyframes rowFlash{0%{background:var(--accent-soft)}100%{background:transparent}}
 
-.code-cell{
-  font:600 11px/1 'IBM Plex Mono',monospace;
-  color:var(--text-mute);letter-spacing:.02em;
-}
-.name-cell{font-weight:500;color:var(--text)}
+.code-cell{font:600 10px/1 'IBM Plex Mono',monospace;color:var(--text-mute);letter-spacing:.02em}
+.name-cell{font-weight:500;color:var(--text);font-size:12px}
 
 .qty-input,.price-input{
-  width:74px;
+  width:64px;
   background:var(--input-bg);border:1px solid var(--input-border);
-  border-radius:6px;padding:5px 9px;
+  border-radius:6px;padding:6px 8px;
   color:var(--text);
   font:600 13px/1.2 'IBM Plex Mono',monospace;
   text-align:right;
   font-variant-numeric:tabular-nums;
   transition:border-color var(--tx-fast),box-shadow var(--tx-fast);
+  /* Touch: bigger tap target */
+  min-height:36px;
 }
-.price-input{width:90px}
-.qty-input:focus{
+.price-input{width:82px}
+.qty-input:focus,.price-input:focus{
   outline:none;border-color:var(--accent);
   box-shadow:0 0 0 2px var(--accent-soft);
 }
-.price-input[readonly]{
-  background:transparent;color:var(--text-mute);
-  cursor:not-allowed;border-color:transparent;
+/* EDITABLE price — no longer readonly */
+.price-input.editable{
+  background:var(--input-bg);color:var(--text);
+  cursor:text;border-color:var(--input-border);
+}
+.price-input.editable:focus{
+  border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft);
 }
 
 .qty-owned{
-  font:600 12px/1 'IBM Plex Mono',monospace;
+  font:600 11px/1 'IBM Plex Mono',monospace;
   text-align:right;font-variant-numeric:tabular-nums;
 }
 .qty-owned.ok{color:var(--success)}
 .qty-owned.warn{color:var(--warn)}
-.qty-owned.over{
-  color:var(--danger);background:var(--danger-soft);
-  border-radius:6px;padding:3px 7px;display:inline-block;
-}
+.qty-owned.over{color:var(--danger);background:var(--danger-soft);border-radius:6px;padding:3px 7px;display:inline-block}
 .qty-owned.na{color:var(--text-dim)}
 tr.over-row td{background:rgba(239,68,68,.04) !important}
 
 .line-total{
-  font:600 13px/1.2 'IBM Plex Mono',monospace;
+  font:600 12px/1.2 'IBM Plex Mono',monospace;
   text-align:right;color:var(--success);
   font-variant-numeric:tabular-nums;
 }
@@ -422,61 +392,59 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
 .remove-btn{
   background:transparent;border:1px solid var(--border);
   color:var(--text-mute);border-radius:6px;
-  width:26px;height:26px;cursor:pointer;
+  width:32px;height:32px;cursor:pointer;
   display:grid;place-items:center;
   font:600 16px/1 'IBM Plex Sans';
   transition:all var(--tx-fast);
+  -webkit-tap-highlight-color:transparent;
 }
-.remove-btn:hover{
-  background:var(--danger);color:#fff;border-color:var(--danger);
-}
+.remove-btn:hover,.remove-btn:active{background:var(--danger);color:#fff;border-color:var(--danger)}
 
-.empty-cart{
-  text-align:center;padding:60px 20px;color:var(--text-mute);
-}
+.empty-cart{text-align:center;padding:40px 20px;color:var(--text-mute)}
 .empty-cart-icon{
-  width:48px;height:48px;border-radius:14px;
+  width:44px;height:44px;border-radius:14px;
   background:var(--accent-soft);
-  display:grid;place-items:center;margin:0 auto 14px;
+  display:grid;place-items:center;margin:0 auto 12px;
   color:var(--accent);
 }
-.empty-cart-title{font-size:14px;color:var(--text);font-weight:600;margin-bottom:4px}
-.empty-cart-sub{font-size:12px;color:var(--text-mute)}
+.empty-cart-title{font-size:13px;color:var(--text);font-weight:600;margin-bottom:4px}
+.empty-cart-sub{font-size:11px;color:var(--text-mute)}
 
 /* ─────────── SUMMARY ─────────── */
 .summary{
   background:var(--bg);border:1px solid var(--border);
-  border-radius:var(--radius);padding:14px 18px;margin-bottom:12px;
+  border-radius:var(--radius);padding:12px 14px;margin-bottom:8px;
 }
 .summary-row{
   display:flex;justify-content:space-between;align-items:center;
-  padding:4px 0;font-size:13px;color:var(--text-mute);font-weight:500;
+  padding:3px 0;font-size:12px;color:var(--text-mute);font-weight:500;
 }
 .summary-row .v{
   font-family:'IBM Plex Mono',monospace;font-weight:600;
   color:var(--text);font-variant-numeric:tabular-nums;
 }
 .summary-row.grand{
-  border-top:1px solid var(--border);margin-top:10px;padding-top:12px;
+  border-top:1px solid var(--border);margin-top:8px;padding-top:10px;
 }
 .summary-row.grand .l{
-  font:700 11px/1 'IBM Plex Sans';text-transform:uppercase;
+  font:700 10px/1 'IBM Plex Sans';text-transform:uppercase;
   letter-spacing:.08em;color:var(--text-mute);
 }
 .summary-row.grand .v{
-  font:700 26px/1 'IBM Plex Sans';
+  font:700 24px/1 'IBM Plex Sans';
   color:var(--success);letter-spacing:-0.02em;
   font-variant-numeric:tabular-nums;
-  font-feature-settings:"tnum";
 }
 
 /* ─────────── ACTIONS ─────────── */
-.actions{display:grid;grid-template-columns:1fr 2fr;gap:10px}
+.actions{display:grid;grid-template-columns:1fr 1fr 2fr;gap:8px}
 .btn{
-  padding:13px 18px;border:none;border-radius:var(--radius);
-  font:700 12px/1 'IBM Plex Sans';cursor:pointer;
+  padding:14px 14px;border:none;border-radius:var(--radius);
+  font:700 11px/1 'IBM Plex Sans';cursor:pointer;
   text-transform:uppercase;letter-spacing:.06em;
   transition:background var(--tx-fast),transform var(--tx-fast),opacity var(--tx-fast);
+  -webkit-tap-highlight-color:transparent;
+  min-height:48px;/* Touch-friendly */
 }
 .btn:active:not(:disabled){transform:translateY(1px)}
 .btn-primary{
@@ -485,53 +453,43 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
 }
 .btn-primary:hover:not(:disabled){background:var(--accent-strong)}
 .btn-primary:disabled{opacity:.5;cursor:not-allowed}
-.btn-secondary{
-  background:transparent;color:var(--text-mute);
-  border:1px solid var(--border);
+.btn-secondary{background:transparent;color:var(--text-mute);border:1px solid var(--border)}
+.btn-secondary:hover{background:var(--panel-hover);color:var(--text);border-color:var(--border-strong)}
+.btn-print{
+  background:linear-gradient(135deg,#8b5cf6 0%,#7c3aed 100%);
+  color:#fff;border:none;
+  box-shadow:0 0 0 1px rgba(124,58,237,.5) inset, 0 2px 8px rgba(139,92,246,.3);
 }
-.btn-secondary:hover{
-  background:var(--panel-hover);color:var(--text);
-  border-color:var(--border-strong);
-}
+.btn-print:hover:not(:disabled){box-shadow:0 0 0 1px rgba(124,58,237,.5) inset, 0 4px 16px rgba(139,92,246,.4)}
 
 /* ─────────── TOAST ─────────── */
 .toast{
-  position:fixed;top:18px;right:18px;
-  padding:12px 16px;border-radius:var(--radius);
-  font:600 13px/1.4 'IBM Plex Sans';z-index:9999;
-  animation:toastIn .25s ease;max-width:420px;
+  position:fixed;top:14px;right:14px;
+  padding:10px 14px;border-radius:var(--radius);
+  font:600 12px/1.4 'IBM Plex Sans';z-index:9999;
+  animation:toastIn .25s ease;max-width:380px;
   box-shadow:var(--shadow-lg);
-  border:1px solid;display:flex;align-items:center;gap:10px;
+  border:1px solid;display:flex;align-items:center;gap:8px;
 }
 .toast.success{background:var(--success-soft);color:var(--success);border-color:rgba(16,185,129,.3)}
 .toast.error{background:var(--danger-soft);color:var(--danger);border-color:rgba(239,68,68,.3)}
 .toast.info{background:var(--accent-soft);color:var(--accent);border-color:rgba(79,140,255,.3)}
-[data-theme="dark"] .toast{
-  background:var(--panel);
-}
+[data-theme="dark"] .toast{background:var(--panel)}
 [data-theme="dark"] .toast.success{color:#34d399;border-color:rgba(16,185,129,.4)}
 [data-theme="dark"] .toast.error{color:#fca5a5;border-color:rgba(239,68,68,.4)}
 [data-theme="dark"] .toast.info{color:#93b8ff;border-color:rgba(79,140,255,.4)}
-@keyframes toastIn{
-  from{transform:translateX(20px);opacity:0}
-  to{transform:translateX(0);opacity:1}
-}
+@keyframes toastIn{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
 
 /* ─────────── CUSTOMER BADGE ─────────── */
-.customer-display{margin-top:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.customer-display{margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .customer-badge{
-  display:inline-flex;align-items:center;gap:7px;
-  padding:5px 11px;background:var(--accent-soft);
+  display:inline-flex;align-items:center;gap:6px;
+  padding:4px 10px;background:var(--accent-soft);
   border:1px solid rgba(79,140,255,.25);
-  border-radius:99px;font-size:12px;font-weight:600;color:var(--accent);
+  border-radius:99px;font-size:11px;font-weight:600;color:var(--accent);
 }
-.customer-badge .dot{
-  width:5px;height:5px;border-radius:50%;background:var(--accent);
-}
-.clear-link{
-  font:600 11px/1 'IBM Plex Sans';color:var(--text-mute);
-  cursor:pointer;text-decoration:none;
-}
+.customer-badge .dot{width:5px;height:5px;border-radius:50%;background:var(--accent)}
+.clear-link{font:600 10px/1 'IBM Plex Sans';color:var(--text-mute);cursor:pointer;text-decoration:none}
 .clear-link:hover{color:var(--danger);text-decoration:underline}
 
 /* ─────────── SUGGEST ─────────── */
@@ -539,85 +497,119 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
 .suggest-list{
   position:absolute;top:calc(100% + 4px);left:0;right:0;
   background:var(--bg-elevated);border:1px solid var(--border-strong);
-  border-radius:var(--radius);max-height:300px;overflow-y:auto;
+  border-radius:var(--radius);max-height:260px;overflow-y:auto;
   z-index:200;display:none;box-shadow:var(--shadow-lg);
+  -webkit-overflow-scrolling:touch;
 }
 .suggest-list.open{display:block}
 .suggest-item{
-  padding:9px 14px;cursor:pointer;
+  padding:10px 12px;cursor:pointer;
   border-bottom:1px solid var(--border);
   transition:background var(--tx-fast);
+  -webkit-tap-highlight-color:transparent;
 }
 .suggest-item:last-child{border-bottom:none}
 .suggest-item:hover,.suggest-item.active{background:var(--row-hover)}
 .suggest-item .name{font-size:13px;font-weight:500;color:var(--text)}
-.suggest-item .code{font-size:11px;color:var(--text-mute);margin-top:2px;font-family:'IBM Plex Mono',monospace}
+.suggest-item .code{font-size:10px;color:var(--text-mute);margin-top:2px;font-family:'IBM Plex Mono',monospace}
 
 .item-suggest .suggest-item{
-  display:grid;grid-template-columns:90px 1fr 70px;
-  align-items:center;gap:10px;padding:9px 14px;
+  display:grid;grid-template-columns:80px 1fr 60px;
+  align-items:center;gap:8px;padding:10px 12px;
 }
 .item-suggest .suggest-item.low{opacity:.55}
-.si-code{
-  font:600 11px/1 'IBM Plex Mono',monospace;
-  color:var(--accent);white-space:nowrap;
-  overflow:hidden;text-overflow:ellipsis;
-}
-.si-name{
-  font-size:13px;font-weight:500;color:var(--text);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-}
-.si-stock{
-  font:600 11px/1 'IBM Plex Mono',monospace;
-  color:var(--success);text-align:right;
-  font-variant-numeric:tabular-nums;
-}
+.si-code{font:600 10px/1 'IBM Plex Mono',monospace;color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.si-name{font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.si-stock{font:600 10px/1 'IBM Plex Mono',monospace;color:var(--success);text-align:right;font-variant-numeric:tabular-nums}
 .item-suggest .suggest-item.low .si-stock{color:var(--danger)}
 
 /* ─────────── DIVIDER & CHIPS ─────────── */
 .divider{
-  display:flex;align-items:center;gap:10px;
-  font:600 9px/1 'IBM Plex Sans';text-transform:uppercase;
+  display:flex;align-items:center;gap:8px;
+  font:600 8px/1 'IBM Plex Sans';text-transform:uppercase;
   color:var(--text-mute);letter-spacing:.1em;
-  margin:14px 0 10px;
+  margin:10px 0 8px;
 }
-.divider::before,.divider::after{
-  content:"";flex:1;height:1px;background:var(--border);
-}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--border)}
 .ref-chip{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:9px 14px;border-radius:var(--radius-sm);
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 10px;border-radius:var(--radius-sm);
   background:var(--bg);border:1px solid var(--border);
-  color:var(--text);font:600 12px/1 'IBM Plex Mono',monospace;
+  color:var(--text);font:600 11px/1 'IBM Plex Mono',monospace;
   width:100%;justify-content:flex-start;
 }
-.ref-chip::before{
-  content:"#";color:var(--text-mute);font-weight:500;
-}
+.ref-chip::before{content:"#";color:var(--text-mute);font-weight:500}
 .error-box{
   color:var(--danger);background:var(--danger-soft);
   border:1px solid rgba(239,68,68,.25);
-  border-radius:var(--radius);padding:14px 18px;
-  font-size:13px;margin-bottom:14px;font-weight:500;
+  border-radius:var(--radius);padding:12px 16px;
+  font-size:13px;margin-bottom:10px;font-weight:500;
 }
 .warning-banner{
   background:var(--warn-soft);border:1px solid rgba(245,158,11,.25);
-  border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;
-  color:var(--warn);font-size:12px;font-weight:500;
+  border-radius:var(--radius);padding:8px 12px;margin-bottom:8px;
+  color:var(--warn);font-size:11px;font-weight:500;
 }
 
 /* ─────────── SCROLLBARS ─────────── */
-::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--scroll);border-radius:99px}
 ::-webkit-scrollbar-thumb:hover{background:var(--scroll-hover)}
 
+/* ─────────── PRINT RECEIPT MODAL ─────────── */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.6);
+  backdrop-filter:blur(4px);z-index:1000;
+  display:none;align-items:center;justify-content:center;
+}
+.modal-overlay.open{display:flex}
+.modal-content{
+  background:var(--panel);border:1px solid var(--border);
+  border-radius:var(--radius-xl);padding:20px;
+  max-width:420px;width:90vw;max-height:85vh;overflow-y:auto;
+  box-shadow:var(--shadow-lg);
+}
+.modal-header{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:14px;
+}
+.modal-title{font:700 15px/1 'IBM Plex Sans';color:var(--text)}
+.modal-close{
+  width:30px;height:30px;border-radius:var(--radius-sm);
+  border:1px solid var(--border);background:transparent;
+  cursor:pointer;color:var(--text-mute);
+  display:grid;place-items:center;font-size:16px;
+  transition:all var(--tx-fast);
+}
+.modal-close:hover{background:var(--danger);color:#fff;border-color:var(--danger)}
+.receipt-preview{
+  background:#fff;color:#000;border-radius:var(--radius);
+  padding:12px;margin-bottom:14px;overflow:auto;
+  max-height:50vh;
+}
+.modal-actions{display:flex;gap:8px;flex-wrap:wrap}
+.modal-actions .btn{flex:1;min-width:100px}
+
+/* ─────────── QUICK ADD INVENTORY MODAL ─────────── */
+.add-item-form{display:flex;flex-direction:column;gap:10px}
+.add-item-form .form-row{margin-bottom:0}
+
+/* ─────────── RIGHT PANEL SCROLL ─────────── */
+.right-panel-scroll{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:0;-webkit-overflow-scrolling:touch}
+
 /* ─────────── KBD HINT ─────────── */
 .kbd{
-  font:600 10px/1 'IBM Plex Mono',monospace;
+  font:600 9px/1 'IBM Plex Mono',monospace;
   background:var(--bg);border:1px solid var(--border);
   border-bottom-width:2px;border-radius:4px;
   padding:2px 5px;color:var(--text-mute);
+}
+
+@media(max-width:720px){
+  .app-cta{margin-left:0;width:100%;justify-content:center}
+  .app-badges{order:3;width:100%}
+  .pos-grid{height:auto;min-height:calc(100vh - 110px)}
 }
 </style>
 </head>
@@ -627,19 +619,18 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
 <header class="app-header">
   <div class="app-brand">
     <div class="app-logo" aria-hidden="true">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
         <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
       </svg>
     </div>
     <div class="app-title">
       <div class="app-name">POS Terminal</div>
-      <div class="app-sub">for Manager.io</div>
+      <div class="app-sub">for Manager.io · v2.0</div>
     </div>
   </div>
-
   <div class="app-badges">
-    <span class="app-badge b-blue">V1.0</span>
+    <span class="app-badge b-blue">V2.0</span>
     <span class="app-badge b-green">
       <svg class="b-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 12a9 9 0 1 1-3.8-7.4"/><polyline points="21 3 21 9 15 9"/>
@@ -657,9 +648,8 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
       <span id="mode-label">Standalone Mode</span>
     </span>
   </div>
-
   <a class="app-cta" id="cta-btn" href="mailto:contact@example.com?subject=POS%20Custom%20Development%20Request" target="_blank" rel="noopener">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
       <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
     </svg>
     Need Custom Dev?
@@ -678,6 +668,63 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
 
 <div id="app"></div>
 
+<!-- Receipt Print Modal -->
+<div class="modal-overlay" id="receipt-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <span class="modal-title">🧾 Receipt Preview</span>
+      <button class="modal-close" onclick="closeReceiptModal()">×</button>
+    </div>
+    <div id="receipt-preview-area" class="receipt-preview"></div>
+    <div class="modal-actions">
+      <button class="btn btn-print" onclick="printReceipt()">🖨 Print</button>
+      <button class="btn btn-secondary" onclick="downloadReceiptPDF()">📄 PDF</button>
+      <button class="btn btn-secondary" onclick="shareWhatsApp()">💬 WhatsApp</button>
+      <button class="btn btn-secondary" onclick="closeReceiptModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Add Inventory Modal -->
+<div class="modal-overlay" id="add-item-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <span class="modal-title">➕ Quick Add Inventory Item</span>
+      <button class="modal-close" onclick="closeAddItemModal()">×</button>
+    </div>
+    <div class="add-item-form">
+      <div class="form-row">
+        <div class="form-field">
+          <label>Item Code (Barcode)</label>
+          <input type="text" id="new-item-code" placeholder="Scan barcode or type code" autocomplete="off" />
+        </div>
+        <div class="form-field">
+          <label>Item Name</label>
+          <input type="text" id="new-item-name" placeholder="Item name" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Unit Name</label>
+          <input type="text" id="new-item-unit" placeholder="e.g. pcs, kg, box" value="pcs" />
+        </div>
+        <div class="form-field">
+          <label>Sale Price</label>
+          <input type="number" id="new-item-price" placeholder="0.00" step="any" min="0" />
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="btn btn-primary" style="flex:2" onclick="submitNewItem()">Save & Add to Cart</button>
+        <button class="btn btn-secondary" style="flex:1" onclick="submitNewItemOnly()">Save Only</button>
+        <button class="btn btn-secondary" style="flex:1" onclick="closeAddItemModal()">Cancel</button>
+      </div>
+      <div style="font:500 10px/1.4 'IBM Plex Sans';color:var(--text-mute);margin-top:6px">
+        💡 Scan an unknown barcode in the main scanner → it will auto-open this form with the code pre-filled.
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ══════════════════════════════════════════════════════
    Capture managerAppContext from parent
@@ -694,18 +741,11 @@ window.addEventListener('message', (event) => {
 function setLiveBadge() {
   const badge = document.getElementById('mode-badge');
   const label = document.getElementById('mode-label');
-  if (badge && label) {
-    badge.classList.add('live');
-    label.textContent = 'Live · Connected';
-  }
+  if (badge && label) { badge.classList.add('live'); label.textContent = 'Live · Connected'; }
 }
-
-// In case parent posted context before this script attached, check on load.
 if (window.managerAppContext) setLiveBadge();
 
-function toggleDebug() {
-  document.getElementById('debug-log').classList.toggle('show');
-}
+function toggleDebug() { document.getElementById('debug-log').classList.toggle('show'); }
 function debugLog(type, msg) {
   const el = document.getElementById('debug-log');
   if (!el) return;
@@ -725,17 +765,14 @@ function postMessageWithResponse(message, timeoutMs = 30000) {
     const requestId = crypto.randomUUID();
     const timer = setTimeout(() => {
       window.removeEventListener('message', handler);
-      reject(new Error(`Timeout after ${Math.round(timeoutMs/1000)}s — server taking too long`));
+      reject(new Error(`Timeout after ${Math.round(timeoutMs/1000)}s`));
     }, timeoutMs);
     function handler(event) {
       if (event.data?.type?.endsWith('-response') && event.data?.requestId === requestId) {
         clearTimeout(timer);
         window.removeEventListener('message', handler);
-        if (event.data.error) {
-          reject(new Error(event.data.error));
-        } else {
-          resolve(event.data.body);
-        }
+        if (event.data.error) reject(new Error(event.data.error));
+        else resolve(event.data.body);
       }
     }
     window.addEventListener('message', handler);
@@ -750,9 +787,8 @@ async function directFetch(method, path, body) {
   const ctx = window.managerAppContext;
   if (!ctx || !ctx.apiEndpoint) throw new Error('managerAppContext not available');
   let url;
-  if (path.startsWith('http')) {
-    url = path;
-  } else {
+  if (path.startsWith('http')) url = path;
+  else {
     const base = ctx.apiEndpoint.replace(/\/+$/, '');
     url = base + (path.startsWith('/') ? path : '/' + path);
   }
@@ -770,14 +806,12 @@ async function directFetch(method, path, body) {
   debugLog('info', `→ ${method} ${url}`);
   const resp = await fetch(url, opts);
   const text = await resp.text();
-  debugLog(resp.ok ? 'ok' : 'fail',
-    `← ${resp.status} ${resp.statusText} · ${text.substring(0, 160)}`);
+  debugLog(resp.ok ? 'ok' : 'fail', `← ${resp.status} ${resp.statusText} · ${text.substring(0, 160)}`);
   if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${text.substring(0, 200)}`);
   try { return JSON.parse(text); } catch { return text; }
 }
 
 async function apiCall(method, path, body) {
-  // postMessage only — never directFetch for writes (would cause duplicates).
   const msg = { type: 'api-request', method, path };
   if (body !== undefined && body !== null) msg.body = body;
   const result = await postMessageWithResponse(msg);
@@ -786,17 +820,11 @@ async function apiCall(method, path, body) {
 }
 
 /* ══════════════════════════════════════════════════════
-   Paginated batch fetch  —  resilient version
-   FIX: never use spread (`...page`) on a large array — it
-   blows up at ~100k args with "Maximum call stack size
-   exceeded". Use a plain index loop instead.
-   FIX: per-page timeout is generous (3 min) and each page
-   retries up to 2 times with backoff so a slow sales-invoice
-   batch doesn't silently return [] and ruin stock totals.
+   Paginated batch fetch
 ══════════════════════════════════════════════════════ */
-const BATCH_PAGE_SIZE   = 2000;     // smaller pages = faster per call, more reliable
-const BATCH_TIMEOUT_MS  = 180000;   // 3 minutes per page
-const BATCH_RETRIES     = 2;        // 3 attempts total per page
+const BATCH_PAGE_SIZE  = 2000;
+const BATCH_TIMEOUT_MS = 180000;
+const BATCH_RETRIES    = 2;
 
 async function fetchOnePage(canDirect, path) {
   let lastErr;
@@ -804,15 +832,12 @@ async function fetchOnePage(canDirect, path) {
     try {
       return canDirect
         ? await directFetch('GET', path)
-        : await postMessageWithResponse(
-            { type: 'api-request', method: 'GET', path },
-            BATCH_TIMEOUT_MS
-          );
+        : await postMessageWithResponse({ type: 'api-request', method: 'GET', path }, BATCH_TIMEOUT_MS);
     } catch (e) {
       lastErr = e;
       if (attempt < BATCH_RETRIES) {
         const wait = 1500 * (attempt + 1);
-        debugLog('info', `↻ retry ${attempt+1}/${BATCH_RETRIES} for ${path} in ${wait}ms · ${e.message.substring(0,80)}`);
+        debugLog('info', `↻ retry ${attempt+1}/${BATCH_RETRIES} for ${path} in ${wait}ms`);
         await new Promise(r => setTimeout(r, wait));
       }
     }
@@ -822,99 +847,55 @@ async function fetchOnePage(canDirect, path) {
 
 async function getBatchEndpoint(endpointPath, onProgress) {
   const allItems = [];
-  let nextToken     = null;
-  let pageNum       = 0;
-  let apiTotal      = null;
-  let useSkip       = false;   // fallback to offset-based when no token returned
-  let lastFirstKey  = null;    // detect "same page returned twice" infinite loops
-
-  // For read-only GETs, prefer directFetch when we have a context — it skips
-  // the postMessage relay and is much faster on large paginated datasets.
+  let nextToken = null, pageNum = 0, apiTotal = null, useSkip = false, lastFirstKey = null;
   const canDirect = !!(window.managerAppContext?.apiEndpoint);
 
   while (true) {
     let path;
-    if (useSkip) {
-      // Offset-based pagination — Manager.io accepts Skip= for batch endpoints
-      path = endpointPath + '?PageSize=' + BATCH_PAGE_SIZE + '&Skip=' + allItems.length;
-    } else if (nextToken) {
-      path = endpointPath + '?PageSize=' + BATCH_PAGE_SIZE
-           + '&next_page_token=' + encodeURIComponent(nextToken)
-           + '&NextPageToken='   + encodeURIComponent(nextToken);  // hedge: try both casings
-    } else {
-      path = endpointPath + '?PageSize=' + BATCH_PAGE_SIZE;
-    }
+    if (useSkip) path = endpointPath + '?PageSize=' + BATCH_PAGE_SIZE + '&Skip=' + allItems.length;
+    else if (nextToken) path = endpointPath + '?PageSize=' + BATCH_PAGE_SIZE + '&next_page_token=' + encodeURIComponent(nextToken) + '&NextPageToken=' + encodeURIComponent(nextToken);
+    else path = endpointPath + '?PageSize=' + BATCH_PAGE_SIZE;
 
     const data = await fetchOnePage(canDirect, path);
-
-    // Tolerant items-array extraction — try every field name we've seen.
     let page;
-    if (Array.isArray(data))                   page = data;
-    else if (Array.isArray(data.items))        page = data.items;
-    else if (Array.isArray(data.Items))        page = data.Items;
-    else if (Array.isArray(data.results))      page = data.results;
-    else if (Array.isArray(data.records))      page = data.records;
-    else if (Array.isArray(data.data))         page = data.data;
-    else                                        page = [];
+    if (Array.isArray(data)) page = data;
+    else if (Array.isArray(data.items)) page = data.items;
+    else if (Array.isArray(data.Items)) page = data.Items;
+    else if (Array.isArray(data.results)) page = data.results;
+    else if (Array.isArray(data.records)) page = data.records;
+    else if (Array.isArray(data.data)) page = data.data;
+    else page = [];
 
-    // First-page diagnostic — log all top-level keys so we can see what
-    // pagination fields the API actually exposes (only logs once per source).
     if (pageNum === 0 && !Array.isArray(data)) {
       const keys = Object.keys(data).slice(0, 14);
       debugLog('info', `${endpointPath} first-page keys: {${keys.join(', ')}}`);
     }
-
     if (page.length === 0) break;
 
-    // Detect stuck loops — if the API ignores both our token AND our Skip,
-    // we'd otherwise re-fetch the same page forever.
     const firstKey = page[0]?.key || page[0]?.Key || null;
     if (firstKey && firstKey === lastFirstKey) {
-      debugLog('fail', `${endpointPath}: pagination not advancing (same first key '${firstKey}'). Stopping at ${allItems.length}.`);
+      debugLog('fail', `${endpointPath}: pagination stuck. Stopping at ${allItems.length}.`);
       break;
     }
     lastFirstKey = firstKey;
-
-    // SAFE append — index loop instead of spread, so 100k+ rows never crash.
     for (let i = 0; i < page.length; i++) allItems.push(page[i]);
 
     if (apiTotal === null) {
-      apiTotal = data.totalCount ?? data.total ?? data.count
-        ?? data.TotalCount ?? data.Total ?? data.Count
-        ?? data._metadata?.totalCount ?? null;
+      apiTotal = data.totalCount ?? data.total ?? data.count ?? data.TotalCount ?? data.Total ?? data.Count ?? data._metadata?.totalCount ?? null;
     }
-
     pageNum++;
     if (onProgress) onProgress(allItems.length, apiTotal, pageNum);
 
-    // Decide how to fetch the next page.
-    const newToken = data.next_page_token || data.nextPageToken
-      || data.NextPageToken || data.nextPage
-      || data._links?.next?.href || null;
+    const newToken = data.next_page_token || data.nextPageToken || data.NextPageToken || data.nextPage || data._links?.next?.href || null;
+    if (newToken) { nextToken = newToken; useSkip = false; }
+    else if (page.length >= BATCH_PAGE_SIZE) {
+      if (!useSkip) debugLog('info', `${endpointPath}: switching to Skip-based at ${allItems.length}`);
+      useSkip = true; nextToken = null;
+    } else break;
 
-    if (newToken) {
-      nextToken = newToken;
-      useSkip = false; // tokens work, prefer them
-    } else if (page.length >= BATCH_PAGE_SIZE) {
-      // Page came back FULL but server didn't give us a token —
-      // switch to Skip/offset pagination so we keep going.
-      if (!useSkip) {
-        debugLog('info', `${endpointPath}: no next_page_token but page is full · switching to Skip-based pagination at offset ${allItems.length}`);
-        useSkip = true;
-      }
-      nextToken = null;
-    } else {
-      // Page wasn't full and no token — we're done.
-      break;
-    }
-
-    // Stop if we know the total and we've reached it.
     if (apiTotal !== null && allItems.length >= apiTotal) break;
-
-    // Hard cap: 5000 pages × 2000 = 10M records.
     if (pageNum >= 5000) break;
   }
-
   return allItems;
 }
 
@@ -922,10 +903,6 @@ async function getBatchInventoryItem(onProgress) {
   return getBatchEndpoint('/api4/inventory-item-batch', onProgress);
 }
 
-/* ══════════════════════════════════════════════════════
-   Yield to UI between heavy chunks (so the page doesn't
-   freeze when summing 100k+ transaction lines).
-══════════════════════════════════════════════════════ */
 const yieldToUI = () => new Promise(r => setTimeout(r, 0));
 
 async function chunkProcess(arr, fn, chunkSize = 5000) {
@@ -938,34 +915,17 @@ async function chunkProcess(arr, fn, chunkSize = 5000) {
 }
 
 /* ══════════════════════════════════════════════════════
-   Compute qty owned per inventory item key.
-   Uses INTEGER accumulator (qty × 1e6) to avoid IEEE-754
-   drift when adding 100k+ floating-point quantities.
-   Sources:
-     + Starting balances    (rec.item.qtyOnHandLines[].qtyOnHand)
-     + Purchase invoices    (rec.item.lines[].qty)
-     − Debit notes          (returns to supplier)
-     − Sales invoices       (rec.item.lines[].qty)
-     + Credit notes         (returns from customer)
-     − Inventory write-offs (rec.item.items[].qty)
+   Compute qty owned per inventory item key
 ══════════════════════════════════════════════════════ */
 const SCALE = 1e6;
 
 async function computeQtyOwned(onProgress) {
   const errors = [];
-
-  // ── Sequential fetch with per-page progress ─────────────────────────
-  // Why sequential? The parent frame serializes postMessage requests
-  // anyway, so parallel just means later requests sit in a queue burning
-  // their timeout clock while earlier ones run. Sequential = predictable
-  // progress + each fetch gets the full timeout window for itself.
   const fetchSource = async (path, label) => {
     onProgress && onProgress(`${label} · fetching…`);
     try {
       const data = await getBatchEndpoint(path, (loaded, total, page) => {
-        const totalStr = total
-          ? `${loaded.toLocaleString()} / ${total.toLocaleString()}`
-          : `${loaded.toLocaleString()} loaded`;
+        const totalStr = total ? `${loaded.toLocaleString()} / ${total.toLocaleString()}` : `${loaded.toLocaleString()} loaded`;
         onProgress && onProgress(`${label} · page ${page} · ${totalStr}`);
       });
       debugLog('ok', `${label}: ${data.length.toLocaleString()} records`);
@@ -978,107 +938,31 @@ async function computeQtyOwned(onProgress) {
   };
 
   const startingBalances = await fetchSource('/api4/inventory-item-starting-balance-batch', 'Starting balances');
-  const purchaseInvoices = await fetchSource('/api4/purchase-invoice-batch',                'Purchase invoices');
-  const debitNotes       = await fetchSource('/api4/debit-note-batch',                      'Debit notes');
-  const salesInvoices    = await fetchSource('/api4/sales-invoice-batch',                   'Sales invoices');
-  const creditNotes      = await fetchSource('/api4/credit-note-batch',                     'Credit notes');
-  const writeOffs        = await fetchSource('/api4/inventory-write-off-batch',             'Write-offs');
+  const purchaseInvoices = await fetchSource('/api4/purchase-invoice-batch', 'Purchase invoices');
+  const debitNotes       = await fetchSource('/api4/debit-note-batch', 'Debit notes');
+  const salesInvoices    = await fetchSource('/api4/sales-invoice-batch', 'Sales invoices');
+  const creditNotes      = await fetchSource('/api4/credit-note-batch', 'Credit notes');
+  const writeOffs        = await fetchSource('/api4/inventory-write-off-batch', 'Write-offs');
 
-  debugLog('info',
-    `Stock sources — starting:${startingBalances.length} ` +
-    `purchases:${purchaseInvoices.length} debitNotes:${debitNotes.length} ` +
-    `sales:${salesInvoices.length} creditNotes:${creditNotes.length} writeOffs:${writeOffs.length}`
-  );
-
-  // Integer accumulator — no float drift.
   const microMap = Object.create(null);
-  const addMicro = (k, qty) => {
-    if (!k) return;
-    const n = Number(qty);
-    if (!n) return; // skip 0 / NaN / null
-    microMap[k] = (microMap[k] || 0) + Math.round(n * SCALE);
-  };
-  const subMicro = (k, qty) => {
-    if (!k) return;
-    const n = Number(qty);
-    if (!n) return;
-    microMap[k] = (microMap[k] || 0) - Math.round(n * SCALE);
-  };
+  const addMicro = (k, qty) => { if (!k) return; const n = Number(qty); if (!n) return; microMap[k] = (microMap[k] || 0) + Math.round(n * SCALE); };
+  const subMicro = (k, qty) => { if (!k) return; const n = Number(qty); if (!n) return; microMap[k] = (microMap[k] || 0) - Math.round(n * SCALE); };
 
-  // ── 1. Starting balances ──
-  onProgress && onProgress(`Computing stock · starting balances (${startingBalances.length.toLocaleString()})…`);
+  onProgress && onProgress(`Computing stock…`);
   await chunkProcess(startingBalances, rec => {
-    const d = rec.item || rec;
-    const itemKey = d.inventoryItem || null;
-    const lines = d.qtyOnHandLines || [];
-    if (lines.length > 0) {
-      for (let i = 0; i < lines.length; i++) addMicro(itemKey, lines[i].qtyOnHand);
-    } else {
-      addMicro(itemKey, d.qtyOwned ?? 0);
-    }
+    const d = rec.item || rec; const itemKey = d.inventoryItem || null; const lines = d.qtyOnHandLines || [];
+    if (lines.length > 0) { for (let i = 0; i < lines.length; i++) addMicro(itemKey, lines[i].qtyOnHand); }
+    else addMicro(itemKey, d.qtyOwned ?? 0);
   });
+  await chunkProcess(purchaseInvoices, rec => { const lines = rec.item?.lines; if (!lines) return; for (let i = 0; i < lines.length; i++) { const ln = lines[i]; if (ln.item) addMicro(ln.item, ln.qty); } });
+  await chunkProcess(debitNotes, rec => { const lines = rec.item?.lines; if (!lines) return; for (let i = 0; i < lines.length; i++) { const ln = lines[i]; if (ln.item) subMicro(ln.item, ln.qty); } });
+  await chunkProcess(salesInvoices, rec => { const lines = rec.item?.lines; if (!lines) return; for (let i = 0; i < lines.length; i++) { const ln = lines[i]; if (ln.item) subMicro(ln.item, ln.qty); } });
+  await chunkProcess(creditNotes, rec => { const lines = rec.item?.lines; if (!lines) return; for (let i = 0; i < lines.length; i++) { const ln = lines[i]; if (ln.item) addMicro(ln.item, ln.qty); } });
+  await chunkProcess(writeOffs, rec => { const items = rec.item?.items; if (!items) return; for (let i = 0; i < items.length; i++) { const e = items[i]; if (e.inventoryItem) subMicro(e.inventoryItem, e.qty); } });
 
-  // ── 2. Purchase invoices (IN) ──
-  onProgress && onProgress(`Computing stock · purchase invoices (${purchaseInvoices.length.toLocaleString()})…`);
-  await chunkProcess(purchaseInvoices, rec => {
-    const lines = rec.item?.lines;
-    if (!lines) return;
-    for (let i = 0; i < lines.length; i++) {
-      const ln = lines[i];
-      if (ln.item) addMicro(ln.item, ln.qty);
-    }
-  });
-
-  // ── 3. Debit notes (OUT) ──
-  onProgress && onProgress(`Computing stock · debit notes (${debitNotes.length.toLocaleString()})…`);
-  await chunkProcess(debitNotes, rec => {
-    const lines = rec.item?.lines;
-    if (!lines) return;
-    for (let i = 0; i < lines.length; i++) {
-      const ln = lines[i];
-      if (ln.item) subMicro(ln.item, ln.qty);
-    }
-  });
-
-  // ── 4. Sales invoices (OUT) ──
-  onProgress && onProgress(`Computing stock · sales invoices (${salesInvoices.length.toLocaleString()})…`);
-  await chunkProcess(salesInvoices, rec => {
-    const lines = rec.item?.lines;
-    if (!lines) return;
-    for (let i = 0; i < lines.length; i++) {
-      const ln = lines[i];
-      if (ln.item) subMicro(ln.item, ln.qty);
-    }
-  });
-
-  // ── 5. Credit notes (IN) ──
-  onProgress && onProgress(`Computing stock · credit notes (${creditNotes.length.toLocaleString()})…`);
-  await chunkProcess(creditNotes, rec => {
-    const lines = rec.item?.lines;
-    if (!lines) return;
-    for (let i = 0; i < lines.length; i++) {
-      const ln = lines[i];
-      if (ln.item) addMicro(ln.item, ln.qty);
-    }
-  });
-
-  // ── 6. Write-offs (OUT) ──
-  onProgress && onProgress(`Computing stock · write-offs (${writeOffs.length.toLocaleString()})…`);
-  await chunkProcess(writeOffs, rec => {
-    const items = rec.item?.items;
-    if (!items) return;
-    for (let i = 0; i < items.length; i++) {
-      const e = items[i];
-      if (e.inventoryItem) subMicro(e.inventoryItem, e.qty);
-    }
-  });
-
-  // Convert integer accumulator back to floats.
   const qtyMap = Object.create(null);
   for (const k in microMap) qtyMap[k] = microMap[k] / SCALE;
-
   debugLog('ok', `qtyOwned computed for ${Object.keys(qtyMap).length.toLocaleString()} unique items`);
-
   return { qtyMap, errors };
 }
 
@@ -1086,20 +970,15 @@ async function computeQtyOwned(onProgress) {
    State
 ══════════════════════════════════════════════════════ */
 const state = {
-  items: [],
-  customers: [],
-  cart: [],
-  selectedCustomer: null,
-  reference: '',
+  items: [], customers: [], cart: [],
+  selectedCustomer: null, reference: '',
   qtyOwned: Object.create(null),
-
-  // Search indexes — built once after load for fast lookup.
-  itemIndex: [],            // [{rec, key, codeLower, nameLower}, ...]
-  itemByCodeExact: new Map(), // codeLower -> rec  (O(1) scanner lookup)
+  itemIndex: [], itemByCodeExact: new Map(),
+  lastSubmittedSale: null, // for receipt printing
 };
 
 /* ══════════════════════════════════════════════════════
-   Build search indexes after items load.
+   Build search indexes
 ══════════════════════════════════════════════════════ */
 function buildItemIndexes() {
   const items = state.items;
@@ -1115,12 +994,9 @@ function buildItemIndexes() {
   }
   state.itemIndex = idx;
   state.itemByCodeExact = exact;
-  debugLog('ok', `Indexed ${items.length.toLocaleString()} items for fast search`);
+  debugLog('ok', `Indexed ${items.length.toLocaleString()} items`);
 }
 
-/* ══════════════════════════════════════════════════════
-   Auto-generate unique reference — POS-YYMMDD-HHMMSS
-══════════════════════════════════════════════════════ */
 function generateReference() {
   const d = new Date();
   const pad = n => String(n).padStart(2, '0');
@@ -1131,47 +1007,35 @@ function generateReference() {
    Load
 ══════════════════════════════════════════════════════ */
 async function loadAllRecords() {
-  const btn    = document.getElementById('load-btn');
-  const bar    = document.getElementById('prog-bar');
+  const btn = document.getElementById('load-btn');
+  const bar = document.getElementById('prog-bar');
   const status = document.getElementById('status-text');
-  const app    = document.getElementById('app');
+  const app = document.getElementById('app');
 
-  btn.disabled = true;
-  btn.textContent = 'Loading…';
-  bar.style.width = '0%';
-  app.innerHTML = '';
+  btn.disabled = true; btn.textContent = 'Loading…';
+  bar.style.width = '0%'; app.innerHTML = '';
 
   try {
-    status.textContent = 'Fetching items & customers in parallel…';
+    status.textContent = 'Fetching items & customers…';
     bar.style.width = '5%';
-
     let itemsDone = false, custsDone = false;
-    const updateParallelStatus = (label, loaded, total) => {
-      status.textContent = total
-        ? `${label} · ${loaded.toLocaleString()}/${total.toLocaleString()}${itemsDone?' · items ✓':''}${custsDone?' · customers ✓':''}`
-        : `${label} · ${loaded.toLocaleString()} loaded…`;
-    };
 
     const [items, customers] = await Promise.all([
       getBatchInventoryItem((loaded, total, page) => {
-        updateParallelStatus(`Items · pg ${page}`, loaded, total);
+        status.textContent = `Items · pg ${page} · ${loaded.toLocaleString()} loaded`;
         if (total) bar.style.width = Math.min(20, Math.round(loaded/total*20)) + '%';
       }).then(r => { itemsDone = true; return r; }),
       getBatchEndpoint('/api4/customer-batch', (loaded, total, page) => {
-        updateParallelStatus(`Customers · pg ${page}`, loaded, total);
+        status.textContent = `Customers · pg ${page} · ${loaded.toLocaleString()} loaded`;
       }).then(r => { custsDone = true; return r; }),
     ]);
 
-    state.items = items;
-    state.customers = customers;
-
-    // Build search indexes once — this is the key perf fix for 100k+ items.
+    state.items = items; state.customers = customers;
     status.textContent = `Indexing ${items.length.toLocaleString()} items…`;
     bar.style.width = '38%';
     await yieldToUI();
     buildItemIndexes();
 
-    // Compute qty owned (chunked + integer accumulator)
     bar.style.width = '50%';
     const { qtyMap, errors } = await computeQtyOwned(msg => { status.textContent = msg; });
     state.qtyOwned = qtyMap;
@@ -1179,38 +1043,27 @@ async function loadAllRecords() {
 
     const ownedCount = Object.keys(qtyMap).length;
     if (errors.length) {
-      status.textContent = `⚠ ${errors.length} source(s) failed — stock may be inaccurate · ${items.length.toLocaleString()} items · ${customers.length.toLocaleString()} customers`;
+      status.textContent = `⚠ ${errors.length} source(s) failed · ${items.length.toLocaleString()} items · ${customers.length.toLocaleString()} customers`;
     } else {
       status.textContent = `✓ ${items.length.toLocaleString()} items · ${customers.length.toLocaleString()} customers · stock for ${ownedCount.toLocaleString()}`;
     }
-    btn.textContent = '↻ Reload';
-    btn.disabled = false;
+    btn.textContent = '↻ Reload'; btn.disabled = false;
 
-    // Default 999/POS customer
     const def = getDefaultCustomer();
-    if (def) {
-      state.selectedCustomer = {
-        key: def.key,
-        name: def.item?.name || 'POS',
-        code: def.item?.code || '999',
-      };
-    }
+    if (def) state.selectedCustomer = { key: def.key, name: def.item?.name || 'POS', code: def.item?.code || '999' };
     state.reference = generateReference();
 
     render();
 
-    // Surface any partial-fetch errors so user knows totals may be off
     if (errors.length) {
       const banner = document.createElement('div');
       banner.className = 'warning-banner';
-      banner.innerHTML = `<strong>⚠ Stock totals may be inaccurate.</strong> ${errors.length} of 6 stock source(s) failed to load. Press <strong>↻ Reload</strong> to retry — slow endpoints are retried automatically up to 3 times per page.<br><small style="opacity:.8;display:block;margin-top:6px">${errors.map(e => escapeHtml(e)).join(' · ')}</small>`;
+      banner.innerHTML = `<strong>⚠ Stock totals may be inaccurate.</strong> ${errors.length} source(s) failed. Press ↻ Reload to retry.`;
       app.insertBefore(banner, app.firstChild);
     }
-
   } catch (err) {
     status.textContent = '⚠ ' + err.message;
-    btn.textContent = '↻ Retry';
-    btn.disabled = false;
+    btn.textContent = '↻ Retry'; btn.disabled = false;
     app.innerHTML = `<div class="error-box">⚠ ${err.message}<br><small>Make sure this extension is running inside Manager.io</small></div>`;
   }
 }
@@ -1223,28 +1076,21 @@ const fmtQty = v => (Number(v) || 0).toLocaleString(undefined, { maximumFraction
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
 function escapeHtml(s) {
-  return String(s ?? '').replace(/[&<>"']/g, c =>
-    ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
+  return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
 }
-
 function toast(msg, type = 'info') {
   const t = document.createElement('div');
-  t.className = 'toast ' + type;
-  t.textContent = msg;
+  t.className = 'toast ' + type; t.textContent = msg;
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 4500);
 }
 
-/* O(1) exact-code lookup → fallback to single-pass partial match. */
 function findItemByBarcode(code) {
   if (!code) return null;
   const needle = code.trim().toLowerCase();
   if (!needle) return null;
-
   const exact = state.itemByCodeExact.get(needle);
   if (exact) return exact;
-
-  // Single pass for prefix / name match — early exit on first hit.
   const idx = state.itemIndex;
   for (let i = 0; i < idx.length; i++) {
     if (idx[i].codeLower.startsWith(needle) && needle.length >= 2) return idx[i].rec;
@@ -1263,41 +1109,27 @@ function getDefaultCustomer() {
   );
 }
 
-/* ══════════════════════════════════════════════════════
-   FAST search — single pass, early termination, ranked.
-══════════════════════════════════════════════════════ */
 function searchItems(needle, limit = 12) {
   needle = needle.toLowerCase();
   if (!needle) return [];
   const idx = state.itemIndex;
-  const out = [];
-  const seen = new Set();
-
-  // Tier 1: exact code (single map lookup)
+  const out = [], seen = new Set();
   const ex = state.itemByCodeExact.get(needle);
   if (ex) { out.push(ex); seen.add(ex.key); }
-
-  // Tier 2: code starts-with  (single pass, early exit)
   for (let i = 0; i < idx.length && out.length < limit; i++) {
     const e = idx[i];
-    if (!seen.has(e.key) && e.codeLower && e.codeLower.startsWith(needle)) {
-      out.push(e.rec); seen.add(e.key);
-    }
+    if (!seen.has(e.key) && e.codeLower && e.codeLower.startsWith(needle)) { out.push(e.rec); seen.add(e.key); }
   }
   if (out.length >= limit) return out;
-
-  // Tier 3: name contains  (single pass, early exit)
   for (let i = 0; i < idx.length && out.length < limit; i++) {
     const e = idx[i];
-    if (!seen.has(e.key) && e.nameLower && e.nameLower.includes(needle)) {
-      out.push(e.rec); seen.add(e.key);
-    }
+    if (!seen.has(e.key) && e.nameLower && e.nameLower.includes(needle)) { out.push(e.rec); seen.add(e.key); }
   }
   return out;
 }
 
 /* ══════════════════════════════════════════════════════
-   Cart  —  incremental DOM updates (no full re-render)
+   Cart — EDITABLE PRICES (Feature #1)
 ══════════════════════════════════════════════════════ */
 function addItemToCartByRecord(rec) {
   if (!rec) return false;
@@ -1313,6 +1145,7 @@ function addItemToCartByRecord(rec) {
       itemName: rec.item?.itemName || 'Item',
       qty: rec.item?.hasDefaultQty && rec.item?.defaultQty ? rec.item.defaultQty : 1,
       unitPrice: rec.item?.hasDefaultSalesUnitPrice ? (rec.item.defaultSalesUnitPrice || 0) : 0,
+      defaultPrice: rec.item?.hasDefaultSalesUnitPrice ? (rec.item.defaultSalesUnitPrice || 0) : 0,
       description: rec.item?.hasDefaultLineDescription ? (rec.item.defaultLineDescription || '') : '',
       qtyOwned: (state.qtyOwned && key in state.qtyOwned) ? state.qtyOwned[key] : null,
     };
@@ -1326,7 +1159,8 @@ function addItemToCartByRecord(rec) {
 function addItemToCart(barcode) {
   const rec = findItemByBarcode(barcode);
   if (!rec) {
-    toast(`No item matches "${barcode}"`, 'error');
+    // Feature #3: Unknown barcode → offer to create new item
+    openAddItemModal(barcode);
     return false;
   }
   return addItemToCartByRecord(rec);
@@ -1341,6 +1175,7 @@ function updateCartQty(key, qty) {
   renderSummary();
 }
 
+// Feature #1: Allow changing unit price inline
 function updateCartPrice(key, price) {
   const line = state.cart.find(l => l.key === key);
   if (!line) return;
@@ -1366,54 +1201,35 @@ function clearCart() {
   renderSummary();
 }
 
-/* CSS.escape polyfill-lite (UUIDs only contain - and hex, but be safe) */
 function cssEscape(s) { return String(s).replace(/[^a-zA-Z0-9_-]/g, c => '\\' + c); }
 
 /* ══════════════════════════════════════════════════════
-   Submit sale
+   Submit sale + auto-print receipt (Feature #2)
 ══════════════════════════════════════════════════════ */
 let isSubmitting = false;
 
 async function submitSale() {
   if (isSubmitting) return;
-
-  if (state.cart.length === 0) {
-    toast('Cart is empty — scan items first', 'error');
-    return;
-  }
+  if (state.cart.length === 0) { toast('Cart is empty — scan items first', 'error'); return; }
 
   let customer = state.selectedCustomer;
   if (!customer) {
     const def = getDefaultCustomer();
-    if (def) {
-      customer = {
-        key: def.key,
-        name: def.item?.name || 'POS',
-        code: def.item?.code || '999'
-      };
-    }
+    if (def) customer = { key: def.key, name: def.item?.name || 'POS', code: def.item?.code || '999' };
   }
-
-  if (!customer) {
-    toast('No POS customer found.', 'error');
-    return;
-  }
+  if (!customer) { toast('No POS customer found.', 'error'); return; }
 
   isSubmitting = true;
-
   const btn = document.getElementById('submit-btn');
-  btn.disabled = true;
-  btn.textContent = 'Processing…';
+  btn.disabled = true; btn.textContent = 'Processing…';
 
   try {
     const issueDate = document.getElementById('issue-date').value || todayISO();
     const custName  = document.getElementById('cust-name-free').value.trim();
     const custPhone = document.getElementById('cust-phone').value.trim();
-
     let description = '';
     if (custName) description += `Name: ${custName} `;
     if (custPhone) description += `Phone: ${custPhone}`;
-
     const reference = state.reference || generateReference();
 
     const payload = {
@@ -1437,24 +1253,45 @@ async function submitSale() {
       }
     };
 
-    debugLog('info', 'Submitting invoice...');
-    debugLog('info', JSON.stringify(payload));
-
+    debugLog('info', 'Submitting invoice…');
     const result = await apiCall('POST', '/api4/sales-invoice', payload);
-
     debugLog('ok', 'Invoice saved: ' + result);
-
     toast(`✓ Sale saved · ${reference}`, 'success');
+
+    // Save for receipt printing
+    state.lastSubmittedSale = {
+      reference, issueDate,
+      customerName: customer.name || custName || 'Walk-in',
+      customerCode: customer.code || '',
+      custNameFree: custName,
+      custPhone: custPhone,
+      lines: state.cart.map(l => ({
+        code: l.itemCode, name: l.itemName,
+        qty: Number(l.qty) || 0,
+        price: Number(l.unitPrice) || 0,
+        total: (Number(l.qty) || 0) * (Number(l.unitPrice) || 0)
+      })),
+      total: cartTotal(),
+      totalQty: cartQty(),
+    };
+
+    // Update stock in memory
+    for (const l of state.cart) {
+      if (l.key in state.qtyOwned) {
+        state.qtyOwned[l.key] -= Number(l.qty) || 0;
+      }
+    }
 
     state.cart = [];
     state.reference = generateReference();
-
     renderEmptyCart();
     renderSummary();
     renderReference();
-
     document.getElementById('cust-name-free').value = '';
     document.getElementById('cust-phone').value = '';
+
+    // Auto-show receipt after sale
+    showReceiptModal();
     document.getElementById('barcode').focus();
 
   } catch (err) {
@@ -1462,9 +1299,207 @@ async function submitSale() {
     toast('Failed: ' + err.message, 'error');
   }
 
-  btn.disabled = false;
-  btn.textContent = 'Complete Sale';
+  btn.disabled = false; btn.textContent = 'Complete Sale';
   isSubmitting = false;
+}
+
+/* ══════════════════════════════════════════════════════
+   Feature #2: Thermal Receipt Printing
+══════════════════════════════════════════════════════ */
+function showReceiptModal() {
+  const sale = state.lastSubmittedSale;
+  if (!sale) { toast('No recent sale to print', 'error'); return; }
+  const area = document.getElementById('receipt-preview-area');
+  area.innerHTML = buildThermalReceiptHTML(sale);
+  document.getElementById('receipt-modal').classList.add('open');
+}
+
+function closeReceiptModal() {
+  document.getElementById('receipt-modal').classList.remove('open');
+  setTimeout(() => { const b = document.getElementById('barcode'); if (b) b.focus(); }, 100);
+}
+
+function buildThermalReceiptHTML(sale) {
+  const now = new Date();
+  const dateStr = sale.issueDate || now.toISOString().slice(0, 10);
+  const timeStr = now.toLocaleTimeString();
+
+  let lines = '';
+  for (const l of sale.lines) {
+    lines += `<tr>
+      <td style="text-align:center;font-weight:700;font-size:11px">${l.qty}</td>
+      <td style="font-size:11px;font-weight:500">${escapeHtml(l.name)}</td>
+      <td style="text-align:right;font-size:11px">${fmt(l.price)}</td>
+      <td style="text-align:right;font-weight:700;font-size:11px">${fmt(l.total)}</td>
+    </tr>`;
+  }
+
+  return `
+    <div id="thermal-receipt" style="font-family:'Roboto Mono',monospace;width:72mm;max-width:72mm;margin:0 auto;padding:3mm 4mm;color:#000;font-size:11px;line-height:1.4">
+      <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:2mm;margin-bottom:2mm">
+        <div style="font-size:14px;font-weight:700">SALES RECEIPT</div>
+        <div style="font-size:9px;margin-top:1mm;color:#333">POS Terminal · Manager.io</div>
+      </div>
+      <div style="font-size:10px;border-bottom:1px dashed #999;padding-bottom:1.5mm;margin-bottom:1.5mm">
+        <div style="display:flex;justify-content:space-between"><span>Ref#</span><span style="font-weight:700">${escapeHtml(sale.reference)}</span></div>
+        <div style="display:flex;justify-content:space-between"><span>Date</span><span>${escapeHtml(dateStr)}</span></div>
+        <div style="display:flex;justify-content:space-between"><span>Time</span><span>${timeStr}</span></div>
+        <div style="display:flex;justify-content:space-between"><span>Customer</span><span style="font-weight:600">${escapeHtml(sale.customerName)}</span></div>
+        ${sale.custPhone ? `<div style="display:flex;justify-content:space-between"><span>Phone</span><span>${escapeHtml(sale.custPhone)}</span></div>` : ''}
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:10px">
+        <thead><tr style="border-bottom:1px solid #000">
+          <th style="text-align:center;font-size:9px;padding:1mm 0">QTY</th>
+          <th style="text-align:left;font-size:9px;padding:1mm 0">ITEM</th>
+          <th style="text-align:right;font-size:9px;padding:1mm 0">RATE</th>
+          <th style="text-align:right;font-size:9px;padding:1mm 0">AMT</th>
+        </tr></thead>
+        <tbody>${lines}</tbody>
+      </table>
+      <div style="border-top:2px solid #000;margin-top:1.5mm;padding-top:1.5mm">
+        <div style="display:flex;justify-content:space-between;font-size:10px"><span>Total Qty:</span><span style="font-weight:700">${sale.totalQty}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;margin-top:1mm"><span>TOTAL:</span><span>${fmt(sale.total)}</span></div>
+      </div>
+      <div style="border-top:1px dashed #999;margin-top:2mm;padding-top:1.5mm;text-align:center;font-size:9px;color:#333">
+        <div>Please report any shortage within 3 days</div>
+        <div>Bill required for any exchange</div>
+        <div style="margin-top:1.5mm;font-size:8px">— Thank you for your business —</div>
+      </div>
+    </div>
+  `;
+}
+
+function printReceipt() {
+  const receipt = document.getElementById('thermal-receipt');
+  if (!receipt) return;
+  const printWin = window.open('', '_blank', 'width=320,height=600');
+  if (!printWin) { toast('Popup blocked — allow popups for printing', 'error'); return; }
+  printWin.document.write(`<!doctype html><html><head><meta charset="utf-8">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      @page{size:80mm auto;margin:0}
+      *{box-sizing:border-box;margin:0;padding:0}
+      body{background:#fff;margin:0;padding:0;font-family:'Roboto Mono',monospace}
+      @media print{html,body{width:80mm;background:#fff}}
+    </style>
+  </head><body>${receipt.outerHTML}
+  <script>
+    setTimeout(function(){window.focus();window.print();},400);
+    window.onafterprint=function(){setTimeout(function(){window.close()},200)};
+  <\/script></body></html>`);
+  printWin.document.close();
+}
+
+function downloadReceiptPDF() {
+  const receipt = document.getElementById('thermal-receipt');
+  if (!receipt) return;
+  const sale = state.lastSubmittedSale;
+  const ref = sale ? sale.reference : 'receipt';
+  const html = `<!doctype html><html><head><meta charset="utf-8">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>@page{size:80mm auto;margin:0}*{box-sizing:border-box;margin:0;padding:0}body{background:#fff;font-family:'Roboto Mono',monospace}</style>
+  </head><body>${receipt.outerHTML}</body></html>`;
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = ref.replace(/[^\w.-]+/g, '_') + '.html';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast('Receipt downloaded as HTML — open in browser and "Save as PDF"', 'info');
+}
+
+function shareWhatsApp() {
+  const sale = state.lastSubmittedSale;
+  if (!sale) return;
+  let msg = `*SALES RECEIPT*\nRef# ${sale.reference}\nDate: ${sale.issueDate}\nCustomer: ${sale.customerName}\n────────\n`;
+  for (const l of sale.lines) {
+    msg += `• ${l.name}  ${l.qty} × ${fmt(l.price)} = ${fmt(l.total)}\n`;
+  }
+  msg += `────────\n*TOTAL: ${fmt(sale.total)}*\n\nThank you for your business!`;
+  const url = 'https://wa.me/?text=' + encodeURIComponent(msg);
+  window.open(url, '_blank');
+}
+
+/* ══════════════════════════════════════════════════════
+   Feature #3: Quick Add Inventory Item via Barcode
+══════════════════════════════════════════════════════ */
+function openAddItemModal(prefilledCode) {
+  document.getElementById('new-item-code').value = prefilledCode || '';
+  document.getElementById('new-item-name').value = '';
+  document.getElementById('new-item-unit').value = 'pcs';
+  document.getElementById('new-item-price').value = '';
+  document.getElementById('add-item-modal').classList.add('open');
+  setTimeout(() => {
+    const nameEl = document.getElementById('new-item-name');
+    if (prefilledCode) nameEl.focus();
+    else document.getElementById('new-item-code').focus();
+  }, 100);
+}
+
+function closeAddItemModal() {
+  document.getElementById('add-item-modal').classList.remove('open');
+  setTimeout(() => { const b = document.getElementById('barcode'); if (b) b.focus(); }, 100);
+}
+
+async function submitNewItem() {
+  await doSubmitNewItem(true);
+}
+async function submitNewItemOnly() {
+  await doSubmitNewItem(false);
+}
+
+async function doSubmitNewItem(addToCart) {
+  const code  = document.getElementById('new-item-code').value.trim();
+  const name  = document.getElementById('new-item-name').value.trim();
+  const unit  = document.getElementById('new-item-unit').value.trim() || 'pcs';
+  const price = Number(document.getElementById('new-item-price').value) || 0;
+
+  if (!code && !name) { toast('Please enter at least item code or name', 'error'); return; }
+
+  try {
+    const payload = {
+      value: {
+        itemCode: code || null,
+        itemName: name || code,
+        unitName: unit,
+        hasDefaultSalesUnitPrice: price > 0,
+        defaultSalesUnitPrice: price,
+        valuationMethod: 0,  // FIFO
+      }
+    };
+
+    debugLog('info', 'Creating inventory item: ' + JSON.stringify(payload));
+    const newKey = await apiCall('POST', '/api4/inventory-item', payload);
+    debugLog('ok', 'Item created: ' + newKey);
+    toast(`✓ Item "${name || code}" created`, 'success');
+
+    // Add to local state immediately
+    const newRec = {
+      key: newKey,
+      item: {
+        itemCode: code, itemName: name || code, unitName: unit,
+        hasDefaultSalesUnitPrice: price > 0, defaultSalesUnitPrice: price,
+        hasDefaultQty: false, defaultQty: 0,
+        hasDefaultLineDescription: false, defaultLineDescription: '',
+      }
+    };
+    state.items.push(newRec);
+    buildItemIndexes(); // Rebuild indexes
+
+    // Update scanner count
+    const countEl = document.querySelector('.indexed-count');
+    if (countEl) countEl.textContent = state.items.length.toLocaleString();
+
+    closeAddItemModal();
+
+    if (addToCart) {
+      addItemToCartByRecord(newRec);
+    }
+
+  } catch (err) {
+    debugLog('fail', err.message);
+    toast('Failed to create item: ' + err.message, 'error');
+  }
 }
 
 /* ══════════════════════════════════════════════════════
@@ -1485,7 +1520,7 @@ function cartQty() {
 }
 
 /* ══════════════════════════════════════════════════════
-   Render — main shell (called once after load)
+   Render — main shell
 ══════════════════════════════════════════════════════ */
 function render() {
   const app = document.getElementById('app');
@@ -1495,6 +1530,30 @@ function render() {
     return;
   }
 
+  // Build quick-add items (top 20 by default price, for touch POS)
+  const quickItems = state.items
+    .filter(r => r.item?.hasDefaultSalesUnitPrice && Number(r.item.defaultSalesUnitPrice) > 0)
+    .sort((a, b) => (b.item.defaultSalesUnitPrice || 0) - (a.item.defaultSalesUnitPrice || 0))
+    .slice(0, 20);
+
+  let quickGrid = '';
+  if (quickItems.length > 0) {
+    quickGrid = `
+      <div class="quick-add-section">
+        <div class="quick-add-label">⚡ Quick Add (tap to add)</div>
+        <div class="quick-add-grid">
+          ${quickItems.map(r => `
+            <div class="quick-item" onclick="addItemToCartByRecord(state.items.find(i=>i.key==='${r.key}'))" title="${escapeHtml(r.item.itemName)}">
+              <span class="qi-name">${escapeHtml(r.item.itemName || '')}</span>
+              <span class="qi-price">${fmt(r.item.defaultSalesUnitPrice)}</span>
+              <span class="qi-code">${escapeHtml(r.item.itemCode || '')}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
   app.innerHTML = `
     <div class="pos-grid">
       <!-- LEFT -->
@@ -1502,24 +1561,29 @@ function render() {
         <div class="panel-title">Current Sale</div>
 
         <div class="form-field full">
-          <label>Barcode / Search — scan, type code or name</label>
+          <label>Barcode / Search — scan, type code or name · <kbd class="kbd">Enter</kbd> to add</label>
           <div class="barcode-wrap suggest-wrap">
             <svg class="barcode-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="4" width="18" height="16" rx="2"/>
               <path d="M7 8v8M10 8v8M13 8v8M16 8v8"/>
             </svg>
             <input type="text" id="barcode" class="barcode-input"
-                   placeholder="Scan or type code / name…"
-                   autocomplete="off" />
+                   placeholder="Scan barcode or type code / name…"
+                   autocomplete="off" inputmode="search" />
             <div class="suggest-list item-suggest" id="item-suggest"></div>
           </div>
           <div class="scanner-status">
             <span class="scanner-dot"></span>
             <span>Scanner ready · <span class="indexed-count">${state.items.length.toLocaleString()}</span> items indexed</span>
+            <span style="margin-left:auto">
+              <button class="debug-toggle" onclick="openAddItemModal('')" style="font-size:9px;padding:4px 8px" title="Add new inventory item">+ New Item</button>
+            </span>
           </div>
         </div>
 
-        <div class="stats" style="margin-top:14px">
+        ${quickGrid}
+
+        <div class="stats" style="margin-top:8px">
           <div class="stat"><div class="val" id="stat-lines">0</div><div class="lbl">Lines</div></div>
           <div class="stat"><div class="val" id="stat-qty">0</div><div class="lbl">Total Qty</div></div>
           <div class="stat accent"><div class="val" id="stat-total">0.00</div><div class="lbl">Total</div></div>
@@ -1531,42 +1595,44 @@ function render() {
       <!-- RIGHT -->
       <div class="panel">
         <div class="panel-title">Sale Details</div>
-
-        <div class="form-row">
-          <div class="form-field">
-            <label>Issue Date</label>
-            <input type="date" id="issue-date" value="${todayISO()}" />
+        <div class="right-panel-scroll">
+          <div class="form-row">
+            <div class="form-field">
+              <label>Issue Date</label>
+              <input type="date" id="issue-date" value="${todayISO()}" />
+            </div>
+            <div class="form-field">
+              <label>Reference</label>
+              <div id="ref-display"></div>
+            </div>
           </div>
-          <div class="form-field">
-            <label>Reference</label>
-            <div id="ref-display"></div>
+
+          <div class="form-row">
+            <div class="form-field full suggest-wrap">
+              <label>Customer</label>
+              <input type="text" id="cust-search" placeholder="Type to change customer…" autocomplete="off" />
+              <div class="suggest-list" id="cust-suggest"></div>
+              <div class="customer-display" id="cust-selected"></div>
+            </div>
           </div>
-        </div>
 
-        <div class="form-row">
-          <div class="form-field full suggest-wrap">
-            <label>Customer</label>
-            <input type="text" id="cust-search" placeholder="Type to change customer…" autocomplete="off" />
-            <div class="suggest-list" id="cust-suggest"></div>
-            <div class="customer-display" id="cust-selected"></div>
+          <div class="divider">Walk-in info (saved in description)</div>
+          <div class="form-row">
+            <div class="form-field"><label>Name</label><input type="text" id="cust-name-free" placeholder="Optional" /></div>
+            <div class="form-field"><label>Phone</label><input type="tel" id="cust-phone" placeholder="Optional" /></div>
           </div>
-        </div>
 
-        <div class="divider">Walk-in info (saved in description)</div>
-        <div class="form-row">
-          <div class="form-field"><label>Name</label><input type="text" id="cust-name-free" placeholder="Optional" /></div>
-          <div class="form-field"><label>Phone</label><input type="tel" id="cust-phone" placeholder="Optional" /></div>
-        </div>
+          <div class="summary">
+            <div class="summary-row"><span>Items</span><span class="v" id="sum-lines">0</span></div>
+            <div class="summary-row"><span>Total Quantity</span><span class="v" id="sum-qty">0</span></div>
+            <div class="summary-row grand"><span class="l">Total</span><span class="v" id="sum-total">0.00</span></div>
+          </div>
 
-        <div class="summary">
-          <div class="summary-row"><span>Items</span><span class="v" id="sum-lines">0</span></div>
-          <div class="summary-row"><span>Total Quantity</span><span class="v" id="sum-qty">0</span></div>
-          <div class="summary-row grand"><span class="l">Total</span><span class="v" id="sum-total">0.00</span></div>
-        </div>
-
-        <div class="actions">
-          <button class="btn btn-secondary" onclick="clearCart()">Clear</button>
-          <button class="btn btn-primary" id="submit-btn" onclick="submitSale()">Complete Sale</button>
+          <div class="actions">
+            <button class="btn btn-secondary" onclick="clearCart()">Clear</button>
+            <button class="btn btn-print" onclick="showReceiptModal()" title="Print last receipt">🖨 Print</button>
+            <button class="btn btn-primary" id="submit-btn" onclick="submitSale()">Complete Sale</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1574,7 +1640,6 @@ function render() {
 
   attachBarcodeHandlers();
   attachCustomerSearch();
-
   renderCustomerField();
   renderReference();
   renderEmptyCart();
@@ -1592,13 +1657,13 @@ function renderEmptyCart() {
   wrap.innerHTML = `
     <div class="empty-cart">
       <div class="empty-cart-icon">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
           <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
         </svg>
       </div>
       <div class="empty-cart-title">Ready for your first scan</div>
-      <div class="empty-cart-sub">Items will appear here as they're added</div>
+      <div class="empty-cart-sub">Scan barcode, type code/name, or tap Quick Add items</div>
     </div>
   `;
 }
@@ -1612,13 +1677,13 @@ function ensureCartTable() {
       <table class="cart-table">
         <thead>
           <tr>
-            <th style="width:90px">Code</th>
+            <th style="width:70px">Code</th>
             <th>Item</th>
-            <th style="width:80px;text-align:right">Owned</th>
-            <th style="width:90px;text-align:right">Qty</th>
-            <th style="width:104px;text-align:right">Price</th>
-            <th style="width:104px;text-align:right">Total</th>
-            <th style="width:46px"></th>
+            <th style="width:60px;text-align:right">Stock</th>
+            <th style="width:72px;text-align:right">Qty</th>
+            <th style="width:90px;text-align:right">Price ✎</th>
+            <th style="width:90px;text-align:right">Total</th>
+            <th style="width:40px"></th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -1642,6 +1707,7 @@ function rowHTML(line) {
   }
   const trCls = isOver ? 'over-row' : '';
   const k = escapeHtml(line.key);
+  // Feature #1: price-input is now EDITABLE (class "editable" instead of readonly)
   return `
     <tr data-key="${k}" class="${trCls}">
       <td class="code-cell">${escapeHtml(line.itemCode || '—')}</td>
@@ -1649,11 +1715,14 @@ function rowHTML(line) {
       <td style="text-align:right"><span class="qty-owned ${ownedCls}">${ownedLbl}</span></td>
       <td style="text-align:right">
         <input type="number" class="qty-input" value="${line.qty}" min="0" step="any"
-               onchange="updateCartQty('${k}', this.value)" />
+               onchange="updateCartQty('${k}', this.value)"
+               inputmode="decimal" />
       </td>
       <td style="text-align:right">
-        <input type="number" class="price-input" value="${line.unitPrice}" readonly
-               title="Selling price is fixed" />
+        <input type="number" class="price-input editable" value="${line.unitPrice}" min="0" step="any"
+               onchange="updateCartPrice('${k}', this.value)"
+               inputmode="decimal"
+               title="Edit price for this sale" />
       </td>
       <td class="line-total">${fmt(lineTotal)}</td>
       <td style="text-align:center">
@@ -1671,7 +1740,6 @@ function appendCartRow(line) {
   const newRow = tmp.firstElementChild;
   newRow.classList.add('flash');
   tbody.appendChild(newRow);
-  // Scroll into view
   const wrap = document.getElementById('cart-wrap');
   if (wrap) wrap.scrollTop = wrap.scrollHeight;
 }
@@ -1679,11 +1747,9 @@ function appendCartRow(line) {
 function updateCartRowDOM(line, isIncrement) {
   const row = document.querySelector(`tr[data-key="${cssEscape(line.key)}"]`);
   if (!row) {
-    // Row missing — fallback to append (e.g. empty-cart was rendered)
     if (state.cart.length === 1) appendCartRow(line);
     return;
   }
-  // Replace just this row — keeps focus elsewhere intact.
   const tmp = document.createElement('tbody');
   tmp.innerHTML = rowHTML(line);
   const newRow = tmp.firstElementChild;
@@ -1722,15 +1788,13 @@ function renderCustomerField() {
       <a class="clear-link" href="#" onclick="event.preventDefault();resetToDefaultCustomer()">reset to default</a>
     `;
   } else {
-    el.innerHTML = `<span style="color:var(--danger);font-size:12px;font-weight:500">⚠ No customer with code "999" or "POS" found — please create one in Manager</span>`;
+    el.innerHTML = `<span style="color:var(--danger);font-size:11px;font-weight:500">⚠ No customer with code "999" or "POS" found — please create one in Manager</span>`;
   }
 }
 
 function resetToDefaultCustomer() {
   const def = getDefaultCustomer();
-  state.selectedCustomer = def ? {
-    key: def.key, name: def.item?.name || 'POS', code: def.item?.code || '999',
-  } : null;
+  state.selectedCustomer = def ? { key: def.key, name: def.item?.name || 'POS', code: def.item?.code || '999' } : null;
   const search = document.getElementById('cust-search');
   if (search) search.value = '';
   renderCustomerField();
@@ -1749,15 +1813,13 @@ function attachBarcodeHandlers() {
 
   function closeItemSuggest() {
     itemSuggest.classList.remove('open');
-    _itemActiveIdx = -1;
-    _itemMatches = [];
+    _itemActiveIdx = -1; _itemMatches = [];
   }
 
   function renderItemSuggest(q) {
     if (!q) { closeItemSuggest(); return; }
     _itemMatches = searchItems(q, 12);
     if (_itemMatches.length === 0) { closeItemSuggest(); return; }
-
     const qtyMap = state.qtyOwned;
     let html = '';
     for (let i = 0; i < _itemMatches.length; i++) {
@@ -1792,7 +1854,6 @@ function attachBarcodeHandlers() {
   barcodeEl.addEventListener('input', () => {
     const v = barcodeEl.value.trim();
     clearTimeout(_searchTimer);
-    // Debounce — keeps the UI responsive at 100k+ items.
     _searchTimer = setTimeout(() => renderItemSuggest(v), 60);
   });
 
@@ -1817,21 +1878,21 @@ function attachBarcodeHandlers() {
         e.preventDefault();
         if (_itemActiveIdx >= 0 && _itemMatches[_itemActiveIdx]) {
           addItemToCartByRecord(_itemMatches[_itemActiveIdx]);
-          barcodeEl.value = '';
-          closeItemSuggest();
+          barcodeEl.value = ''; closeItemSuggest();
         } else {
           const val = barcodeEl.value.trim();
-          if (val && addItemToCart(val)) {
-            barcodeEl.value = '';
-            closeItemSuggest();
-          }
+          if (val && addItemToCart(val)) { barcodeEl.value = ''; closeItemSuggest(); }
         }
         return;
       }
     } else if (e.key === 'Enter') {
       e.preventDefault();
       const val = barcodeEl.value.trim();
-      if (val && addItemToCart(val)) barcodeEl.value = '';
+      if (val) {
+        if (addItemToCart(val)) barcodeEl.value = '';
+        // If addItemToCart opens the add-item modal (unknown barcode), clear input
+        else barcodeEl.value = '';
+      }
     }
   });
 
@@ -1879,11 +1940,7 @@ function attachCustomerSearch() {
     custSuggest.classList.add('open');
     custSuggest.querySelectorAll('.suggest-item').forEach(el => {
       el.addEventListener('click', () => {
-        state.selectedCustomer = {
-          key: el.dataset.key,
-          name: el.dataset.name,
-          code: el.dataset.code,
-        };
+        state.selectedCustomer = { key: el.dataset.key, name: el.dataset.name, code: el.dataset.code };
         custSearch.value = '';
         custSuggest.classList.remove('open');
         renderCustomerField();
@@ -1908,8 +1965,7 @@ function attachCustomerSearch() {
       _custActiveIdx = Math.max(_custActiveIdx - 1, 0);
       items.forEach((el, i) => el.classList.toggle('active', i === _custActiveIdx));
     } else if (e.key === 'Enter' && _custActiveIdx >= 0) {
-      e.preventDefault();
-      items[_custActiveIdx].click();
+      e.preventDefault(); items[_custActiveIdx].click();
     } else if (e.key === 'Escape') {
       custSuggest.classList.remove('open');
     }
@@ -1943,6 +1999,38 @@ function toggleTheme() {
     }
   } catch(e) {}
 })();
+
+/* ══════════════════════════════════════════════════════
+   Keyboard Shortcuts (Feature #4: POS optimized)
+══════════════════════════════════════════════════════ */
+document.addEventListener('keydown', (e) => {
+  // F2: Focus barcode scanner
+  if (e.key === 'F2') {
+    e.preventDefault();
+    const b = document.getElementById('barcode');
+    if (b) b.focus();
+  }
+  // F4: Complete sale
+  if (e.key === 'F4') {
+    e.preventDefault();
+    submitSale();
+  }
+  // F8: Print last receipt
+  if (e.key === 'F8') {
+    e.preventDefault();
+    showReceiptModal();
+  }
+  // F9: New item
+  if (e.key === 'F9') {
+    e.preventDefault();
+    openAddItemModal('');
+  }
+  // Escape: close modals
+  if (e.key === 'Escape') {
+    if (document.getElementById('receipt-modal').classList.contains('open')) closeReceiptModal();
+    else if (document.getElementById('add-item-modal').classList.contains('open')) closeAddItemModal();
+  }
+});
 </script>
 </body>
 </html>
