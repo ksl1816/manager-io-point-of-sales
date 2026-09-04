@@ -1953,24 +1953,27 @@ function updateRecordPaymentButton() {
 // clearing entry in a Suspense-type account instead of Accounts
 // Receivable), even though accountsReceivableCustomer/
 // accountsReceivableSalesInvoice were correctly populated.
-// The correct account is the one flagged isAccountsReceivable:true in the
-// business's Chart of Accounts (/api4/account-batch) — NOT the Customer's
-// own "controlAccount" field, which is only a per-customer override and
-// is usually null. We use the customer's override if present, otherwise
-// fall back to scanning existing receipts for the AR account already in
-// use by this business (most reliable, since it's what Manager actually
-// uses), and only then to the Chart of Accounts default.
+// The AR account is exposed via the balance-sheet-account-batch and
+// control-account-batch endpoints (isAccountsReceivable flag) — NOT
+// account-batch, which is a different, non-matching schema. This mirrors
+// exactly what the Payment Receipts tab's findAccountsReceivableUuid()
+// queries, and is the reason the old account-batch lookup always failed
+// to find an AR account.
 let cachedDefaultARAccount = undefined; // undefined = not fetched yet, null = fetched but none found
 
 async function getDefaultARAccount() {
   if (cachedDefaultARAccount !== undefined) return cachedDefaultARAccount;
   try {
-    const data = await apiCall('GET', '/api4/account-batch?PageSize=500');
-    const items = Array.isArray(data?.items) ? data.items : (Array.isArray(data) ? data : []);
-    const arAccount = items.find(a => a.item?.isAccountsReceivable);
+    const [bsData, caData] = await Promise.all([
+      apiCall('GET', '/api4/balance-sheet-account-batch?PageSize=500'),
+      apiCall('GET', '/api4/control-account-batch?PageSize=500'),
+    ]);
+    const toItems = (data) => Array.isArray(data?.items) ? data.items : (Array.isArray(data) ? data : []);
+    const all = [...toItems(bsData), ...toItems(caData)];
+    const arAccount = all.find(a => a.item?.isAccountsReceivable === true);
     cachedDefaultARAccount = arAccount ? arAccount.key : null;
   } catch (err) {
-    debugLog('fail', 'Could not fetch Chart of Accounts for AR lookup: ' + err.message);
+    debugLog('fail', 'Could not fetch balance-sheet/control accounts for AR lookup: ' + err.message);
     cachedDefaultARAccount = null;
   }
   return cachedDefaultARAccount;
