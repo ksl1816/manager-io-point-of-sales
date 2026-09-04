@@ -1953,6 +1953,12 @@ function updateRecordPaymentButton() {
 // clearing entry in a Suspense-type account instead of Accounts
 // Receivable), even though accountsReceivableCustomer/
 // accountsReceivableSalesInvoice were correctly populated.
+// Hardcoded fallback: this business's generic Accounts Receivable account
+// UUID, confirmed directly by the user. Used only if the dynamic lookups
+// (customer override → existing receipts → balance-sheet/control accounts)
+// all come back empty.
+const ACCT_ACCOUNTS_RECEIVABLE = 'd1489e95-bb28-4f5d-b42e-67d3291b3893';
+
 // The AR account is exposed via the balance-sheet-account-batch and
 // control-account-batch endpoints (isAccountsReceivable flag) — NOT
 // account-batch, which is a different, non-matching schema. This mirrors
@@ -1971,10 +1977,10 @@ async function getDefaultARAccount() {
     const toItems = (data) => Array.isArray(data?.items) ? data.items : (Array.isArray(data) ? data : []);
     const all = [...toItems(bsData), ...toItems(caData)];
     const arAccount = all.find(a => a.item?.isAccountsReceivable === true);
-    cachedDefaultARAccount = arAccount ? arAccount.key : null;
+    cachedDefaultARAccount = arAccount ? arAccount.key : ACCT_ACCOUNTS_RECEIVABLE;
   } catch (err) {
-    debugLog('fail', 'Could not fetch balance-sheet/control accounts for AR lookup: ' + err.message);
-    cachedDefaultARAccount = null;
+    debugLog('fail', 'Could not fetch balance-sheet/control accounts for AR lookup, using hardcoded fallback: ' + err.message);
+    cachedDefaultARAccount = ACCT_ACCOUNTS_RECEIVABLE;
   }
   return cachedDefaultARAccount;
 }
