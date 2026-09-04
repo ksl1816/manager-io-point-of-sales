@@ -4,6 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>POS — Manager.io</title>
+<!-- CSP note:
+     • gstatic.com is whitelisted for the Firebase SDK (account login)
+     • googleapis.com / firebaseio.com are whitelisted so Firebase Auth
+       and Firestore (account storage) can reach their backend -->
+<!-- Scoped narrowly to just adding Firebase's script source — this extension
+     makes direct fetch() calls to whatever Manager API endpoint the host
+     business provides, so connect-src/default-src are intentionally left
+     unrestricted rather than risk breaking that. -->
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' https://www.gstatic.com; frame-ancestors *;">
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Roboto+Mono:wght@400;500;600;700&family=Noto+Nastaliq+Urdu:wght@400;600;700&family=Noto+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
@@ -611,9 +623,214 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
   .app-badges{order:3;width:100%}
   .pos-grid{height:auto;min-height:calc(100vh - 110px)}
 }
+
+/* ─────────── STANDALONE INSTALL GUIDE ─────────── */
+.install-overlay{
+  position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#0f172a,#1e293b);padding:24px;overflow-y:auto;
+}
+.install-card{
+  background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:40px;max-width:560px;width:100%;box-shadow:var(--shadow-lg);margin:auto;
+}
+.install-icon{font-size:36px;text-align:center;margin-bottom:12px}
+.install-title{font-size:22px;font-weight:800;text-align:center;color:var(--text);margin-bottom:8px}
+.install-sub{font-size:13.5px;color:var(--text-mute);text-align:center;line-height:1.5;margin-bottom:28px}
+.install-steps{display:flex;flex-direction:column;gap:18px;margin-bottom:24px}
+.install-step{display:flex;gap:14px;align-items:flex-start}
+.install-step-num{
+  flex-shrink:0;width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:800;
+}
+.install-step-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px}
+.install-step-desc{font-size:12.5px;color:var(--text-mute);line-height:1.55}
+.install-link-row{display:flex;gap:8px;margin-top:10px}
+.install-link-input{
+  flex:1;padding:9px 12px;border-radius:var(--radius-sm);border:1px solid var(--input-border);
+  background:var(--input-bg);color:var(--text);font-size:12px;font-family:ui-monospace,monospace;
+}
+.install-copy-btn{
+  flex-shrink:0;padding:9px 16px;border-radius:var(--radius-sm);border:none;background:var(--accent);
+  color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;
+}
+.install-copy-btn:hover{opacity:.9}
+.install-copy-btn.copied{background:var(--success)}
+.install-footer{font-size:12.5px;color:var(--text-mute);text-align:center}
+.install-footer a{color:var(--accent);font-weight:700;text-decoration:none}
+
+/* ─────────── ACCESS GATE ─────────── */
+.gate-overlay{
+  position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#0f172a,#1e293b);padding:20px;
+}
+.gate-overlay.unlocked{display:none}
+.gate-card{
+  background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:36px;max-width:420px;width:100%;box-shadow:var(--shadow-lg);
+}
+.gate-icon{font-size:34px;text-align:center;margin-bottom:10px}
+.gate-title{font-size:20px;font-weight:800;text-align:center;color:var(--text);margin-bottom:8px}
+.gate-sub{font-size:13px;color:var(--text-mute);text-align:center;line-height:1.5;margin-bottom:22px}
+.gate-row{margin-bottom:14px}
+.gate-label{display:block;font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px}
+.gate-input{
+  width:100%;padding:10px 13px;border-radius:var(--radius-sm);border:1px solid var(--input-border);
+  font-size:13.5px;font-family:inherit;background:var(--input-bg);color:var(--text);
+}
+.gate-input:focus{outline:none;border-color:var(--accent)}
+.gate-error{font-size:12px;color:var(--danger);margin-bottom:10px;display:none}
+.gate-submit{
+  width:100%;padding:12px;border:none;border-radius:var(--radius);cursor:pointer;
+  background:var(--accent);color:#fff;font-size:14px;font-weight:700;
+}
+.gate-submit:hover{opacity:.9}
+.gate-footer{font-size:12px;color:var(--text-mute);text-align:center;margin-top:16px}
+.gate-footer a{color:var(--accent);font-weight:600;text-decoration:none}
+.gate-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:20px}
+.gate-tab{flex:1;text-align:center;padding:10px 0;font-size:13px;font-weight:700;color:var(--text-mute);border-bottom:2px solid transparent;cursor:pointer}
+.gate-tab.active{color:var(--accent);border-color:var(--accent)}
+.gate-version-group{display:flex;gap:8px}
+.gate-v-option{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+  border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 6px;cursor:pointer;
+  font-size:12.5px;font-weight:600;color:var(--text-mute);background:var(--input-bg);
+}
+.gate-v-option input{accent-color:var(--accent);width:13px;height:13px}
+.gate-v-option:has(input:checked){border-color:var(--accent);color:var(--text)}
+.gate-panel{display:none}
+.gate-panel.active{display:block}
+.acct-bar{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:6px 14px;margin:0 8px 6px;background:var(--panel);border:1px solid var(--border);
+  border-radius:var(--radius);font-size:12px;color:var(--text-mute);
+}
+.acct-bar button{
+  border:none;background:none;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;padding:2px 4px;
+}
 </style>
 </head>
 <body>
+
+<!-- ══ STANDALONE INSTALL GUIDE ══
+     Shown instead of everything else when this page is opened directly in
+     a browser tab (not embedded inside Manager.io as an extension iframe).
+     Detected via window.self !== window.top. The POS terminal can't function
+     standalone — it only talks to Manager.io through managerAppContext /
+     postMessage — so rather than showing a broken/frozen app, this explains
+     what to do. ══ -->
+<div class="install-overlay" id="installOverlay" style="display:none">
+  <div class="install-card">
+    <div class="install-icon">🧩</div>
+    <h2 class="install-title">This is a Manager.io Extension</h2>
+    <p class="install-sub">You're viewing this page directly in a browser — it only works when installed inside Manager.io. Follow the steps below to add it.</p>
+
+    <div class="install-steps">
+      <div class="install-step">
+        <span class="install-step-num">1</span>
+        <div>
+          <div class="install-step-title">Open Manager.io</div>
+          <div class="install-step-desc">Open your business, go to the <strong>Settings</strong> tab, and select <strong>Extensions</strong> (on newer versions there's also a top-level Extensions icon in the main navigation).</div>
+        </div>
+      </div>
+      <div class="install-step">
+        <span class="install-step-num">2</span>
+        <div>
+          <div class="install-step-title">Click "New Extension"</div>
+          <div class="install-step-desc">This opens a form for adding a custom extension.</div>
+        </div>
+      </div>
+      <div class="install-step">
+        <span class="install-step-num">3</span>
+        <div>
+          <div class="install-step-title">Fill in the details</div>
+          <div class="install-step-desc">
+            <strong>Name:</strong> POS Terminal (or anything recognizable)<br>
+            <strong>Endpoint:</strong> the link below — copy it exactly
+          </div>
+          <div class="install-link-row">
+            <input type="text" class="install-link-input" id="installLinkInput" readonly>
+            <button type="button" class="install-copy-btn" id="installCopyBtn">Copy Link</button>
+          </div>
+        </div>
+      </div>
+      <div class="install-step">
+        <span class="install-step-num">4</span>
+        <div>
+          <div class="install-step-title">Set the Placement</div>
+          <div class="install-step-desc">Manager will show a dropdown of valid pages (e.g. Sales Invoices or a Point of Sale area) — pick wherever you want this terminal's iframe to appear, then Save.</div>
+        </div>
+      </div>
+      <div class="install-step">
+        <span class="install-step-num">5</span>
+        <div>
+          <div class="install-step-title">Create a free account</div>
+          <div class="install-step-desc">Once it loads inside Manager, you'll see a sign-up screen — create a free account (or log in if you already have one) to unlock the terminal. No approval needed, it's instant.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="install-footer">
+      Need help? <a href="https://wa.me/?text=Hi%2C%20I%20need%20help%20installing%20the%20POS%20Terminal%20extension." target="_blank" rel="noopener">Message us on WhatsApp</a>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ACCESS GATE ══
+     Free account system — create an account once, then log in any time. ══ -->
+<div class="gate-overlay" id="gateOverlay">
+  <div class="gate-card">
+    <div class="gate-icon">🔐</div>
+    <h2 class="gate-title">Sign in to continue</h2>
+    <p class="gate-sub">Free to use — create an account once, then log in any time.</p>
+    <div class="gate-tabs">
+      <div class="gate-tab active" id="gateTabSignup">Create Account</div>
+      <div class="gate-tab" id="gateTabLogin">Log In</div>
+    </div>
+
+    <form id="signupGateForm" class="gate-panel active">
+      <div class="gate-row">
+        <label class="gate-label" for="gsName">Full Name</label>
+        <input class="gate-input" type="text" id="gsName" placeholder="e.g. Ahmed Khan" required>
+      </div>
+      <div class="gate-row">
+        <label class="gate-label" for="gsEmail">Email</label>
+        <input class="gate-input" type="email" id="gsEmail" placeholder="you@example.com" required>
+      </div>
+      <div class="gate-row">
+        <label class="gate-label" for="gsPassword">Password</label>
+        <input class="gate-input" type="password" id="gsPassword" placeholder="At least 6 characters" minlength="6" required>
+      </div>
+      <div class="gate-row">
+        <label class="gate-label">Manager.io Version</label>
+        <div class="gate-version-group">
+          <label class="gate-v-option"><input type="radio" name="gsVersion" value="Cloud" required id="gsVersionCloud" checked><span>Cloud</span></label>
+          <label class="gate-v-option"><input type="radio" name="gsVersion" value="Server" required id="gsVersionServer"><span>Server</span></label>
+          <label class="gate-v-option"><input type="radio" name="gsVersion" value="Desktop" required id="gsVersionDesktop"><span>Desktop</span></label>
+        </div>
+      </div>
+      <div class="gate-error" id="gsError"></div>
+      <button type="submit" class="gate-submit">Create Account &amp; Enter</button>
+    </form>
+
+    <form id="loginGateForm" class="gate-panel">
+      <div class="gate-row">
+        <label class="gate-label" for="glEmail">Email</label>
+        <input class="gate-input" type="email" id="glEmail" placeholder="you@example.com" required>
+      </div>
+      <div class="gate-row">
+        <label class="gate-label" for="glPassword">Password</label>
+        <input class="gate-input" type="password" id="glPassword" placeholder="Your password" required>
+      </div>
+      <div class="gate-error" id="glError"></div>
+      <button type="submit" class="gate-submit">Log In &amp; Enter</button>
+    </form>
+
+    <div class="gate-footer" id="gateFallback" style="display:none">
+      Sign-up isn't connected yet — message us on
+      <a href="https://wa.me/?text=Hi%2C%20I%27d%20like%20to%20register%20for%20the%20POS%20Terminal%20extension." target="_blank" rel="noopener">WhatsApp</a> instead.
+    </div>
+  </div>
+</div>
 
 <!-- APP HEADER -->
 <header class="app-header">
@@ -655,6 +872,12 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
     Need Custom Dev?
   </a>
 </header>
+
+<!-- ══ Account Bar ══ -->
+<div class="acct-bar" id="acctInfo" style="display:none">
+  <span id="acctInfoText"></span>
+  <button type="button" id="acctInfoLogout">Log out</button>
+</div>
 
 <!-- TOP BAR -->
 <div class="topbar">
@@ -744,6 +967,150 @@ function setLiveBadge() {
   if (badge && label) { badge.classList.add('live'); label.textContent = 'Live · Connected'; }
 }
 if (window.managerAppContext) setLiveBadge();
+
+/* ══════════════════════════════════════════════
+   STANDALONE INSTALL GUIDE
+   If this page is opened directly in a browser tab (not embedded inside
+   Manager.io as an extension iframe), show the install guide and stop
+   here — the rest of this file only works via managerAppContext /
+   postMessage from a Manager.io parent window.
+══════════════════════════════════════════════ */
+const isEmbeddedInManager = window.self !== window.top;
+if (!isEmbeddedInManager) {
+  const installOverlay = document.getElementById('installOverlay');
+  const installLinkInput = document.getElementById('installLinkInput');
+  const installCopyBtn = document.getElementById('installCopyBtn');
+  if (installOverlay) installOverlay.style.display = 'flex';
+  if (installLinkInput) installLinkInput.value = window.location.href.split('?')[0].split('#')[0];
+  if (installCopyBtn) {
+    installCopyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(installLinkInput.value).then(() => {
+        const original = installCopyBtn.textContent;
+        installCopyBtn.textContent = 'Copied!';
+        installCopyBtn.classList.add('copied');
+        setTimeout(() => { installCopyBtn.textContent = original; installCopyBtn.classList.remove('copied'); }, 1500);
+      }).catch(() => {
+        installLinkInput.select();
+      });
+    });
+  }
+}
+
+/* ══════════════════════════════════════════════
+   ACCESS GATE — Firebase account system
+   Free to create, no approval needed.
+══════════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyAB2tEp15hwxawWKeuiwiq1-XYxpX6gZik",
+  authDomain: "ksl-solutions.firebaseapp.com",
+  projectId: "ksl-solutions",
+  storageBucket: "ksl-solutions.firebasestorage.app",
+  messagingSenderId: "284806677972",
+  appId: "1:284806677972:web:281bc01a2aa9cb7ec04241"
+};
+
+let fbReady = false;
+let auth, db;
+try {
+  firebase.initializeApp(firebaseConfig);
+  auth = firebase.auth();
+  db = firebase.firestore();
+  fbReady = true;
+} catch (err) {
+  console.warn('Firebase not available:', err);
+  const fb = document.getElementById('gateFallback');
+  if (fb) fb.style.display = 'block';
+}
+
+function unlockGate() {
+  const overlay = document.getElementById('gateOverlay');
+  if (overlay) overlay.classList.add('unlocked');
+}
+function lockGate() {
+  const overlay = document.getElementById('gateOverlay');
+  if (overlay) overlay.classList.remove('unlocked');
+}
+
+// ── Tabs ──
+const gateTabSignup = document.getElementById('gateTabSignup');
+const gateTabLogin = document.getElementById('gateTabLogin');
+const signupGateForm = document.getElementById('signupGateForm');
+const loginGateForm = document.getElementById('loginGateForm');
+function showGateSignup(){
+  gateTabSignup.classList.add('active'); gateTabLogin.classList.remove('active');
+  signupGateForm.classList.add('active'); loginGateForm.classList.remove('active');
+}
+function showGateLogin(){
+  gateTabLogin.classList.add('active'); gateTabSignup.classList.remove('active');
+  loginGateForm.classList.add('active'); signupGateForm.classList.remove('active');
+}
+if (gateTabSignup) gateTabSignup.addEventListener('click', showGateSignup);
+if (gateTabLogin) gateTabLogin.addEventListener('click', showGateLogin);
+
+// ── Create account ──
+const gsError = document.getElementById('gsError');
+if (signupGateForm) {
+  signupGateForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!fbReady) return;
+    const name = document.getElementById('gsName').value.trim();
+    const email = document.getElementById('gsEmail').value.trim();
+    const password = document.getElementById('gsPassword').value;
+    const versionEl = document.querySelector('input[name="gsVersion"]:checked');
+    const version = versionEl ? versionEl.value : '';
+    gsError.style.display = 'none';
+    try {
+      const cred = await auth.createUserWithEmailAndPassword(email, password);
+      await cred.user.updateProfile({ displayName: name });
+      await db.collection('users').doc(cred.user.uid).set({
+        name, email, version,
+        source: 'pos-terminal-extension',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+      signupGateForm.reset();
+    } catch (err) {
+      gsError.textContent = err.message.replace('Firebase: ', '');
+      gsError.style.display = 'block';
+    }
+  });
+}
+
+// ── Log in ──
+const glError = document.getElementById('glError');
+if (loginGateForm) {
+  loginGateForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!fbReady) return;
+    const email = document.getElementById('glEmail').value.trim();
+    const password = document.getElementById('glPassword').value;
+    glError.style.display = 'none';
+    try {
+      await auth.signInWithEmailAndPassword(email, password);
+      loginGateForm.reset();
+    } catch (err) {
+      glError.textContent = err.message.replace('Firebase: ', '');
+      glError.style.display = 'block';
+    }
+  });
+}
+
+// ── Persist session across visits, show account info ──
+const acctInfo = document.getElementById('acctInfo');
+const acctInfoText = document.getElementById('acctInfoText');
+const acctInfoLogout = document.getElementById('acctInfoLogout');
+if (fbReady) {
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      unlockGate();
+      if (acctInfo) acctInfo.style.display = 'flex';
+      if (acctInfoText) acctInfoText.textContent = user.displayName || user.email;
+    } else {
+      lockGate();
+      if (acctInfo) acctInfo.style.display = 'none';
+    }
+  });
+  if (acctInfoLogout) acctInfoLogout.addEventListener('click', () => auth.signOut());
+}
 
 function toggleDebug() { document.getElementById('debug-log').classList.toggle('show'); }
 function debugLog(type, msg) {
