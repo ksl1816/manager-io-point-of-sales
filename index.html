@@ -1949,12 +1949,27 @@ function updateRecordPaymentButton() {
 // which matches the order "Customer" appears first in Manager's own "Paid
 // by" dropdown. Please verify the very first receipt this creates by
 // opening it in Manager before relying on this for every sale.
+//
+// IMPORTANT: the receipt line's "account" must be set explicitly to the
+// customer's own Accounts Receivable control account. If left unset,
+// Manager silently fills in a different default account (observed: it
+// landed the clearing entry in a Suspense-type account instead of AR),
+// even though accountsReceivableCustomer/accountsReceivableSalesInvoice
+// are correctly populated. We already have the full customer record from
+// the customer-batch load, so we pull controlAccount from there.
 async function recordManagerReceipt() {
   const sale = state.lastSubmittedSale;
   if (!sale || !sale.invoiceKey || !sale.paymentAccountKey || sale.paymentReceiptKey) return;
   const btn = document.getElementById('record-payment-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Recording…'; }
   try {
+    const customerRec = state.customers.find(c => c.key === sale.customerKey);
+    const controlAccount = customerRec?.item?.controlAccount || null;
+    if (!controlAccount) {
+      toast('Could not find this customer\'s Accounts Receivable control account — payment not recorded, to avoid it landing in the wrong account. Please record this receipt manually in Manager.', 'error');
+      if (btn) { btn.disabled = false; btn.textContent = '💰 Record Payment'; }
+      return;
+    }
     const payload = {
       value: {
         date: (sale.issueDate || todayISO()) + 'T00:00:00',
@@ -1963,6 +1978,7 @@ async function recordManagerReceipt() {
         customer: sale.customerKey,
         receivedIn: sale.paymentAccountKey,
         lines: [{
+          account: controlAccount,
           accountsReceivableCustomer: sale.customerKey,
           accountsReceivableSalesInvoice: sale.invoiceKey,
           amount: sale.total
