@@ -1818,10 +1818,10 @@ function buildThermalReceiptHTML(sale) {
   let lines = '';
   for (const l of sale.lines) {
     lines += `<tr>
-      <td style="text-align:center;font-weight:700;font-size:11px">${l.qty}</td>
-      <td style="font-size:11px;font-weight:500">${escapeHtml(l.name)}</td>
-      <td style="text-align:right;font-size:11px">${fmt(l.price)}</td>
-      <td style="text-align:right;font-weight:700;font-size:11px">${fmt(l.total)}</td>
+      <td style="text-align:center;font-weight:700;font-size:11px;padding:1mm 1mm 1mm 0;vertical-align:top">${l.qty}</td>
+      <td style="font-size:11px;font-weight:500;padding:1mm 2mm 1mm 0;vertical-align:top;word-break:break-word">${escapeHtml(l.name)}</td>
+      <td style="text-align:right;font-size:11px;padding:1mm 2mm 1mm 0;vertical-align:top;white-space:nowrap">${fmt(l.price)}</td>
+      <td style="text-align:right;font-weight:700;font-size:11px;padding:1mm 0 1mm 0;vertical-align:top;white-space:nowrap">${fmt(l.total)}</td>
     </tr>`;
   }
 
@@ -1838,12 +1838,18 @@ function buildThermalReceiptHTML(sale) {
         <div style="display:flex;justify-content:space-between"><span>Customer</span><span style="font-weight:600">${escapeHtml(sale.customerName)}</span></div>
         ${sale.custPhone ? `<div style="display:flex;justify-content:space-between"><span>Phone</span><span>${escapeHtml(sale.custPhone)}</span></div>` : ''}
       </div>
-      <table style="width:100%;border-collapse:collapse;font-size:10px">
+      <table style="width:100%;border-collapse:collapse;font-size:10px;table-layout:fixed">
+        <colgroup>
+          <col style="width:12%">
+          <col style="width:46%">
+          <col style="width:21%">
+          <col style="width:21%">
+        </colgroup>
         <thead><tr style="border-bottom:1px solid #000">
-          <th style="text-align:center;font-size:9px;padding:1mm 0">QTY</th>
-          <th style="text-align:left;font-size:9px;padding:1mm 0">ITEM</th>
-          <th style="text-align:right;font-size:9px;padding:1mm 0">RATE</th>
-          <th style="text-align:right;font-size:9px;padding:1mm 0">AMT</th>
+          <th style="text-align:center;font-size:9px;padding:1mm 1mm 1mm 0">QTY</th>
+          <th style="text-align:left;font-size:9px;padding:1mm 2mm 1mm 0">ITEM</th>
+          <th style="text-align:right;font-size:9px;padding:1mm 2mm 1mm 0">RATE</th>
+          <th style="text-align:right;font-size:9px;padding:1mm 0 1mm 0">AMT</th>
         </tr></thead>
         <tbody>${lines}</tbody>
       </table>
@@ -1899,6 +1905,20 @@ function downloadReceiptPDF() {
   toast('Receipt downloaded as HTML — open in browser and "Save as PDF"', 'info');
 }
 
+// Normalizes a phone number for wa.me: digits only, no leading zeros/plus/spaces.
+// wa.me expects the FULL international number (country code + number) with no
+// "+", spaces, dashes, or leading "00". If the number looks like a local
+// number without a country code, it's passed through as-is since we have no
+// reliable way to guess the country here — better to let WhatsApp reject it
+// than silently attach the wrong country code.
+function normalizeWhatsAppNumber(raw) {
+  if (!raw) return '';
+  let digits = String(raw).trim().replace(/[^\d+]/g, '');
+  if (digits.startsWith('+')) digits = digits.slice(1);
+  else if (digits.startsWith('00')) digits = digits.slice(2);
+  return digits.replace(/\D/g, '');
+}
+
 function shareWhatsApp() {
   const sale = state.lastSubmittedSale;
   if (!sale) return;
@@ -1907,7 +1927,13 @@ function shareWhatsApp() {
     msg += `• ${l.name}  ${l.qty} × ${fmt(l.price)} = ${fmt(l.total)}\n`;
   }
   msg += `────────\n*TOTAL: ${fmt(sale.total)}*\n\nThank you for your business!`;
-  const url = 'https://wa.me/?text=' + encodeURIComponent(msg);
+  const number = normalizeWhatsAppNumber(sale.custPhone);
+  const url = number
+    ? `https://wa.me/${number}?text=${encodeURIComponent(msg)}`
+    : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+  if (!number && sale.custPhone) {
+    toast('Customer phone number looks incomplete — opening WhatsApp without a pre-filled contact', 'info');
+  }
   window.open(url, '_blank');
 }
 
