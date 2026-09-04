@@ -885,6 +885,7 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
   <div class="progress-wrap"><div class="progress-bar" id="prog-bar"></div></div>
   <span class="status-text" id="status-text">Press Load to fetch data from Manager</span>
   <button class="icon-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+  <button class="debug-toggle" onclick="toggleSetupModal()" title="Default customer & custom fields setup">⚙ Setup</button>
   <button class="debug-toggle" onclick="toggleDebug()">Debug</button>
 </div>
 <div class="debug-log" id="debug-log"></div>
@@ -904,6 +905,53 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
       <button class="btn btn-secondary" onclick="downloadReceiptPDF()">📄 PDF</button>
       <button class="btn btn-secondary" onclick="shareWhatsApp()">💬 WhatsApp</button>
       <button class="btn btn-secondary" onclick="closeReceiptModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Setup Modal: default POS customer + walk-in custom fields -->
+<div class="modal-overlay" id="setup-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <span class="modal-title">⚙ POS Setup</span>
+      <button class="modal-close" onclick="closeSetupModal()">×</button>
+    </div>
+    <div class="add-item-form">
+
+      <div style="font:700 12.5px/1.3 'IBM Plex Sans';color:var(--text);margin-bottom:4px">Default POS Customer</div>
+      <div style="font:500 11px/1.5 'IBM Plex Sans';color:var(--text-mute);margin-bottom:10px">
+        Walk-in sales are posted against a customer with code <code>999</code> or named "POS". If your business doesn't have one yet, create it here.
+      </div>
+      <div id="setup-customer-status" style="font:600 12px/1.4 'IBM Plex Sans';margin-bottom:8px"></div>
+      <button class="btn btn-primary" id="setup-create-customer-btn" style="width:100%;margin-bottom:18px" onclick="setupCreateDefaultCustomer()">Create Default "POS" Customer</button>
+
+      <div style="font:700 12.5px/1.3 'IBM Plex Sans';color:var(--text);margin-bottom:4px">Walk-in Custom Fields (optional)</div>
+      <div style="font:500 11px/1.5 'IBM Plex Sans';color:var(--text-mute);margin-bottom:10px">
+        By default the walk-in Name/Phone are saved as plain text in the invoice description. If you'd rather have them as proper, filterable fields on the Sales Invoice, create these two Text Custom Fields yourself in Manager — it only takes a minute:
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:6px">
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <span style="flex-shrink:0;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font:800 11px/1 'IBM Plex Sans'">1</span>
+          <div style="font:500 11.5px/1.5 'IBM Plex Sans';color:var(--text)">Go to <strong>Settings → Custom Fields → New Text Custom Field</strong></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <span style="flex-shrink:0;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font:800 11px/1 'IBM Plex Sans'">2</span>
+          <div style="font:500 11.5px/1.5 'IBM Plex Sans';color:var(--text)">Name it <strong>Customer Name</strong>, and under <strong>Position on documents</strong> tick <strong>Sales Invoice</strong>, then Save</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <span style="flex-shrink:0;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font:800 11px/1 'IBM Plex Sans'">3</span>
+          <div style="font:500 11.5px/1.5 'IBM Plex Sans';color:var(--text)">Repeat, naming the second one <strong>Customer Phone</strong>, also placed on Sales Invoice</div>
+        </div>
+      </div>
+      <div id="setup-cf-status" style="font:600 12px/1.6 'IBM Plex Sans';margin:8px 0 4px"></div>
+      <div style="font:500 10.5px/1.5 'IBM Plex Sans';color:var(--text-mute);margin-bottom:6px">
+        Once both exist, come back and click Refresh below — the POS will detect them automatically and this checklist will confirm it.
+      </div>
+      <button class="btn btn-secondary" style="width:100%" onclick="refreshSetupCustomFieldStatus()">↻ Refresh Field Status</button>
+
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn btn-secondary" style="flex:1" onclick="closeSetupModal()">Close</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1474,6 +1522,82 @@ function getDefaultCustomer() {
     (c.item?.code || '').toLowerCase().includes('pos') ||
     (c.item?.name || '').toLowerCase() === 'pos'
   );
+}
+
+/* ══════════════════════════════════════════════════════
+   SETUP MODAL — create default POS customer + walk-in
+   custom field definitions (Customer Name / Customer Phone)
+══════════════════════════════════════════════════════ */
+function toggleSetupModal() {
+  document.getElementById('setup-modal').classList.add('open');
+  renderSetupCustomerStatus();
+  refreshSetupCustomFieldStatus();
+}
+function closeSetupModal() {
+  document.getElementById('setup-modal').classList.remove('open');
+}
+
+function renderSetupCustomerStatus() {
+  const el = document.getElementById('setup-customer-status');
+  const btn = document.getElementById('setup-create-customer-btn');
+  if (!el) return;
+  const def = getDefaultCustomer();
+  if (def) {
+    el.innerHTML = `✓ Found: <span style="color:var(--success)">${escapeHtml(def.item?.name || 'POS')} (${escapeHtml(def.item?.code || '999')})</span>`;
+    if (btn) { btn.disabled = true; btn.textContent = 'Already exists'; }
+  } else {
+    el.innerHTML = `⚠ <span style="color:var(--danger)">No default POS customer found in this business yet.</span>`;
+    if (btn) { btn.disabled = false; btn.textContent = 'Create Default "POS" Customer'; }
+  }
+}
+
+async function setupCreateDefaultCustomer() {
+  const btn = document.getElementById('setup-create-customer-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Creating…'; }
+  try {
+    const payload = { value: { name: 'POS', code: '999' } };
+    const key = await apiCall('POST', '/api4/customer', payload);
+    // Add to local state so it's usable immediately without a full reload
+    state.customers.push({ key, item: { name: 'POS', code: '999' } });
+    toast('✓ Default "POS" customer created', 'success');
+    // If nothing was selected yet, select it now
+    if (!state.selectedCustomer) {
+      state.selectedCustomer = { key, name: 'POS', code: '999' };
+      renderCustomerField();
+    }
+    renderSetupCustomerStatus();
+  } catch (err) {
+    toast('Could not create customer: ' + err.message, 'error');
+    if (btn) { btn.disabled = false; btn.textContent = 'Create Default "POS" Customer'; }
+  }
+}
+
+async function refreshSetupCustomFieldStatus() {
+  const el = document.getElementById('setup-cf-status');
+  if (el) el.textContent = 'Checking existing custom fields…';
+  try {
+    const data = await apiCall('GET', '/api4/text-custom-field-batch?PageSize=200');
+    const items = Array.isArray(data?.items) ? data.items : (Array.isArray(data) ? data : []);
+    state.lookups = state.lookups || {};
+    state.lookups.textCustomFields = items;
+    renderSetupCustomFieldStatus();
+  } catch (err) {
+    if (el) el.innerHTML = `<span style="color:var(--danger)">Could not check existing fields: ${escapeHtml(err.message)}</span>`;
+  }
+}
+
+function findTextCustomFieldByName(name) {
+  const list = state.lookups?.textCustomFields || [];
+  return list.find(x => (x.item?.name || '').trim().toLowerCase() === name.trim().toLowerCase());
+}
+
+function renderSetupCustomFieldStatus() {
+  const el = document.getElementById('setup-cf-status');
+  if (!el) return;
+  const nameField = findTextCustomFieldByName('Customer Name');
+  const phoneField = findTextCustomFieldByName('Customer Phone');
+  const line = (label, found) => `${found ? '✓' : '○'} ${label}: <span style="color:${found ? 'var(--success)' : 'var(--text-mute)'}">${found ? 'found' : 'not found yet'}</span>`;
+  el.innerHTML = line('Customer Name', !!nameField) + '<br>' + line('Customer Phone', !!phoneField);
 }
 
 function searchItems(needle, limit = 12) {
@@ -2396,6 +2520,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     if (document.getElementById('receipt-modal').classList.contains('open')) closeReceiptModal();
     else if (document.getElementById('add-item-modal').classList.contains('open')) closeAddItemModal();
+    else if (document.getElementById('setup-modal').classList.contains('open')) closeSetupModal();
   }
 });
 </script>
