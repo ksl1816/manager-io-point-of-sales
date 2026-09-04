@@ -1944,11 +1944,9 @@ function updateRecordPaymentButton() {
 }
 
 // Creates a Manager Receipt against the invoice, marking it paid in the
-// selected bank/cash account. NOTE: Manager's PayerPayeeType enum for the
-// "paidBy" field isn't publicly documented — this assumes 0 = Customer,
-// which matches the order "Customer" appears first in Manager's own "Paid
-// by" dropdown. Please verify the very first receipt this creates by
-// opening it in Manager before relying on this for every sale.
+// selected bank/cash account. Manager's PayerPayeeType enum: 1 = Customer
+// (confirmed against the Payment Receipts tab's own receipt-creation logic,
+// which is exercised constantly and known to post correctly).
 //
 // IMPORTANT: the receipt line's "account" must be set explicitly, or
 // Manager silently fills in the wrong default (observed: it landed the
@@ -1959,7 +1957,9 @@ function updateRecordPaymentButton() {
 // business's Chart of Accounts (/api4/account-batch) — NOT the Customer's
 // own "controlAccount" field, which is only a per-customer override and
 // is usually null. We use the customer's override if present, otherwise
-// fall back to the business's default AR account.
+// fall back to scanning existing receipts for the AR account already in
+// use by this business (most reliable, since it's what Manager actually
+// uses), and only then to the Chart of Accounts default.
 let cachedDefaultARAccount = undefined; // undefined = not fetched yet, null = fetched but none found
 
 async function getDefaultARAccount() {
@@ -1976,16 +1976,57 @@ async function getDefaultARAccount() {
   return cachedDefaultARAccount;
 }
 
+// Lazily fetched, cached list of existing receipts — only pulled in if we
+// actually need it to resolve an AR account (avoids slowing down normal
+// POS startup, which doesn't otherwise touch this endpoint).
+let cachedReceiptsForAR = undefined; // undefined = not fetched yet
+
+async function getReceiptsForAR() {
+  if (cachedReceiptsForAR !== undefined) return cachedReceiptsForAR;
+  try {
+    const data = await apiCall('GET', '/api4/receipt-batch?PageSize=500');
+    const items = Array.isArray(data?.items) ? data.items : (Array.isArray(data) ? data : []);
+    cachedReceiptsForAR = items;
+  } catch (err) {
+    debugLog('fail', 'Could not fetch existing receipts for AR lookup: ' + err.message);
+    cachedReceiptsForAR = [];
+  }
+  return cachedReceiptsForAR;
+}
+
+// Best-effort AR account resolver for a given customer, mirroring the
+// fallback chain used by the Payment Receipts tab: customer override →
+// AR account already used on an existing receipt for this customer →
+// AR account used on any existing receipt → Chart of Accounts default.
+async function resolveARAccountForCustomer(customerKey) {
+  const customerRec = state.customers.find(c => c.key === customerKey);
+  let arAccount = customerRec?.item?.controlAccount || null;
+  if (!arAccount) {
+    const receipts = await getReceiptsForAR();
+    for (const r of receipts) {
+      for (const ln of (r?.item?.lines || [])) {
+        if (ln?.accountsReceivableCustomer === customerKey && ln?.account) { arAccount = ln.account; break; }
+      }
+      if (arAccount) break;
+    }
+    if (!arAccount) {
+      for (const r of receipts) {
+        const acct = r?.item?.lines?.find(ln => ln?.account)?.account;
+        if (acct) { arAccount = acct; break; }
+      }
+    }
+  }
+  if (!arAccount) arAccount = await getDefaultARAccount();
+  return arAccount;
+}
+
 async function recordManagerReceipt() {
   const sale = state.lastSubmittedSale;
   if (!sale || !sale.invoiceKey || !sale.paymentAccountKey || sale.paymentReceiptKey) return;
   const btn = document.getElementById('record-payment-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Recording…'; }
   try {
-    const customerRec = state.customers.find(c => c.key === sale.customerKey);
-    const customerOverrideAccount = customerRec?.item?.controlAccount || null;
-    const defaultARAccount = await getDefaultARAccount();
-    const arAccount = customerOverrideAccount || defaultARAccount;
+    const arAccount = await resolveARAccountForCustomer(sale.customerKey);
     if (!arAccount) {
       toast('Could not find the Accounts Receivable account in this business\'s Chart of Accounts — payment not recorded, to avoid it landing in the wrong account. Please record this receipt manually in Manager.', 'error');
       if (btn) { btn.disabled = false; btn.textContent = '💰 Record Payment'; }
@@ -1995,7 +2036,7 @@ async function recordManagerReceipt() {
       value: {
         date: (sale.issueDate || todayISO()) + 'T00:00:00',
         reference: sale.reference,
-        paidBy: 0, // assumed Customer — see note above
+        paidBy: 1, // Customer
         customer: sale.customerKey,
         receivedIn: sale.paymentAccountKey,
         lines: [{
