@@ -885,6 +885,7 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
   <div class="progress-wrap"><div class="progress-bar" id="prog-bar"></div></div>
   <span class="status-text" id="status-text">Press Load to fetch data from Manager</span>
   <button class="icon-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+  <button class="debug-toggle" id="register-badge-btn" onclick="toggleRegisterModal()" title="Open/close the day's cash register">🗄 Register</button>
   <button class="debug-toggle" onclick="toggleSetupModal()" title="Default customer & custom fields setup">⚙ Setup</button>
   <button class="debug-toggle" onclick="toggleDebug()">Debug</button>
 </div>
@@ -900,10 +901,11 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
       <button class="modal-close" onclick="closeReceiptModal()">×</button>
     </div>
     <div id="receipt-preview-area" class="receipt-preview"></div>
+    <div id="record-payment-note" style="font:500 10.5px/1.5 'IBM Plex Sans';color:var(--text-mute);margin:8px 2px 0;display:none"></div>
     <div class="modal-actions">
       <button class="btn btn-print" onclick="printReceipt()">🖨 Print</button>
       <button class="btn btn-secondary" onclick="downloadReceiptPDF()">📄 PDF</button>
-      <button class="btn btn-secondary" onclick="shareWhatsApp()">💬 WhatsApp</button>
+      <button class="btn btn-secondary" id="record-payment-btn" onclick="recordManagerReceipt()">💰 Record Payment</button>
       <button class="btn btn-secondary" onclick="closeReceiptModal()">Close</button>
     </div>
   </div>
@@ -953,6 +955,17 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
         <button class="btn btn-secondary" style="flex:1" onclick="closeSetupModal()">Close</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Register Modal: day opening float + day closing summary -->
+<div class="modal-overlay" id="register-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <span class="modal-title">🗄 Day Register</span>
+      <button class="modal-close" onclick="closeRegisterModal()">×</button>
+    </div>
+    <div id="register-modal-body" class="add-item-form"></div>
   </div>
 </div>
 
@@ -1390,6 +1403,7 @@ const state = {
   qtyOwned: Object.create(null),
   itemIndex: [], itemByCodeExact: new Map(),
   lastSubmittedSale: null, // for receipt printing
+  paymentAccounts: [], selectedPaymentAccount: null,
 };
 
 /* ══════════════════════════════════════════════════════
@@ -1435,7 +1449,7 @@ async function loadAllRecords() {
     bar.style.width = '5%';
     let itemsDone = false, custsDone = false;
 
-    const [items, customers] = await Promise.all([
+    const [items, customers, paymentAccounts] = await Promise.all([
       getBatchInventoryItem((loaded, total, page) => {
         status.textContent = `Items · pg ${page} · ${loaded.toLocaleString()} loaded`;
         if (total) bar.style.width = Math.min(20, Math.round(loaded/total*20)) + '%';
@@ -1443,9 +1457,14 @@ async function loadAllRecords() {
       getBatchEndpoint('/api4/customer-batch', (loaded, total, page) => {
         status.textContent = `Customers · pg ${page} · ${loaded.toLocaleString()} loaded`;
       }).then(r => { custsDone = true; return r; }),
+      getBatchEndpoint('/api4/bank-or-cash-account-batch', () => {}).catch(e => {
+        debugLog('fail', 'Payment accounts fetch failed: ' + e.message);
+        return [];
+      }),
     ]);
 
     state.items = items; state.customers = customers;
+    state.paymentAccounts = paymentAccounts || [];
     status.textContent = `Indexing ${items.length.toLocaleString()} items…`;
     bar.style.width = '38%';
     await yieldToUI();
@@ -1522,6 +1541,235 @@ function getDefaultCustomer() {
     (c.item?.code || '').toLowerCase().includes('pos') ||
     (c.item?.name || '').toLowerCase() === 'pos'
   );
+}
+
+/* ══════════════════════════════════════════════════════
+   Payment methods — from /api4/bank-or-cash-account-batch
+══════════════════════════════════════════════════════ */
+function renderPaymentMethodOptions() {
+  const sel = document.getElementById('payment-method');
+  if (!sel) return;
+  const accounts = state.paymentAccounts || [];
+  if (accounts.length === 0) {
+    sel.innerHTML = `<option value="">No bank/cash accounts loaded — press Load</option>`;
+    state.selectedPaymentAccount = null;
+    return;
+  }
+  // Cash accounts first (most common for POS), then bank accounts, alphabetically within each group.
+  const sorted = [...accounts].sort((a, b) => {
+    const ca = a.item?.isCashAccount ? 0 : 1, cb = b.item?.isCashAccount ? 0 : 1;
+    if (ca !== cb) return ca - cb;
+    return (a.item?.name || '').localeCompare(b.item?.name || '');
+  });
+  sel.innerHTML = sorted.map(a =>
+    `<option value="${a.key}">${escapeHtml(a.item?.name || 'Unnamed')}${a.item?.isCashAccount ? ' (Cash)' : ''}</option>`
+  ).join('');
+  // Preselect a cash account by default if one exists (typical POS default)
+  const preselect = sorted.find(a => a.item?.isCashAccount) || sorted[0];
+  if (preselect) {
+    sel.value = preselect.key;
+    state.selectedPaymentAccount = { key: preselect.key, name: preselect.item?.name || 'Unnamed', isCash: !!preselect.item?.isCashAccount };
+  }
+  sel.onchange = () => {
+    const found = sorted.find(a => a.key === sel.value);
+    state.selectedPaymentAccount = found
+      ? { key: found.key, name: found.item?.name || 'Unnamed', isCash: !!found.item?.isCashAccount }
+      : null;
+  };
+}
+
+/* ══════════════════════════════════════════════════════
+   DAY REGISTER — opening float / closing count
+   Stored locally per calendar day (localStorage), since Manager has no
+   native "register session" object. This tracks POS sales made through
+   this extension only — it does not read historical sales made outside it.
+══════════════════════════════════════════════════════ */
+function registerKey(dateStr) { return `pos-register-${dateStr}`; }
+
+function loadRegister(dateStr) {
+  try {
+    const raw = localStorage.getItem(registerKey(dateStr));
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
+}
+function saveRegister(dateStr, obj) {
+  try { localStorage.setItem(registerKey(dateStr), JSON.stringify(obj)); } catch (e) {}
+}
+
+function registerLogSale(sale) {
+  const dateStr = todayISO();
+  const reg = loadRegister(dateStr);
+  if (!reg || reg.closed) return; // no open register today — nothing to log
+  reg.sales.push({ ...sale, time: new Date().toISOString() });
+  saveRegister(dateStr, reg);
+  updateRegisterBadge();
+}
+
+function updateRegisterBadge() {
+  const btn = document.getElementById('register-badge-btn');
+  if (!btn) return;
+  const reg = loadRegister(todayISO());
+  if (reg && !reg.closed) btn.innerHTML = '🗄 Register: <span style="color:var(--success)">Open</span>';
+  else if (reg && reg.closed) btn.innerHTML = '🗄 Register: Closed';
+  else btn.innerHTML = '🗄 Register';
+}
+
+function registerSummary(reg) {
+  const sales = reg.sales || [];
+  const totalSales = sales.reduce((s, x) => s + (Number(x.total) || 0), 0);
+  const cashSales = sales.filter(x => x.isCash).reduce((s, x) => s + (Number(x.total) || 0), 0);
+  const nonCashSales = totalSales - cashSales;
+  const expectedCash = (Number(reg.openingFloat) || 0) + cashSales;
+  return { count: sales.length, totalSales, cashSales, nonCashSales, expectedCash };
+}
+
+function toggleRegisterModal() {
+  document.getElementById('register-modal').classList.add('open');
+  renderRegisterModalBody();
+}
+function closeRegisterModal() {
+  document.getElementById('register-modal').classList.remove('open');
+}
+
+function renderRegisterModalBody() {
+  const el = document.getElementById('register-modal-body');
+  if (!el) return;
+  const dateStr = todayISO();
+  const reg = loadRegister(dateStr);
+
+  if (!reg) {
+    el.innerHTML = `
+      <div style="font:500 12px/1.5 'IBM Plex Sans';color:var(--text-mute);margin-bottom:14px">
+        No register opened yet for <strong style="color:var(--text)">${escapeHtml(dateStr)}</strong>. Enter the starting cash float to open one — sales made from here on will be tracked against it.
+      </div>
+      <div class="form-field" style="margin-bottom:14px">
+        <label>Opening Cash Float</label>
+        <input type="number" id="reg-opening-float" class="gate-input" placeholder="0.00" step="any" min="0" />
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="submitOpenRegister()">Open Register for Today</button>
+    `;
+    return;
+  }
+
+  const s = registerSummary(reg);
+
+  if (!reg.closed) {
+    el.innerHTML = `
+      <div class="summary" style="margin-bottom:14px">
+        <div class="summary-row"><span>Opened at</span><span class="v">${escapeHtml(new Date(reg.openedAt).toLocaleTimeString())}</span></div>
+        <div class="summary-row"><span>Opening Float</span><span class="v">${fmt(reg.openingFloat)}</span></div>
+        <div class="summary-row"><span>Sales so far</span><span class="v">${s.count}</span></div>
+        <div class="summary-row"><span>Total Sales</span><span class="v">${fmt(s.totalSales)}</span></div>
+        <div class="summary-row"><span>Cash Sales</span><span class="v">${fmt(s.cashSales)}</span></div>
+        <div class="summary-row"><span>Non-Cash Sales</span><span class="v">${fmt(s.nonCashSales)}</span></div>
+        <div class="summary-row grand"><span class="l">Expected Cash in Drawer</span><span class="v">${fmt(s.expectedCash)}</span></div>
+      </div>
+      <div class="form-field" style="margin-bottom:10px">
+        <label>Counted Cash (at closing)</label>
+        <input type="number" id="reg-counted-cash" class="gate-input" placeholder="0.00" step="any" min="0" />
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="submitCloseRegister()">Close Register for Today</button>
+    `;
+    return;
+  }
+
+  // Already closed today
+  const variance = (Number(reg.countedCash) || 0) - s.expectedCash;
+  const varColor = Math.abs(variance) < 0.005 ? 'var(--success)' : (variance > 0 ? 'var(--warn)' : 'var(--danger)');
+  el.innerHTML = `
+    <div style="font:600 12px/1.5 'IBM Plex Sans';color:var(--success);margin-bottom:10px">✓ Register closed for ${escapeHtml(dateStr)}</div>
+    <div class="summary" style="margin-bottom:14px">
+      <div class="summary-row"><span>Opening Float</span><span class="v">${fmt(reg.openingFloat)}</span></div>
+      <div class="summary-row"><span>Sales</span><span class="v">${s.count}</span></div>
+      <div class="summary-row"><span>Total Sales</span><span class="v">${fmt(s.totalSales)}</span></div>
+      <div class="summary-row"><span>Cash Sales</span><span class="v">${fmt(s.cashSales)}</span></div>
+      <div class="summary-row"><span>Non-Cash Sales</span><span class="v">${fmt(s.nonCashSales)}</span></div>
+      <div class="summary-row"><span>Expected Cash</span><span class="v">${fmt(s.expectedCash)}</span></div>
+      <div class="summary-row"><span>Counted Cash</span><span class="v">${fmt(reg.countedCash)}</span></div>
+      <div class="summary-row grand"><span class="l">Variance</span><span class="v" style="color:${varColor}">${variance >= 0 ? '+' : ''}${fmt(variance)}</span></div>
+    </div>
+    <button class="btn btn-secondary" style="width:100%" onclick="printDayClosingReport()">🖨 Print Day Closing Report</button>
+  `;
+}
+
+function submitOpenRegister() {
+  const input = document.getElementById('reg-opening-float');
+  const openingFloat = Number(input?.value) || 0;
+  const dateStr = todayISO();
+  const reg = { dateStr, openedAt: new Date().toISOString(), openingFloat, closed: false, sales: [], countedCash: null, closedAt: null };
+  saveRegister(dateStr, reg);
+  toast('✓ Register opened for today', 'success');
+  updateRegisterBadge();
+  renderRegisterModalBody();
+}
+
+function submitCloseRegister() {
+  const dateStr = todayISO();
+  const reg = loadRegister(dateStr);
+  if (!reg || reg.closed) return;
+  const input = document.getElementById('reg-counted-cash');
+  const countedCash = Number(input?.value) || 0;
+  if (!confirm('Close the register for today? This locks the day\'s summary.')) return;
+  reg.closed = true;
+  reg.countedCash = countedCash;
+  reg.closedAt = new Date().toISOString();
+  saveRegister(dateStr, reg);
+  toast('✓ Register closed for today', 'success');
+  updateRegisterBadge();
+  renderRegisterModalBody();
+}
+
+function printDayClosingReport() {
+  const dateStr = todayISO();
+  const reg = loadRegister(dateStr);
+  if (!reg) return;
+  const s = registerSummary(reg);
+  const variance = (Number(reg.countedCash) || 0) - s.expectedCash;
+  const rows = (reg.sales || []).map(x => `
+    <tr>
+      <td style="padding:1mm 2mm 1mm 0">${escapeHtml(x.reference)}</td>
+      <td style="padding:1mm 2mm 1mm 0">${escapeHtml(new Date(x.time).toLocaleTimeString())}</td>
+      <td style="padding:1mm 2mm 1mm 0">${escapeHtml(x.paymentAccountName || '')}</td>
+      <td style="text-align:right;padding:1mm 0">${fmt(x.total)}</td>
+    </tr>`).join('');
+  const html = `<!doctype html><html><head><meta charset="utf-8">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      @page{size:80mm auto;margin:0}
+      *{box-sizing:border-box;margin:0;padding:0}
+      body{background:#fff;font-family:'Roboto Mono',monospace;color:#000;font-size:11px;padding:4mm;width:72mm}
+      table{width:100%;border-collapse:collapse;font-size:10px;margin:2mm 0}
+      .row{display:flex;justify-content:space-between}
+      .grand{font-weight:700;font-size:13px;border-top:2px solid #000;padding-top:1.5mm;margin-top:1.5mm}
+      h1{font-size:14px;text-align:center;margin-bottom:2mm}
+      .sub{text-align:center;font-size:9px;color:#333;margin-bottom:3mm}
+      .hr{border-top:1px dashed #999;margin:2mm 0}
+    </style>
+  </head><body>
+    <h1>DAY CLOSING REPORT</h1>
+    <div class="sub">POS Terminal · Manager.io</div>
+    <div class="row"><span>Date</span><span>${escapeHtml(dateStr)}</span></div>
+    <div class="row"><span>Opened</span><span>${escapeHtml(new Date(reg.openedAt).toLocaleTimeString())}</span></div>
+    ${reg.closedAt ? `<div class="row"><span>Closed</span><span>${escapeHtml(new Date(reg.closedAt).toLocaleTimeString())}</span></div>` : ''}
+    <div class="hr"></div>
+    <table>
+      <thead><tr style="border-bottom:1px solid #000"><th style="text-align:left">Ref#</th><th style="text-align:left">Time</th><th style="text-align:left">Method</th><th style="text-align:right">Amt</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="4" style="padding:2mm 0;color:#666">No sales recorded</td></tr>'}</tbody>
+    </table>
+    <div class="hr"></div>
+    <div class="row"><span>Opening Float</span><span>${fmt(reg.openingFloat)}</span></div>
+    <div class="row"><span>Total Sales (${s.count})</span><span>${fmt(s.totalSales)}</span></div>
+    <div class="row"><span>Cash Sales</span><span>${fmt(s.cashSales)}</span></div>
+    <div class="row"><span>Non-Cash Sales</span><span>${fmt(s.nonCashSales)}</span></div>
+    <div class="row"><span>Expected Cash</span><span>${fmt(s.expectedCash)}</span></div>
+    <div class="row"><span>Counted Cash</span><span>${fmt(reg.countedCash)}</span></div>
+    <div class="row grand"><span>Variance</span><span>${variance >= 0 ? '+' : ''}${fmt(variance)}</span></div>
+    <script>setTimeout(function(){window.focus();window.print();},400);<\/script>
+  </body></html>`;
+  const printWin = window.open('', '_blank', 'width=320,height=600');
+  if (!printWin) { toast('Popup blocked — allow popups for printing', 'error'); return; }
+  printWin.document.write(html);
+  printWin.document.close();
 }
 
 /* ══════════════════════════════════════════════════════
@@ -1749,22 +1997,48 @@ async function submitSale() {
     debugLog('ok', 'Invoice saved: ' + result);
     toast(`✓ Sale saved · ${reference}`, 'success');
 
+    // If the invoice was posted against the generic default POS/walk-in
+    // customer account, show the walk-in name typed at checkout on the
+    // receipt instead of the literal "POS" account name — that field is
+    // just a placeholder account, not an actual customer.
+    const def = getDefaultCustomer();
+    const isDefaultPosCustomer = def && customer.key === def.key;
+    const displayCustomerName = isDefaultPosCustomer
+      ? (custName || 'Walk-in Customer')
+      : (customer.name || custName || 'Walk-in Customer');
+
+    const paymentAccount = state.selectedPaymentAccount;
+    const saleTotal = cartTotal();
+
     // Save for receipt printing
     state.lastSubmittedSale = {
       reference, issueDate,
-      customerName: customer.name || custName || 'Walk-in',
+      invoiceKey: result,
+      customerKey: customer.key,
+      customerName: displayCustomerName,
       customerCode: customer.code || '',
       custNameFree: custName,
       custPhone: custPhone,
+      paymentAccountKey: paymentAccount?.key || null,
+      paymentAccountName: paymentAccount?.name || '',
+      paymentReceiptKey: null, // set once "Record Payment" is used
       lines: state.cart.map(l => ({
         code: l.itemCode, name: l.itemName,
         qty: Number(l.qty) || 0,
         price: Number(l.unitPrice) || 0,
         total: (Number(l.qty) || 0) * (Number(l.unitPrice) || 0)
       })),
-      total: cartTotal(),
+      total: saleTotal,
       totalQty: cartQty(),
     };
+
+    // Log this sale into today's register session, if one is open
+    registerLogSale({
+      reference, issueDate,
+      total: saleTotal,
+      isCash: !!paymentAccount?.isCash,
+      paymentAccountName: paymentAccount?.name || '',
+    });
 
     // Update stock in memory
     for (const l of state.cart) {
@@ -1802,7 +2076,65 @@ function showReceiptModal() {
   if (!sale) { toast('No recent sale to print', 'error'); return; }
   const area = document.getElementById('receipt-preview-area');
   area.innerHTML = buildThermalReceiptHTML(sale);
+  updateRecordPaymentButton();
   document.getElementById('receipt-modal').classList.add('open');
+}
+
+function updateRecordPaymentButton() {
+  const btn = document.getElementById('record-payment-btn');
+  const note = document.getElementById('record-payment-note');
+  const sale = state.lastSubmittedSale;
+  if (!btn || !sale) return;
+  if (sale.paymentReceiptKey) {
+    btn.disabled = true;
+    btn.textContent = '✓ Payment Recorded';
+    if (note) { note.style.display = 'block'; note.textContent = 'Payment has been recorded against this invoice in Manager.'; }
+  } else if (!sale.invoiceKey || !sale.paymentAccountKey) {
+    btn.disabled = true;
+    btn.textContent = '💰 Record Payment';
+    if (note) { note.style.display = 'block'; note.textContent = 'Select a payment method before checkout to enable this.'; }
+  } else {
+    btn.disabled = false;
+    btn.textContent = '💰 Record Payment';
+    if (note) { note.style.display = 'none'; }
+  }
+}
+
+// Creates a Manager Receipt against the invoice, marking it paid in the
+// selected bank/cash account. NOTE: Manager's PayerPayeeType enum for the
+// "paidBy" field isn't publicly documented — this assumes 0 = Customer,
+// which matches the order "Customer" appears first in Manager's own "Paid
+// by" dropdown. Please verify the very first receipt this creates by
+// opening it in Manager before relying on this for every sale.
+async function recordManagerReceipt() {
+  const sale = state.lastSubmittedSale;
+  if (!sale || !sale.invoiceKey || !sale.paymentAccountKey || sale.paymentReceiptKey) return;
+  const btn = document.getElementById('record-payment-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Recording…'; }
+  try {
+    const payload = {
+      value: {
+        date: (sale.issueDate || todayISO()) + 'T00:00:00',
+        reference: sale.reference,
+        paidBy: 0, // assumed Customer — see note above
+        customer: sale.customerKey,
+        receivedIn: sale.paymentAccountKey,
+        lines: [{
+          accountsReceivableCustomer: sale.customerKey,
+          accountsReceivableSalesInvoice: sale.invoiceKey,
+          amount: sale.total
+        }]
+      }
+    };
+    const key = await apiCall('POST', '/api4/receipt', payload);
+    sale.paymentReceiptKey = key;
+    toast('✓ Payment recorded in Manager — please verify it looks right', 'success');
+    updateRecordPaymentButton();
+  } catch (err) {
+    debugLog('fail', err.message);
+    toast('Could not record payment: ' + err.message, 'error');
+    if (btn) { btn.disabled = false; btn.textContent = '💰 Record Payment'; }
+  }
 }
 
 function closeReceiptModal() {
@@ -2133,6 +2465,13 @@ function render() {
             </div>
           </div>
 
+          <div class="form-row">
+            <div class="form-field full">
+              <label>Payment Method</label>
+              <select id="payment-method" class="gate-input" style="padding:9px 10px;font-size:13px"></select>
+            </div>
+          </div>
+
           <div class="divider">Walk-in info (saved in description)</div>
           <div class="form-row">
             <div class="form-field"><label>Name</label><input type="text" id="cust-name-free" placeholder="Optional" /></div>
@@ -2161,6 +2500,7 @@ function render() {
   renderReference();
   renderEmptyCart();
   renderSummary();
+  renderPaymentMethodOptions();
 
   setTimeout(() => document.getElementById('barcode').focus(), 80);
 }
@@ -2515,6 +2855,7 @@ function toggleTheme() {
       if (btn) btn.textContent = '☀️';
     }
   } catch(e) {}
+  updateRegisterBadge();
 })();
 
 /* ══════════════════════════════════════════════════════
@@ -2547,6 +2888,7 @@ document.addEventListener('keydown', (e) => {
     if (document.getElementById('receipt-modal').classList.contains('open')) closeReceiptModal();
     else if (document.getElementById('add-item-modal').classList.contains('open')) closeAddItemModal();
     else if (document.getElementById('setup-modal').classList.contains('open')) closeSetupModal();
+    else if (document.getElementById('register-modal').classList.contains('open')) closeRegisterModal();
   }
 });
 </script>
