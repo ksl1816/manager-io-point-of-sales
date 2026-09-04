@@ -142,6 +142,7 @@ input,textarea,select{-webkit-user-select:text;user-select:text}
   font:600 11px/1 'IBM Plex Sans';letter-spacing:.01em;
   text-decoration:none;cursor:pointer;white-space:nowrap;flex-shrink:0;
   transition:background var(--tx-fast),border-color var(--tx-fast),transform var(--tx-fast);
+  outline:none;
 }
 [data-theme="dark"] .app-cta{background:rgba(245,158,11,.12);color:#fbbf24;border:1px solid rgba(245,158,11,.3)}
 [data-theme="dark"] .app-cta:hover{background:rgba(245,158,11,.18);border-color:rgba(245,158,11,.5)}
@@ -591,6 +592,45 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
 .modal-actions{display:flex;gap:8px;flex-wrap:wrap}
 .modal-actions .btn{flex:1;min-width:100px}
 
+/* ─────────── HIRE US MODAL ─────────── */
+.hire-modal-content{max-width:560px}
+.hire-eyebrow{
+  display:inline-block;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  border-radius:20px;padding:3px 11px;margin-bottom:10px;
+  font-family:'IBM Plex Mono',monospace;
+  color:#b45309;background:rgba(245,158,11,.14);border:1px solid rgba(245,158,11,.35);
+}
+.hire-subtitle{font-size:13px;color:var(--text-mute);line-height:1.6;margin-bottom:14px}
+.hire-compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.hire-col{padding:14px;border-radius:var(--radius-sm);border:1px solid var(--border);display:flex;flex-direction:column;gap:5px}
+.hire-col.free{border-color:rgba(16,185,129,.4);background:var(--success-soft)}
+.hire-col.pro{border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.1)}
+.hire-col-label{font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;font-family:'IBM Plex Mono',monospace}
+.hire-col.free .hire-col-label{color:var(--success)}
+.hire-col.pro .hire-col-label{color:#b45309}
+.hire-col-title{font-size:13px;font-weight:700;color:var(--text)}
+.hire-col-desc{font-size:11.5px;color:var(--text-mute);line-height:1.5}
+.hire-services{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:14px}
+.hire-services h4{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--text-mute);margin-bottom:10px;font-family:'IBM Plex Mono',monospace}
+.hire-services ul{list-style:none;display:flex;flex-direction:column;gap:6px;padding:0;margin:0}
+.hire-services li{display:flex;gap:9px;font-size:12.5px;color:var(--text);line-height:1.5}
+.hire-services li::before{content:'✓';color:var(--success);font-weight:800;flex-shrink:0;font-family:'IBM Plex Mono',monospace}
+.hire-contact{background:var(--accent-soft);border:1px solid rgba(79,140,255,.35);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:14px}
+.hire-contact-label{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;font-family:'IBM Plex Mono',monospace}
+.hire-contact p{font-size:12.5px;color:var(--text);line-height:1.6;margin-bottom:10px}
+.hire-cta{
+  display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:var(--radius-sm);
+  background:linear-gradient(135deg,var(--accent),#8b5cf6);color:#fff;font-size:12.5px;font-weight:700;
+  text-decoration:none;
+}
+.hire-cta:hover{box-shadow:0 4px 14px rgba(79,140,255,.35)}
+.hire-footer{
+  padding-top:12px;border-top:1px solid var(--border);
+  font-size:11px;color:var(--text-mute);
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+}
+@media(max-width:480px){ .hire-compare{grid-template-columns:1fr} }
+
 /* ─────────── QUICK ADD INVENTORY MODAL ─────────── */
 .add-item-form{display:flex;flex-direction:column;gap:10px}
 .add-item-form .form-row{margin-bottom:0}
@@ -696,20 +736,13 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
         <span class="install-step-num">4</span>
         <div>
           <div class="install-step-title">Set the Placement</div>
-          <div class="install-step-desc">Manager will show a dropdown of valid pages (e.g. Sales Invoices or a Point of Sale area) — pick wherever you want this terminal's iframe to appear, then Save.</div>
-        </div>
-      </div>
-      <div class="install-step">
-        <span class="install-step-num">5</span>
-        <div>
-          <div class="install-step-title">Create a free account</div>
-          <div class="install-step-desc">Once it loads inside Manager, you'll see a sign-up screen — create a free account (or log in if you already have one) to unlock the terminal. No approval needed, it's instant.</div>
+          <div class="install-step-desc">Manager will show a dropdown of valid pages (e.g. Sales Invoices or a Point of Sale area) — pick wherever you want this terminal's iframe to appear, then Save. It'll load right away — no sign-up or account needed.</div>
         </div>
       </div>
     </div>
 
     <div class="install-footer">
-      Need help? <a href="https://wa.me/?text=Hi%2C%20I%20need%20help%20installing%20the%20POS%20Terminal%20extension." target="_blank" rel="noopener">Message us on WhatsApp</a>
+      Need help? <a href="https://wa.me/923458696636?text=Hi%20KSL%2C%20I%20need%20help%20installing%20the%20POS%20Terminal%20extension." target="_blank" rel="noopener">Message us on WhatsApp</a>
     </div>
   </div>
 </div>
@@ -747,12 +780,12 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
       <span id="mode-label">Standalone Mode</span>
     </span>
   </div>
-  <a class="app-cta" id="cta-btn" href="mailto:contact@example.com?subject=POS%20Custom%20Development%20Request" target="_blank" rel="noopener">
+  <button class="app-cta" id="cta-btn" onclick="openHireModal()">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
       <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
     </svg>
     Need Custom Dev?
-  </a>
+  </button>
 </header>
 
 <!-- TOP BAR -->
@@ -768,6 +801,53 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
 <div class="debug-log" id="debug-log"></div>
 
 <div id="app"></div>
+
+<!-- Hire Us / Custom Development Modal -->
+<div class="modal-overlay" id="hire-modal">
+  <div class="modal-content hire-modal-content">
+    <div class="modal-header">
+      <span class="modal-title">⚡ Professional Services</span>
+      <button class="modal-close" onclick="closeHireModal()">×</button>
+    </div>
+    <span class="hire-eyebrow">Custom Development</span>
+    <p class="hire-subtitle">This POS terminal is <strong style="color:var(--success)">100% free and open source</strong>. If you'd rather have an expert build a polished, production-ready Manager.io extension tailored to your business — we're here to help.</p>
+
+    <div class="hire-compare">
+      <div class="hire-col free">
+        <div class="hire-col-label">✓ Free Forever</div>
+        <div class="hire-col-title">Use this POS as-is</div>
+        <div class="hire-col-desc">All features free. Works with any Manager.io business.</div>
+      </div>
+      <div class="hire-col pro">
+        <div class="hire-col-label">★ Done For You</div>
+        <div class="hire-col-title">Custom development</div>
+        <div class="hire-col-desc">We design, build, test &amp; deploy a bespoke extension for your workflow.</div>
+      </div>
+    </div>
+
+    <div class="hire-services">
+      <h4>What we can build for you</h4>
+      <ul>
+        <li>Custom dashboards, KPI views, and reports tailored to your metrics</li>
+        <li>Branded invoice, quote, and document layouts</li>
+        <li>Multi-endpoint tools — cross-report analysis, reconciliation, audits</li>
+        <li>Industry-specific workflows: retail, construction, services, manufacturing</li>
+        <li>Ongoing support, maintenance, and feature updates</li>
+      </ul>
+    </div>
+
+    <div class="hire-contact">
+      <div class="hire-contact-label">🌐 Learn more &amp; get in touch</div>
+      <p>Visit our website to see our work, explore our services, and reach out through our contact form. We typically reply within one business day — no commitment.</p>
+      <a href="https://ksl1816.github.io/ksl-solution-site/" target="_blank" rel="noopener" class="hire-cta">🌐 Visit Our Website →</a>
+    </div>
+
+    <div class="hire-footer">
+      <span>Free tool · Paid custom development</span>
+      <span style="font-family:'IBM Plex Mono',monospace">v2.0</span>
+    </div>
+  </div>
+</div>
 
 <!-- Receipt Print Modal -->
 <div class="modal-overlay" id="receipt-modal">
@@ -934,6 +1014,9 @@ if (!isEmbeddedInManager) {
 }
 
 function toggleDebug() { document.getElementById('debug-log').classList.toggle('show'); }
+
+function openHireModal() { document.getElementById('hire-modal').classList.add('open'); }
+function closeHireModal() { document.getElementById('hire-modal').classList.remove('open'); }
 function debugLog(type, msg) {
   const el = document.getElementById('debug-log');
   if (!el) return;
@@ -2649,6 +2732,7 @@ document.addEventListener('keydown', (e) => {
     else if (document.getElementById('add-item-modal').classList.contains('open')) closeAddItemModal();
     else if (document.getElementById('setup-modal').classList.contains('open')) closeSetupModal();
     else if (document.getElementById('register-modal').classList.contains('open')) closeRegisterModal();
+    else if (document.getElementById('hire-modal').classList.contains('open')) closeHireModal();
   }
 });
 </script>
