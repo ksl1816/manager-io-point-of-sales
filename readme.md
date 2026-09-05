@@ -56,7 +56,7 @@ Once installed inside Manager.io:
 4. Adjust quantity/price per line as needed, pick or confirm the **customer**, and choose a **payment method**
 5. Click **🗄 Register** at the start of the day to open the cash register with an opening float; close it at day's end to reconcile and print the Day Closing Report
 6. Complete the sale — a reference number is generated automatically
-7. From the receipt screen, **print**, **download as PDF**, or **share via WhatsApp**
+7. From the receipt screen, **print**, **download as PDF**
 8. Toggle 🌙/☀️ to switch between dark and light themes at any time
 
 ---
