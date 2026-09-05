@@ -87,8 +87,6 @@ This extension is under active development and currently runs in **Standalone (c
 - No configurable default drawer account per payment method (currently defaults to the first cash account found)
 - No dedicated mobile view (desktop/tablet layout only for now)
 
-See the community forum thread for ongoing discussion and updates.
-
 ---
 
 ## ⚠️ Disclaimer
