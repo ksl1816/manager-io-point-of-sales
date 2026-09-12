@@ -456,6 +456,60 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
 .btn-primary:disabled{opacity:.5;cursor:not-allowed}
 .btn-secondary{background:transparent;color:var(--text-mute);border:1px solid var(--border)}
 .btn-secondary:hover{background:var(--panel-hover);color:var(--text);border-color:var(--border-strong)}
+.btn-xs{padding:6px 10px;min-height:auto;font-size:10px;flex:none!important;min-width:0!important;border-radius:6px}
+
+/* ─────────── DAY REGISTER (Manager-backed) ─────────── */
+.register-modal-content{max-width:min(1600px,96vw);width:96vw}
+.reg-toolbar{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px}
+.reg-toolbar .form-field{min-width:150px}
+.reg-columns{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:820px){.reg-columns{grid-template-columns:1fr}}
+.reg-col-title{font:700 12px/1 'IBM Plex Sans';color:var(--text);margin-bottom:6px;letter-spacing:.03em;text-transform:uppercase}
+.table-scroll{max-height:340px;overflow:auto;border:1px solid var(--border);border-radius:var(--radius)}
+.reg-table{width:100%;border-collapse:collapse;font:500 11px/1.4 'IBM Plex Sans'}
+.reg-table th{position:sticky;top:0;background:var(--panel);text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);color:var(--text-mute);font-size:10px;text-transform:uppercase}
+.reg-table td{padding:6px 8px;border-bottom:1px solid var(--border)}
+.reg-table .icon-btn{width:22px;height:22px;font-size:12px;margin-right:4px;display:inline-grid}
+.reg-table .actions-cell{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end}
+.drilldown-row td,.receiptform-row td{background:var(--panel-hover)}
+.reg-subtable{width:100%;border-collapse:collapse;font-size:10px}
+.reg-subtable th{text-align:left;color:var(--text-mute);padding:3px 6px;border-bottom:1px solid var(--border)}
+.reg-subtable td{padding:3px 6px}
+.receipt-form{padding:8px 4px}
+.receipt-form-title{font:600 11px 'IBM Plex Sans';margin-bottom:6px}
+.receipt-line{display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap}
+.receipt-line select{flex:1;min-width:0}
+.receipt-line input{width:110px}
+@media (max-width:520px){
+  .reg-table{font-size:10px}
+  .reg-table th,.reg-table td{padding:5px 5px}
+  .btn-xs{padding:5px 7px;font-size:9px}
+}
+
+/* Register/History/Analysis modals show a lot of data in a small popup —
+   compact the toolbar & summary so the invoice/return table gets most of
+   the vertical space, and make sure the toolbar wraps cleanly instead of
+   letting a button get clipped by the modal edge on narrow screens. */
+.register-modal-content{padding:14px 16px;max-height:94vh}
+.register-modal-content .reg-toolbar{margin-bottom:8px;gap:8px}
+.register-modal-content .summary{padding:8px 10px;margin-bottom:8px}
+.register-modal-content .summary-row{padding:2px 0;font-size:11px}
+.register-modal-content .summary-row.grand{margin-top:5px;padding-top:6px}
+.register-modal-content .summary-row.grand .v{font-size:17px}
+.register-modal-content .table-scroll{max-height:min(58vh,620px)}
+@media (max-width:480px){
+  .register-modal-content .reg-toolbar{flex-direction:column;align-items:stretch}
+  .register-modal-content .reg-toolbar .form-field{min-width:0;width:100%}
+  .register-modal-content .reg-toolbar button{width:100%}
+}
+/* Native date input: consistent height with other fields + a visible,
+   theme-matched picker icon instead of the browser's default. */
+.form-field input[type="date"]{
+  height:38px;color-scheme:dark;
+}
+.register-modal-content input[type="date"]::-webkit-calendar-picker-indicator{
+  filter:invert(0.85);cursor:pointer;
+}
 .btn-print{
   background:linear-gradient(135deg,#8b5cf6 0%,#7c3aed 100%);
   color:#fff;border:none;
@@ -758,11 +812,11 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
     </div>
     <div class="app-title">
       <div class="app-name">POS Terminal</div>
-      <div class="app-sub">for Manager.io · v2.0</div>
+      <div class="app-sub">for Manager.io · v2.1 · 2026-09-12</div>
     </div>
   </div>
   <div class="app-badges">
-    <span class="app-badge b-blue">V2.0</span>
+    <span class="app-badge b-blue">V2.1</span>
     <span class="app-badge b-green">
       <svg class="b-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 12a9 9 0 1 1-3.8-7.4"/><polyline points="21 3 21 9 15 9"/>
@@ -774,10 +828,6 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
         <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
       </svg>
       Secure
-    </span>
-    <span class="app-badge b-mode" id="mode-badge">
-      <span class="b-dot"></span>
-      <span id="mode-label">Standalone Mode</span>
     </span>
   </div>
   <button class="app-cta" id="cta-btn" onclick="openHireModal()">
@@ -795,6 +845,9 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
   <span class="status-text" id="status-text">Press Load to fetch data from Manager</span>
   <button class="icon-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
   <button class="debug-toggle" id="register-badge-btn" onclick="toggleRegisterModal()" title="Open/close the day's cash register">🗄 Register</button>
+  <button class="debug-toggle" onclick="toggleHistoryModal()" title="Browse previous sales invoices">🕘 History</button>
+  <button class="debug-toggle" onclick="toggleAnalysisModal()" title="Sales analysis & top items">📈 Analysis</button>
+  <button class="debug-toggle" onclick="toggleReturnsSearchModal()" title="Search any invoice to record a return">↩ Returns</button>
   <button class="debug-toggle" onclick="toggleSetupModal()" title="Default customer & custom fields setup">⚙ Setup</button>
   <button class="debug-toggle" onclick="toggleDebug()">Debug</button>
 </div>
@@ -803,7 +856,7 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
 <div id="app"></div>
 
 <!-- Hire Us / Custom Development Modal -->
-<div class="modal-overlay" id="hire-modal">
+<div class="modal-overlay" id="hire-modal" data-close="closeHireModal">
   <div class="modal-content hire-modal-content">
     <div class="modal-header">
       <span class="modal-title">⚡ Professional Services</span>
@@ -844,13 +897,13 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
 
     <div class="hire-footer">
       <span>Free tool · Paid custom development</span>
-      <span style="font-family:'IBM Plex Mono',monospace">v2.0</span>
+      <span style="font-family:'IBM Plex Mono',monospace">v2.1 · 2026-09-12</span>
     </div>
   </div>
 </div>
 
 <!-- Receipt Print Modal -->
-<div class="modal-overlay" id="receipt-modal">
+<div class="modal-overlay" id="receipt-modal" data-close="closeReceiptModal">
   <div class="modal-content">
     <div class="modal-header">
       <span class="modal-title">🧾 Receipt Preview</span>
@@ -861,6 +914,7 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
     <div class="modal-actions">
       <button class="btn btn-print" onclick="printReceipt()">🖨 Print</button>
       <button class="btn btn-secondary" onclick="downloadReceiptPDF()">📄 PDF</button>
+      <button class="btn btn-secondary" id="apply-credit-btn" onclick="openApplyCreditToSaleModal()">💳 Apply Credit</button>
       <button class="btn btn-secondary" id="record-payment-btn" onclick="recordManagerReceipt()">💰 Record Payment</button>
       <button class="btn btn-secondary" onclick="closeReceiptModal()">Close</button>
     </div>
@@ -868,7 +922,7 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
 </div>
 
 <!-- Setup Modal: default POS customer + walk-in custom fields -->
-<div class="modal-overlay" id="setup-modal">
+<div class="modal-overlay" id="setup-modal" data-close="closeSetupModal">
   <div class="modal-content">
     <div class="modal-header">
       <span class="modal-title">⚙ POS Setup</span>
@@ -915,8 +969,8 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
 </div>
 
 <!-- Register Modal: day opening float + day closing summary -->
-<div class="modal-overlay" id="register-modal">
-  <div class="modal-content">
+<div class="modal-overlay" id="register-modal" data-close="closeRegisterModal">
+  <div class="modal-content register-modal-content">
     <div class="modal-header">
       <span class="modal-title">🗄 Day Register</span>
       <button class="modal-close" onclick="closeRegisterModal()">×</button>
@@ -925,14 +979,56 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
   </div>
 </div>
 
+<!-- Sales History Modal -->
+<div class="modal-overlay" id="history-modal" data-close="closeHistoryModal">
+  <div class="modal-content register-modal-content">
+    <div class="modal-header">
+      <span class="modal-title">🕘 Sales History</span>
+      <button class="modal-close" onclick="closeHistoryModal()">×</button>
+    </div>
+    <div id="history-modal-body" class="add-item-form"></div>
+  </div>
+</div>
+
+<!-- Sales Analysis Modal -->
+<div class="modal-overlay" id="analysis-modal" data-close="closeAnalysisModal">
+  <div class="modal-content register-modal-content">
+    <div class="modal-header">
+      <span class="modal-title">📈 Sales Analysis</span>
+      <button class="modal-close" onclick="closeAnalysisModal()">×</button>
+    </div>
+    <div id="analysis-modal-body" class="add-item-form"></div>
+  </div>
+</div>
+
+<!-- Returns Search Modal -->
+<div class="modal-overlay" id="returns-search-modal" data-close="closeReturnsSearchModal">
+  <div class="modal-content register-modal-content">
+    <div class="modal-header">
+      <span class="modal-title">↩ Find Invoice to Return</span>
+      <button class="modal-close" onclick="closeReturnsSearchModal()">×</button>
+    </div>
+    <div id="returns-search-body" class="add-item-form"></div>
+  </div>
+</div>
+
 <!-- Quick Add Inventory Modal -->
-<div class="modal-overlay" id="add-item-modal">
+<div class="modal-overlay" id="add-item-modal" data-close="closeAddItemModal">
   <div class="modal-content">
     <div class="modal-header">
-      <span class="modal-title">➕ Quick Add Inventory Item</span>
+      <span class="modal-title">➕ Quick Add Item</span>
       <button class="modal-close" onclick="closeAddItemModal()">×</button>
     </div>
     <div class="add-item-form">
+      <div class="form-row">
+        <div class="form-field">
+          <label>Item Type</label>
+          <select id="new-item-type">
+            <option value="inventory">Inventory (tracked stock)</option>
+            <option value="non-inventory">Non-Inventory (service/no stock)</option>
+          </select>
+        </div>
+      </div>
       <div class="form-row">
         <div class="form-field">
           <label>Item Code (Barcode)</label>
@@ -1292,11 +1388,15 @@ async function loadAllRecords() {
     bar.style.width = '5%';
     let itemsDone = false, custsDone = false;
 
-    const [items, customers, paymentAccounts] = await Promise.all([
+    const [items, nonInventoryItems, customers, paymentAccounts] = await Promise.all([
       getBatchInventoryItem((loaded, total, page) => {
         status.textContent = `Items · pg ${page} · ${loaded.toLocaleString()} loaded`;
         if (total) bar.style.width = Math.min(20, Math.round(loaded/total*20)) + '%';
       }).then(r => { itemsDone = true; return r; }),
+      getBatchEndpoint('/api4/non-inventory-item-batch', () => {}).catch(e => {
+        debugLog('fail', 'Non-inventory items fetch failed: ' + e.message);
+        return [];
+      }),
       getBatchEndpoint('/api4/customer-batch', (loaded, total, page) => {
         status.textContent = `Customers · pg ${page} · ${loaded.toLocaleString()} loaded`;
       }).then(r => { custsDone = true; return r; }),
@@ -1306,8 +1406,23 @@ async function loadAllRecords() {
       }),
     ]);
 
-    state.items = items; state.customers = customers;
-    state.paymentAccounts = paymentAccounts || [];
+    // Non-inventory items are sellable but carry no stock quantity — tag them
+    // so the cart/search UI can skip stock checks instead of guessing.
+    // They also use different field names (code/name) than inventory items
+    // (itemCode/itemName) — normalize so the rest of the app (search index,
+    // cart rows, receipts) can read itemCode/itemName uniformly either way.
+    for (const r of nonInventoryItems) {
+      r.posType = 'non-inventory';
+      r.item = r.item || {};
+      if (r.item.itemCode === undefined) r.item.itemCode = r.item.code || '';
+      if (r.item.itemName === undefined) r.item.itemName = r.item.name || r.item.code || 'Item';
+    }
+    for (const r of items) r.posType = r.posType || 'inventory';
+
+    state.items = [...items, ...nonInventoryItems]; state.customers = customers;
+    // Inactive Cash & Bank accounts shouldn't be offered as a payment method.
+    state.paymentAccounts = (paymentAccounts || []).filter(a => !a.item?.inactive);
+    getBusinessDetails().then(() => updateRegisterBadge()).catch(() => {}); // don't block startup on this
     status.textContent = `Indexing ${items.length.toLocaleString()} items…`;
     bar.style.width = '38%';
     await yieldToUI();
@@ -1422,159 +1537,1210 @@ function renderPaymentMethodOptions() {
 }
 
 /* ══════════════════════════════════════════════════════
-   DAY REGISTER — opening float / closing count
-   Stored locally per calendar day (localStorage), since Manager has no
-   native "register session" object. This tracks POS sales made through
-   this extension only — it does not read historical sales made outside it.
+   DAY REGISTER — backed entirely by Manager, not localStorage.
+   Opening/Closing cash figures live on the Business Details record
+   itself (customFields2.decimals), namespaced per calendar date:
+     "POS Register Opening 2026-09-12"
+     "POS Register Closing 2026-09-12"
+   This means the register survives across devices/sessions/reinstalls,
+   and "yesterday's closing" can be read back automatically to suggest
+   today's opening float (or it can be entered manually instead).
+   The invoice/receipt/purchase lists shown here are fetched fresh from
+   Manager every time the register is opened or refreshed — nothing
+   about a day's transactions is cached in the browser.
 ══════════════════════════════════════════════════════ */
-function registerKey(dateStr) { return `pos-register-${dateStr}`; }
+const REG_OPEN_PREFIX  = 'POS Register Opening ';
+const REG_CLOSE_PREFIX = 'POS Register Closing ';
 
-function loadRegister(dateStr) {
+state.businessDetails   = null;
+state.dayRegisterDate   = todayISO();
+state.dayRegisterData   = null; // { date, salesInvoices, purchaseInvoices, allReceipts }
+
+async function getBusinessDetails(force) {
+  if (state.businessDetails && !force) return state.businessDetails;
   try {
-    const raw = localStorage.getItem(registerKey(dateStr));
-    return raw ? JSON.parse(raw) : null;
-  } catch (e) { return null; }
-}
-function saveRegister(dateStr, obj) {
-  try { localStorage.setItem(registerKey(dateStr), JSON.stringify(obj)); } catch (e) {}
-}
-
-function registerLogSale(sale) {
-  const dateStr = todayISO();
-  const reg = loadRegister(dateStr);
-  if (!reg || reg.closed) return; // no open register today — nothing to log
-  reg.sales.push({ ...sale, time: new Date().toISOString() });
-  saveRegister(dateStr, reg);
-  updateRegisterBadge();
+    const bd = await apiCall('GET', '/api4/business-details');
+    state.businessDetails = bd || {};
+  } catch (e) {
+    debugLog('fail', 'Could not fetch business details: ' + e.message);
+    state.businessDetails = state.businessDetails || {};
+  }
+  return state.businessDetails;
 }
 
-function updateRegisterBadge() {
+// Always re-fetches business-details right before writing, so a save from
+// this session can't silently clobber a field someone else just wrote.
+async function saveBusinessCustomDecimal(fieldName, amount) {
+  const bd = await getBusinessDetails(true);
+  bd.customFields2 = bd.customFields2 || {};
+  bd.customFields2.decimals = bd.customFields2.decimals || {};
+  bd.customFields2.decimals[fieldName] = Number(amount) || 0;
+  await apiCall('PUT', '/api4/business-details', { value: bd });
+  state.businessDetails = bd;
+}
+
+function getRegisterDecimal(dateStr, prefix) {
+  const decimals = state.businessDetails?.customFields2?.decimals || {};
+  const v = decimals[prefix + dateStr];
+  return (v === undefined || v === null || v === '') ? null : Number(v);
+}
+
+// Looks backward up to 60 days for the most recent recorded Closing amount
+// before dateStr — used only to *suggest* today's opening float.
+function findPreviousClosing(dateStr) {
+  const decimals = state.businessDetails?.customFields2?.decimals || {};
+  const d = new Date(dateStr + 'T00:00:00');
+  for (let i = 1; i <= 60; i++) {
+    d.setDate(d.getDate() - 1);
+    const ds = d.toISOString().slice(0, 10);
+    const v = decimals[REG_CLOSE_PREFIX + ds];
+    if (v !== undefined && v !== null && v !== '') return { date: ds, amount: Number(v) };
+  }
+  return null;
+}
+
+/* ---- Accessors for sales/purchase invoices & receipts ---- */
+function invRef(r)        { return r?.item?.reference || r?.reference || r?.key || ''; }
+function invDate(r)       { return (r?.item?.issueDate || r?.issueDate || '').slice(0, 10); }
+function invCustomerKey(r){ return r?.item?.customer || r?.customer || ''; }
+function invLines(r)      { return r?.item?.lines || r?.lines || []; }
+function invTotal(r) {
+  return invLines(r).reduce((s, l) => s + (Number(l.qty) || 0) * (Number(l.salesUnitPrice ?? l.unitPrice) || 0), 0);
+}
+function purRef(r)         { return r?.item?.reference || r?.reference || r?.key || ''; }
+function purDate(r)        { return (r?.item?.issueDate || r?.issueDate || '').slice(0, 10); }
+function purSupplierKey(r) { return r?.item?.supplier || r?.supplier || ''; }
+function purLines(r)       { return r?.item?.lines || r?.lines || []; }
+function purTotal(r) {
+  return purLines(r).reduce((s, l) => s + (Number(l.qty) || 0) * (Number(l.unitPrice ?? l.purchaseUnitPrice) || 0), 0);
+}
+function customerNameByKey(key) {
+  const c = state.customers.find(x => x.key === key);
+  return c?.item?.name || 'Unknown';
+}
+function itemNameByKey(key) {
+  const it = state.itemIndex.find(x => x.key === key);
+  return it?.rec?.item?.itemName || key || 'Item';
+}
+function receiptTotalForInvoice(invoiceKey, receipts) {
+  let total = 0;
+  for (const r of receipts) {
+    for (const l of (r?.item?.lines || [])) {
+      if (l?.accountsReceivableSalesInvoice === invoiceKey) total += Number(l.amount) || 0;
+    }
+  }
+  return total;
+}
+// Returns (Credit Notes) reduce what's actually owed on an invoice just like
+// a Receipt does — a returned/credited amount is money the customer no
+// longer owes, so "Due" must net this out or it overstates the balance.
+function returnTotalForInvoice(invoiceKey, creditNotes) {
+  let total = 0;
+  for (const cn of creditNotes) {
+    if (cnSalesInvoice(cn) === invoiceKey) total += cnTotal(cn);
+  }
+  return total;
+}
+// Manual Journal Entry adjustments (posted by the Adjust/Apply Credit
+// flows) also affect what an invoice is owed: a credit line against the
+// invoice reduces its balance (like a payment), a debit line increases it
+// (reversing a credit that had been sitting there). Net = credit - debit.
+function jeLines(je) { return je?.item?.lines || je?.lines || []; }
+function adjustmentTotalForInvoice(invoiceKey, journalEntries) {
+  let total = 0;
+  for (const je of journalEntries || []) {
+    for (const l of jeLines(je)) {
+      if (l?.accountsReceivableSalesInvoice === invoiceKey) {
+        total += (Number(l.credit) || 0) - (Number(l.debit) || 0);
+      }
+    }
+  }
+  return total;
+}
+// Single place that computes an invoice's true balance, netting Receipts,
+// Returns (Credit Notes), AND manual Journal Entry adjustments — anywhere
+// "Due"/"Credit" is shown should go through this so all three stay in sync.
+function invoiceBalance(invoiceKey, total, allReceipts, creditNotes, journalEntries) {
+  const rcv = receiptTotalForInvoice(invoiceKey, allReceipts);
+  const ret = returnTotalForInvoice(invoiceKey, creditNotes);
+  const adj = adjustmentTotalForInvoice(invoiceKey, journalEntries);
+  const balance = total - rcv - ret - adj;
+  return { rcv, ret, adj, balance, due: Math.max(0, balance), credit: Math.max(0, -balance) };
+}
+
+/* ---- Fetch the day's data straight from Manager (cached per-date until refreshed) ---- */
+async function loadDayRegisterData(dateStr, force) {
+  if (state.dayRegisterData && state.dayRegisterData.date === dateStr && !force) return state.dayRegisterData;
+  const [salesRaw, creditRaw, receiptRaw, journalRaw] = await Promise.all([
+    getBatchEndpoint('/api4/sales-invoice-batch', () => {}).catch(() => []),
+    getBatchEndpoint('/api4/credit-note-batch', () => {}).catch(() => []),
+    getBatchEndpoint('/api4/receipt-batch', () => {}).catch(() => []),
+    getBatchEndpoint('/api4/journal-entry-batch', () => {}).catch(() => []),
+  ]);
+  if (force || !state.allCreditNotes) state.allCreditNotes = creditRaw; // keep the Return-modal cache in sync
+  if (force || !state.allJournalEntries) state.allJournalEntries = journalRaw; // keep the Adjust-modal cache in sync
+  state.dayRegisterData = {
+    date: dateStr,
+    salesInvoices: salesRaw.filter(r => invDate(r) === dateStr),
+    creditNotes: creditRaw.filter(r => cnDate(r) === dateStr),
+    allReceipts: receiptRaw,
+    allJournalEntries: journalRaw,
+  };
+  return state.dayRegisterData;
+}
+
+async function updateRegisterBadge() {
   const btn = document.getElementById('register-badge-btn');
   if (!btn) return;
-  const reg = loadRegister(todayISO());
-  if (reg && !reg.closed) btn.innerHTML = '🗄 Register: <span style="color:var(--success)">Open</span>';
-  else if (reg && reg.closed) btn.innerHTML = '🗄 Register: Closed';
+  await getBusinessDetails();
+  const today = todayISO();
+  const closing = getRegisterDecimal(today, REG_CLOSE_PREFIX);
+  const opening = getRegisterDecimal(today, REG_OPEN_PREFIX);
+  if (closing !== null) btn.innerHTML = '🗄 Register: Closed';
+  else if (opening !== null) btn.innerHTML = '🗄 Register: <span style="color:var(--success)">Open</span>';
   else btn.innerHTML = '🗄 Register';
-}
-
-function registerSummary(reg) {
-  const sales = reg.sales || [];
-  const totalSales = sales.reduce((s, x) => s + (Number(x.total) || 0), 0);
-  const cashSales = sales.filter(x => x.isCash).reduce((s, x) => s + (Number(x.total) || 0), 0);
-  const nonCashSales = totalSales - cashSales;
-  const expectedCash = (Number(reg.openingFloat) || 0) + cashSales;
-  return { count: sales.length, totalSales, cashSales, nonCashSales, expectedCash };
 }
 
 function toggleRegisterModal() {
   document.getElementById('register-modal').classList.add('open');
+  state.dayRegisterDate = todayISO();
   renderRegisterModalBody();
 }
 function closeRegisterModal() {
   document.getElementById('register-modal').classList.remove('open');
 }
 
-function renderRegisterModalBody() {
+function changeRegisterDate(v) {
+  state.dayRegisterDate = v;
+  renderRegisterModalBody();
+}
+
+async function renderRegisterModalBody() {
   const el = document.getElementById('register-modal-body');
   if (!el) return;
-  const dateStr = todayISO();
-  const reg = loadRegister(dateStr);
+  const dateStr = state.dayRegisterDate;
+  el.innerHTML = `<div style="padding:30px;text-align:center;color:var(--text-mute)">Loading day register…</div>`;
 
-  if (!reg) {
-    el.innerHTML = `
-      <div style="font:500 12px/1.5 'IBM Plex Sans';color:var(--text-mute);margin-bottom:14px">
-        No register opened yet for <strong style="color:var(--text)">${escapeHtml(dateStr)}</strong>. Enter the starting cash float to open one — sales made from here on will be tracked against it.
-      </div>
-      <div class="form-field" style="margin-bottom:14px">
-        <label>Opening Cash Float</label>
-        <input type="number" id="reg-opening-float" class="gate-input" placeholder="0.00" step="any" min="0" />
-      </div>
-      <button class="btn btn-primary" style="width:100%" onclick="submitOpenRegister()">Open Register for Today</button>
+  await getBusinessDetails();
+  const { salesInvoices, creditNotes, allReceipts, allJournalEntries } = await loadDayRegisterData(dateStr);
+
+  const opening    = getRegisterDecimal(dateStr, REG_OPEN_PREFIX);
+  const closing    = getRegisterDecimal(dateStr, REG_CLOSE_PREFIX);
+  const prevClose  = opening === null ? findPreviousClosing(dateStr) : null;
+
+  const salesTotal    = salesInvoices.reduce((s, r) => s + invTotal(r), 0);
+  const receivedTotal = salesInvoices.reduce((s, r) => s + receiptTotalForInvoice(r.key, allReceipts), 0);
+  const returnsTotal  = creditNotes.reduce((s, r) => s + cnTotal(r), 0);
+  const expectedCash  = (opening ?? 0) + receivedTotal;
+  const allCreditNotesForDue = state.allCreditNotes || creditNotes; // returns/adjustments can post on a later date than the sale, so Due must check ALL of them ever made against the invoice, not just today's
+  const allJournalEntriesForDue = state.allJournalEntries || allJournalEntries;
+
+  const salesRows = salesInvoices.map(r => {
+    const total = invTotal(r);
+    const { rcv, ret, due: outstanding, credit } = invoiceBalance(r.key, total, allReceipts, allCreditNotesForDue, allJournalEntriesForDue);
+    return `
+      <tr>
+        <td><button class="icon-btn" title="Edit Sales Invoice" onclick="editSalesInvoice('${r.key}')">✎</button> <strong>${escapeHtml(invRef(r))}</strong></td>
+        <td>${escapeHtml(customerNameByKey(invCustomerKey(r)))}</td>
+        <td style="text-align:right">${fmt(total)}</td>
+        <td style="text-align:right">${fmt(rcv)}${ret > 0.005 ? ` <span style="color:var(--text-mute)">(−${fmt(ret)} ret.)</span>` : ''}</td>
+        <td style="text-align:right;color:${credit > 0.005 ? 'var(--accent)' : (outstanding > 0.005 ? 'var(--warn)' : 'var(--success)')}">${credit > 0.005 ? `Credit ${fmt(credit)}` : fmt(outstanding)}</td>
+        <td>
+          <div class="actions-cell">
+            <button class="btn btn-secondary btn-xs" onclick="toggleInvoiceDrilldown('${r.key}')">Items</button>
+            ${outstanding > 0.005 ? `<button class="btn btn-primary btn-xs" onclick="openReceiptForm('${r.key}')">Receipt</button>` : ''}
+            ${credit > 0.005 ? `<button class="btn btn-primary btn-xs" onclick="openAdjustCreditModal('${r.key}', ${credit.toFixed(2)})">💳 Adjust</button>` : ''}
+            <button class="btn btn-secondary btn-xs" onclick="openSaleReturnModal('${r.key}')">↩ Return</button>
+          </div>
+        </td>
+      </tr>
+      <tr id="drilldown-${r.key}" class="drilldown-row" style="display:none"><td colspan="6">${renderInvoiceLineItems(r)}</td></tr>
+      <tr id="receiptform-${r.key}" class="receiptform-row" style="display:none"><td colspan="6">${renderReceiptForm(r, outstanding)}</td></tr>
     `;
-    return;
-  }
+  }).join('') || `<tr><td colspan="6" style="text-align:center;color:var(--text-mute);padding:14px">No sales invoices on this date.</td></tr>`;
 
-  const s = registerSummary(reg);
+  const returnRows = creditNotes.map(r => `
+    <tr>
+      <td><strong>${escapeHtml(cnRef(r))}</strong></td>
+      <td>${escapeHtml(customerNameByKey(cnCustomerKey(r)))}</td>
+      <td style="font-size:10px;color:var(--text-mute)">${escapeHtml(invRefByKey(cnSalesInvoice(r)))}</td>
+      <td style="text-align:right">${fmt(cnTotal(r))}</td>
+    </tr>
+  `).join('') || `<tr><td colspan="4" style="text-align:center;color:var(--text-mute);padding:14px">No returns on this date.</td></tr>`;
 
-  if (!reg.closed) {
-    el.innerHTML = `
-      <div class="summary" style="margin-bottom:14px">
-        <div class="summary-row"><span>Opened at</span><span class="v">${escapeHtml(new Date(reg.openedAt).toLocaleTimeString())}</span></div>
-        <div class="summary-row"><span>Opening Float</span><span class="v">${fmt(reg.openingFloat)}</span></div>
-        <div class="summary-row"><span>Sales so far</span><span class="v">${s.count}</span></div>
-        <div class="summary-row"><span>Total Sales</span><span class="v">${fmt(s.totalSales)}</span></div>
-        <div class="summary-row"><span>Cash Sales</span><span class="v">${fmt(s.cashSales)}</span></div>
-        <div class="summary-row"><span>Non-Cash Sales</span><span class="v">${fmt(s.nonCashSales)}</span></div>
-        <div class="summary-row grand"><span class="l">Expected Cash in Drawer</span><span class="v">${fmt(s.expectedCash)}</span></div>
-      </div>
-      <div class="form-field" style="margin-bottom:10px">
-        <label>Counted Cash (at closing)</label>
-        <input type="number" id="reg-counted-cash" class="gate-input" placeholder="0.00" step="any" min="0" />
-      </div>
-      <button class="btn btn-primary" style="width:100%" onclick="submitCloseRegister()">Close Register for Today</button>
-    `;
-    return;
-  }
-
-  // Already closed today
-  const variance = (Number(reg.countedCash) || 0) - s.expectedCash;
-  const varColor = Math.abs(variance) < 0.005 ? 'var(--success)' : (variance > 0 ? 'var(--warn)' : 'var(--danger)');
   el.innerHTML = `
-    <div style="font:600 12px/1.5 'IBM Plex Sans';color:var(--success);margin-bottom:10px">✓ Register closed for ${escapeHtml(dateStr)}</div>
-    <div class="summary" style="margin-bottom:14px">
-      <div class="summary-row"><span>Opening Float</span><span class="v">${fmt(reg.openingFloat)}</span></div>
-      <div class="summary-row"><span>Sales</span><span class="v">${s.count}</span></div>
-      <div class="summary-row"><span>Total Sales</span><span class="v">${fmt(s.totalSales)}</span></div>
-      <div class="summary-row"><span>Cash Sales</span><span class="v">${fmt(s.cashSales)}</span></div>
-      <div class="summary-row"><span>Non-Cash Sales</span><span class="v">${fmt(s.nonCashSales)}</span></div>
-      <div class="summary-row"><span>Expected Cash</span><span class="v">${fmt(s.expectedCash)}</span></div>
-      <div class="summary-row"><span>Counted Cash</span><span class="v">${fmt(reg.countedCash)}</span></div>
-      <div class="summary-row grand"><span class="l">Variance</span><span class="v" style="color:${varColor}">${variance >= 0 ? '+' : ''}${fmt(variance)}</span></div>
+    <div class="reg-toolbar">
+      <div class="form-field"><label>Date</label><input type="date" id="reg-date-picker" value="${dateStr}" onchange="changeRegisterDate(this.value)"></div>
+      <button class="btn btn-secondary" onclick="loadDayRegisterData(state.dayRegisterDate, true).then(renderRegisterModalBody)">↻ Refresh</button>
+      <button class="btn btn-secondary" onclick="printDayRegisterReport()">🖨 Print Day Summary</button>
     </div>
-    <button class="btn btn-secondary" style="width:100%" onclick="printDayClosingReport()">🖨 Print Day Closing Report</button>
+
+    <div class="summary" style="margin-bottom:14px">
+      <div class="summary-row"><span>Opening Cash</span><span class="v">
+        ${opening !== null ? fmt(opening) : `
+          <input type="number" id="reg-opening-input" style="width:110px" step="any" min="0" value="${prevClose ? prevClose.amount : ''}" placeholder="0.00">
+          <button class="btn btn-primary btn-xs" onclick="submitOpeningCash('${dateStr}')">Save</button>`}
+      </span></div>
+      ${opening === null && prevClose ? `<div style="font:500 10px 'IBM Plex Sans';color:var(--text-mute);margin:-6px 0 8px">Suggested from ${escapeHtml(prevClose.date)}'s closing: ${fmt(prevClose.amount)}. Change it if this isn't right.</div>` : ''}
+      <div class="summary-row"><span>Sales Invoiced (${salesInvoices.length})</span><span class="v">${fmt(salesTotal)}</span></div>
+      <div class="summary-row"><span>Cash/Receipts Collected</span><span class="v">${fmt(receivedTotal)}</span></div>
+      <div class="summary-row"><span>Returns / Credit Notes (${creditNotes.length})</span><span class="v">${fmt(returnsTotal)}</span></div>
+      <div class="summary-row grand"><span class="l">Expected Cash (Opening + Collected)</span><span class="v">${fmt(expectedCash)}</span></div>
+      <div class="summary-row"><span>Closing Cash</span><span class="v">
+        ${closing !== null ? fmt(closing) : `
+          <input type="number" id="reg-closing-input" style="width:110px" step="any" min="0" placeholder="${fmt(expectedCash)}">
+          <button class="btn btn-primary btn-xs" onclick="submitClosingCash('${dateStr}')">Save</button>`}
+      </span></div>
+      ${closing !== null ? `<div class="summary-row"><span>Variance</span><span class="v" style="color:${Math.abs(closing - expectedCash) < 0.005 ? 'var(--success)' : 'var(--danger)'}">${(closing - expectedCash) >= 0 ? '+' : ''}${fmt(closing - expectedCash)}</span></div>` : ''}
+    </div>
+
+    <div class="reg-columns">
+      <div class="reg-col">
+        <div class="reg-col-title">Sales Invoices</div>
+        <div class="table-scroll"><table class="reg-table">
+          <thead><tr><th>Ref</th><th>Customer</th><th style="text-align:right">Total</th><th style="text-align:right">Received</th><th style="text-align:right">Due</th><th></th></tr></thead>
+          <tbody>${salesRows}</tbody>
+        </table></div>
+      </div>
+      <div class="reg-col">
+        <div class="reg-col-title">Returns (Credit Notes)</div>
+        <div class="table-scroll"><table class="reg-table">
+          <thead><tr><th>Ref</th><th>Customer</th><th>Against Invoice</th><th style="text-align:right">Amount</th></tr></thead>
+          <tbody>${returnRows}</tbody>
+        </table></div>
+      </div>
+    </div>
   `;
 }
 
-function submitOpenRegister() {
-  const input = document.getElementById('reg-opening-float');
-  const openingFloat = Number(input?.value) || 0;
-  const dateStr = todayISO();
-  const reg = { dateStr, openedAt: new Date().toISOString(), openingFloat, closed: false, sales: [], countedCash: null, closedAt: null };
-  saveRegister(dateStr, reg);
-  toast('✓ Register opened for today', 'success');
-  updateRegisterBadge();
-  renderRegisterModalBody();
-}
-
-function submitCloseRegister() {
-  const dateStr = todayISO();
-  const reg = loadRegister(dateStr);
-  if (!reg || reg.closed) return;
-  const input = document.getElementById('reg-counted-cash');
-  const countedCash = Number(input?.value) || 0;
-  if (!confirm('Close the register for today? This locks the day\'s summary.')) return;
-  reg.closed = true;
-  reg.countedCash = countedCash;
-  reg.closedAt = new Date().toISOString();
-  saveRegister(dateStr, reg);
-  toast('✓ Register closed for today', 'success');
-  updateRegisterBadge();
-  renderRegisterModalBody();
-}
-
-function printDayClosingReport() {
-  const dateStr = todayISO();
-  const reg = loadRegister(dateStr);
-  if (!reg) return;
-  const s = registerSummary(reg);
-  const variance = (Number(reg.countedCash) || 0) - s.expectedCash;
-  const rows = (reg.sales || []).map(x => `
+function renderInvoiceLineItems(r) {
+  const lines = invLines(r);
+  if (!lines.length) return `<div style="padding:8px;color:var(--text-mute)">No line items.</div>`;
+  const rows = lines.map(l => `
     <tr>
-      <td style="padding:1mm 2mm 1mm 0">${escapeHtml(x.reference)}</td>
-      <td style="padding:1mm 2mm 1mm 0">${escapeHtml(new Date(x.time).toLocaleTimeString())}</td>
-      <td style="padding:1mm 2mm 1mm 0">${escapeHtml(x.paymentAccountName || '')}</td>
-      <td style="text-align:right;padding:1mm 0">${fmt(x.total)}</td>
+      <td>${escapeHtml(itemNameByKey(l.item))}</td>
+      <td style="text-align:right">${fmtQty(l.qty)}</td>
+      <td style="text-align:right">${fmt(l.salesUnitPrice)}</td>
+      <td style="text-align:right">${fmt((Number(l.qty) || 0) * (Number(l.salesUnitPrice) || 0))}</td>
     </tr>`).join('');
+  return `<table class="reg-subtable"><thead><tr><th>Item</th><th style="text-align:right">Qty</th><th style="text-align:right">Price</th><th style="text-align:right">Line Total</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+function toggleInvoiceDrilldown(key) {
+  const row = document.getElementById('drilldown-' + key);
+  if (row) row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+}
+
+/* ---- Multi-line receipt form: one Manager Receipt is posted per row,
+   so several receipts (e.g. part cash / part bank) can be recorded
+   against a single Sales Invoice in one action. ---- */
+function renderReceiptForm(r, outstanding) {
+  return `
+    <div class="receipt-form" id="rcpt-${r.key}" data-invoice="${r.key}">
+      <div class="receipt-form-title">Record Receipt(s) — Outstanding: ${fmt(outstanding)}</div>
+      <div class="receipt-lines"></div>
+      <div style="display:flex;gap:6px;margin-top:4px">
+        <button class="btn btn-secondary btn-xs" onclick="addReceiptLine('${r.key}')">+ Add Receipt Line</button>
+        <button class="btn btn-primary btn-xs" onclick="submitReceiptLines('${r.key}')">Post Receipt(s)</button>
+      </div>
+      <div class="receipt-form-result" style="margin-top:6px;font:500 10px 'IBM Plex Sans';color:var(--text-mute)"></div>
+    </div>
+  `;
+}
+function openReceiptForm(invoiceKey) {
+  const row = document.getElementById('receiptform-' + invoiceKey);
+  if (!row) return;
+  row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+  if (row.style.display === 'table-row') {
+    const linesEl = row.querySelector('.receipt-lines');
+    if (linesEl && !linesEl.children.length) addReceiptLine(invoiceKey);
+  }
+}
+function addReceiptLine(invoiceKey) {
+  const container = document.querySelector(`#rcpt-${cssEscape(invoiceKey)} .receipt-lines`);
+  if (!container) return;
+  const accounts = state.paymentAccounts || [];
+  const options = accounts.map(a => `<option value="${a.key}">${escapeHtml(a.item?.name || 'Account')}</option>`).join('');
+  const div = document.createElement('div');
+  div.className = 'receipt-line';
+  div.innerHTML = `
+    <select class="rcpt-account">${options}</select>
+    <input type="number" class="rcpt-amount" placeholder="Amount" step="any" min="0">
+    <button class="icon-btn" onclick="this.parentElement.remove()">✕</button>
+  `;
+  container.appendChild(div);
+}
+async function submitReceiptLines(invoiceKey) {
+  const wrap = document.getElementById('rcpt-' + invoiceKey);
+  const resultEl = wrap.querySelector('.receipt-form-result');
+  const invRec = (state.dayRegisterData?.salesInvoices || []).find(x => x.key === invoiceKey);
+  if (!invRec) { resultEl.textContent = 'Invoice not found.'; return; }
+  const customerKey = invCustomerKey(invRec);
+  const lines = [...wrap.querySelectorAll('.receipt-line')].map(row => ({
+    account: row.querySelector('.rcpt-account').value,
+    amount: Number(row.querySelector('.rcpt-amount').value) || 0,
+  })).filter(l => l.amount > 0);
+  if (!lines.length) { resultEl.textContent = 'Enter at least one amount.'; return; }
+
+  resultEl.textContent = 'Posting…';
+  const arAccount = await resolveARAccountForCustomer(customerKey);
+  if (!arAccount) { resultEl.textContent = 'Could not resolve Accounts Receivable account — nothing posted.'; return; }
+
+  let posted = 0, failed = 0;
+  for (const l of lines) {
+    try {
+      const payload = { value: {
+        date: todayISO() + 'T00:00:00',
+        reference: invRef(invRec) + '-R' + (posted + 1),
+        paidBy: 1,
+        customer: customerKey,
+        receivedIn: l.account,
+        lines: [{ account: arAccount, accountsReceivableCustomer: customerKey, accountsReceivableSalesInvoice: invoiceKey, amount: l.amount }]
+      }};
+      await apiCall('POST', '/api4/receipt', payload);
+      posted++;
+    } catch (e) { failed++; debugLog('fail', 'Receipt post failed: ' + e.message); }
+  }
+  resultEl.textContent = failed ? `${posted} posted, ${failed} failed — check the amounts and try again for the rest.` : `✓ ${posted} receipt(s) posted.`;
+  await loadDayRegisterData(state.dayRegisterDate, true);
+  renderRegisterModalBody();
+}
+
+/* ---- Opening / Closing cash — saved to Business Details, never localStorage ---- */
+async function submitOpeningCash(dateStr) {
+  const input = document.getElementById('reg-opening-input');
+  const amount = Number(input?.value) || 0;
+  await saveBusinessCustomDecimal(REG_OPEN_PREFIX + dateStr, amount);
+  toast('✓ Opening cash saved to Business Details', 'success');
+  updateRegisterBadge();
+  renderRegisterModalBody();
+}
+async function submitClosingCash(dateStr) {
+  const input = document.getElementById('reg-closing-input');
+  const amount = Number(input?.value) || 0;
+  if (!confirm('Close the register for ' + dateStr + '? This is saved to Business Details and will be used as the suggested opening float tomorrow.')) return;
+  await saveBusinessCustomDecimal(REG_CLOSE_PREFIX + dateStr, amount);
+  toast('✓ Closing cash saved to Business Details', 'success');
+  updateRegisterBadge();
+  renderRegisterModalBody();
+}
+
+/* ══════════════════════════════════════════════════════
+   REAL EDIT — Sales Invoice & Purchase Invoice
+   Uses the documented PUT /api4/sales-invoice and (by the same
+   Manager line-item conventions) PUT /api4/purchase-invoice.
+   Both fetch the live record fresh (so we edit current data, not a
+   stale cache), patch just reference/issueDate/lines, and PUT the
+   whole record back with its key — Manager requires the full object,
+   not a partial patch.
+══════════════════════════════════════════════════════ */
+async function fetchSalesInvoiceFresh(key) {
+  try {
+    const data = await apiCall('GET', '/api4/sales-invoice-batch?Keys=' + encodeURIComponent(key));
+    const list = Array.isArray(data?.items) ? data.items : (Array.isArray(data) ? data : []);
+    if (list[0]) return list[0];
+  } catch (e) { debugLog('fail', 'Direct invoice lookup failed, using cached copy: ' + e.message); }
+  return (state.dayRegisterData?.salesInvoices || []).find(x => x.key === key)
+      || (state.historyData?.salesInvoices || []).find(x => x.key === key) || null;
+}
+async function fetchPurchaseInvoiceFresh(key) {
+  try {
+    const data = await apiCall('GET', '/api4/purchase-invoice-batch?Keys=' + encodeURIComponent(key));
+    const list = Array.isArray(data?.items) ? data.items : (Array.isArray(data) ? data : []);
+    if (list[0]) return list[0];
+  } catch (e) { debugLog('fail', 'Direct invoice lookup failed, using cached copy: ' + e.message); }
+  return (state.dayRegisterData?.purchaseInvoices || []).find(x => x.key === key)
+      || (state.historyData?.purchaseInvoices || []).find(x => x.key === key) || null;
+}
+
+function openGenericModal(title, bodyHtml, actionsHtml) {
+  let modal = document.getElementById('generic-edit-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.id = 'generic-edit-modal';
+    modal.dataset.close = 'closeGenericModal';
+    modal.innerHTML = `
+      <div class="modal-content register-modal-content">
+        <div class="modal-header">
+          <span class="modal-title" id="generic-edit-title"></span>
+          <button class="modal-close" onclick="closeGenericModal()">×</button>
+        </div>
+        <div id="generic-edit-body"></div>
+        <div class="modal-actions" id="generic-edit-actions" style="margin-top:12px"></div>
+      </div>`;
+    document.body.appendChild(modal);
+  }
+  document.getElementById('generic-edit-title').textContent = title;
+  document.getElementById('generic-edit-body').innerHTML = bodyHtml;
+  document.getElementById('generic-edit-actions').innerHTML = actionsHtml;
+  modal.classList.add('open');
+}
+function closeGenericModal() {
+  document.getElementById('generic-edit-modal')?.classList.remove('open');
+}
+
+async function editSalesInvoice(key) {
+  const rec = await fetchSalesInvoiceFresh(key);
+  if (!rec) { toast('Could not load this Sales Invoice.', 'error'); return; }
+  const val = rec.item || rec;
+  const lines = invLines(rec);
+  const rowsHtml = lines.map((l, i) => `
+    <tr data-idx="${i}">
+      <td>${escapeHtml(itemNameByKey(l.item))}</td>
+      <td><input type="number" class="edit-qty" step="any" min="0" value="${Number(l.qty) || 0}" style="width:80px"></td>
+      <td><input type="number" class="edit-price" step="any" min="0" value="${Number(l.salesUnitPrice ?? l.unitPrice) || 0}" style="width:100px"></td>
+      <td style="text-align:right"><button class="icon-btn" onclick="this.closest('tr').remove()">✕</button></td>
+    </tr>`).join('');
+
+  const body = `
+    <div class="form-row">
+      <div class="form-field"><label>Reference</label><input type="text" id="edit-si-reference" value="${escapeHtml(invRef(rec))}"></div>
+      <div class="form-field"><label>Issue Date</label><input type="date" id="edit-si-date" value="${escapeHtml(invDate(rec))}"></div>
+    </div>
+    <div class="table-scroll" style="margin-top:10px">
+      <table class="reg-table" id="edit-si-lines">
+        <thead><tr><th>Item</th><th>Qty</th><th>Unit Price</th><th></th></tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    </div>
+    <div style="font:500 10px 'IBM Plex Sans';color:var(--text-mute);margin-top:6px">Editing an already-paid invoice's amounts won't adjust any Receipts already recorded against it — check those separately if you change the total.</div>
+  `;
+  const actions = `
+    <button class="btn btn-secondary" onclick="closeGenericModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="submitEditSalesInvoice('${key}')">Save Changes</button>
+  `;
+  openGenericModal('✎ Edit Sales Invoice — ' + invRef(rec), body, actions);
+}
+
+async function submitEditSalesInvoice(key) {
+  const rec = await fetchSalesInvoiceFresh(key);
+  if (!rec) { toast('Invoice not found.', 'error'); return; }
+  const val = { ...(rec.item || rec) };
+  val.reference = document.getElementById('edit-si-reference').value.trim() || val.reference;
+  val.issueDate = document.getElementById('edit-si-date').value + 'T00:00:00';
+  const rows = [...document.querySelectorAll('#edit-si-lines tbody tr')];
+  const origLines = invLines(rec);
+  val.lines = rows.map((row, i) => {
+    const orig = origLines[i] || {};
+    return {
+      ...orig,
+      lineNumber: i + 1,
+      qty: Number(row.querySelector('.edit-qty').value) || 0,
+      salesUnitPrice: Number(row.querySelector('.edit-price').value) || 0,
+    };
+  });
+  try {
+    await apiCall('PUT', '/api4/sales-invoice', { key, value: val });
+    toast('✓ Sales Invoice updated', 'success');
+    closeGenericModal();
+    if (state.dayRegisterData) state.dayRegisterData = null;
+    if (state.historyData) state.historyData = null;
+    if (document.getElementById('register-modal')?.classList.contains('open')) renderRegisterModalBody();
+    if (document.getElementById('history-modal')?.classList.contains('open')) renderHistoryModalBody();
+  } catch (e) {
+    debugLog('fail', e.message);
+    toast('Could not save: ' + e.message, 'error');
+  }
+}
+
+async function editPurchaseInvoice(key) {
+  const rec = await fetchPurchaseInvoiceFresh(key);
+  if (!rec) { toast('Could not load this Purchase Invoice.', 'error'); return; }
+  const lines = purLines(rec);
+  const rowsHtml = lines.map((l, i) => `
+    <tr data-idx="${i}">
+      <td>${escapeHtml(itemNameByKey(l.item))}</td>
+      <td><input type="number" class="edit-qty" step="any" min="0" value="${Number(l.qty) || 0}" style="width:80px"></td>
+      <td><input type="number" class="edit-price" step="any" min="0" value="${Number(l.unitPrice ?? l.purchaseUnitPrice) || 0}" style="width:100px"></td>
+      <td style="text-align:right"><button class="icon-btn" onclick="this.closest('tr').remove()">✕</button></td>
+    </tr>`).join('');
+  const body = `
+    <div class="form-row">
+      <div class="form-field"><label>Reference</label><input type="text" id="edit-pi-reference" value="${escapeHtml(purRef(rec))}"></div>
+      <div class="form-field"><label>Issue Date</label><input type="date" id="edit-pi-date" value="${escapeHtml(purDate(rec))}"></div>
+    </div>
+    <div class="table-scroll" style="margin-top:10px">
+      <table class="reg-table" id="edit-pi-lines">
+        <thead><tr><th>Item</th><th>Qty</th><th>Unit Price</th><th></th></tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    </div>
+    <div style="font:500 10px 'IBM Plex Sans';color:var(--text-mute);margin-top:6px">Purchase Invoice edits use the same line shape as Sales Invoices — if your Manager version rejects this, the purchase-side field names may differ slightly from what's assumed here.</div>
+  `;
+  const actions = `
+    <button class="btn btn-secondary" onclick="closeGenericModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="submitEditPurchaseInvoice('${key}')">Save Changes</button>
+  `;
+  openGenericModal('✎ Edit Purchase Invoice — ' + purRef(rec), body, actions);
+}
+
+async function submitEditPurchaseInvoice(key) {
+  const rec = await fetchPurchaseInvoiceFresh(key);
+  if (!rec) { toast('Invoice not found.', 'error'); return; }
+  const val = { ...(rec.item || rec) };
+  val.reference = document.getElementById('edit-pi-reference').value.trim() || val.reference;
+  val.issueDate = document.getElementById('edit-pi-date').value + 'T00:00:00';
+  const rows = [...document.querySelectorAll('#edit-pi-lines tbody tr')];
+  const origLines = purLines(rec);
+  val.lines = rows.map((row, i) => {
+    const orig = origLines[i] || {};
+    return {
+      ...orig,
+      lineNumber: i + 1,
+      qty: Number(row.querySelector('.edit-qty').value) || 0,
+      unitPrice: Number(row.querySelector('.edit-price').value) || 0,
+    };
+  });
+  try {
+    await apiCall('PUT', '/api4/purchase-invoice', { key, value: val });
+    toast('✓ Purchase Invoice updated', 'success');
+    closeGenericModal();
+    if (state.dayRegisterData) state.dayRegisterData = null;
+    if (state.historyData) state.historyData = null;
+    if (document.getElementById('register-modal')?.classList.contains('open')) renderRegisterModalBody();
+    if (document.getElementById('history-modal')?.classList.contains('open')) renderHistoryModalBody();
+  } catch (e) {
+    debugLog('fail', e.message);
+    toast('Could not save: ' + e.message, 'error');
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   SALE RETURNS — via POST /api4/credit-note
+   A Credit Note is created against the original Sales Invoice,
+   with lines for the qty being returned (never more than what
+   hasn't already been returned on a prior Credit Note).
+══════════════════════════════════════════════════════ */
+state.allCreditNotes = null; // lazy-loaded cache of credit-note-batch
+
+function cnSalesInvoice(cn) { return cn?.item?.salesInvoice || cn?.salesInvoice || ''; }
+function cnLines(cn) { return cn?.item?.lines || cn?.lines || []; }
+function cnRef(cn)  { return cn?.item?.reference || cn?.reference || cn?.key || ''; }
+function cnDate(cn) { return (cn?.item?.issueDate || cn?.issueDate || '').slice(0, 10); }
+function cnCustomerKey(cn) { return cn?.item?.customer || cn?.customer || ''; }
+function cnTotal(cn) {
+  return cnLines(cn).reduce((s, l) => s + (Number(l.qty) || 0) * (Number(l.salesUnitPrice ?? l.unitPrice) || 0), 0);
+}
+// Best-effort reference lookup for the invoice a credit note was issued
+// against — checked across whatever invoice lists are already cached
+// (Day Register / History), so it doesn't need its own network round-trip.
+function invRefByKey(key) {
+  if (!key) return '—';
+  const rec = (state.dayRegisterData?.salesInvoices || []).find(x => x.key === key)
+           || (state.historyData?.salesInvoices || []).find(x => x.key === key);
+  return rec ? invRef(rec) : key;
+}
+
+async function loadCreditNotes(force) {
+  if (state.allCreditNotes && !force) return state.allCreditNotes;
+  state.allCreditNotes = await getBatchEndpoint('/api4/credit-note-batch', () => {}).catch(() => []);
+  return state.allCreditNotes;
+}
+
+state.allJournalEntries = null;
+async function loadJournalEntries(force) {
+  if (state.allJournalEntries && !force) return state.allJournalEntries;
+  state.allJournalEntries = await getBatchEndpoint('/api4/journal-entry-batch', () => {}).catch(() => []);
+  return state.allJournalEntries;
+}
+
+// How much of a given invoice line's qty has already been credited back.
+function alreadyReturnedQty(invoiceKey, itemKey, creditNotes) {
+  let total = 0;
+  for (const cn of creditNotes) {
+    if (cnSalesInvoice(cn) !== invoiceKey) continue;
+    for (const l of cnLines(cn)) {
+      if (l.item === itemKey) total += Number(l.qty) || 0;
+    }
+  }
+  return total;
+}
+
+async function openSaleReturnModal(invoiceKey) {
+  const rec = (await fetchSalesInvoiceFresh(invoiceKey));
+  if (!rec) { toast('Could not load this invoice.', 'error'); return; }
+  const creditNotes = await loadCreditNotes();
+  const lines = invLines(rec);
+
+  const rowsHtml = lines.map((l, i) => {
+    const orig = Number(l.qty) || 0;
+    const returned = alreadyReturnedQty(invoiceKey, l.item, creditNotes);
+    const remaining = Math.max(0, orig - returned);
+    return `
+      <tr data-item="${l.item}" data-price="${Number(l.salesUnitPrice ?? l.unitPrice) || 0}" data-remaining="${remaining}">
+        <td>${escapeHtml(itemNameByKey(l.item))}</td>
+        <td style="text-align:right">${fmtQty(orig)}</td>
+        <td style="text-align:right">${fmtQty(returned)}</td>
+        <td style="text-align:right">${fmtQty(remaining)}</td>
+        <td><input type="number" class="return-qty" min="0" max="${remaining}" step="any" value="0" style="width:90px" ${remaining <= 0 ? 'disabled' : ''}></td>
+      </tr>`;
+  }).join('');
+
+  const body = `
+    <div style="font:500 11px 'IBM Plex Sans';color:var(--text-mute);margin-bottom:10px">Enter the quantity being returned for each line. This posts a Credit Note against ${escapeHtml(invRef(rec))}.</div>
+    <div class="table-scroll">
+      <table class="reg-table">
+        <thead><tr><th>Item</th><th style="text-align:right">Sold</th><th style="text-align:right">Returned</th><th style="text-align:right">Remaining</th><th>Return Qty</th></tr></thead>
+        <tbody id="return-lines">${rowsHtml || '<tr><td colspan="5">No line items.</td></tr>'}</tbody>
+      </table>
+    </div>
+    <div class="form-row" style="margin-top:10px">
+      <div class="form-field"><label>Return Date</label><input type="date" id="return-date" value="${todayISO()}"></div>
+      <div class="form-field"><label>Reference</label><input type="text" id="return-reference" value="${escapeHtml(invRef(rec))}-RET"></div>
+    </div>
+    <div id="return-result" style="margin-top:8px;font:500 11px 'IBM Plex Sans';color:var(--text-mute)"></div>
+  `;
+  const actions = `
+    <button class="btn btn-secondary" onclick="closeGenericModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="submitSaleReturn('${invoiceKey}')">Post Return</button>
+  `;
+  openGenericModal('↩ Sale Return — ' + invRef(rec), body, actions);
+}
+
+async function submitSaleReturn(invoiceKey) {
+  const rec = await fetchSalesInvoiceFresh(invoiceKey);
+  if (!rec) return;
+  const resultEl = document.getElementById('return-result');
+  const rows = [...document.querySelectorAll('#return-lines tr[data-item]')];
+  const returnLines = rows.map((row, i) => {
+    const qty = Number(row.querySelector('.return-qty')?.value) || 0;
+    return { item: row.dataset.item, price: Number(row.dataset.price) || 0, qty };
+  }).filter(l => l.qty > 0);
+
+  if (!returnLines.length) { resultEl.textContent = 'Enter a return quantity for at least one line.'; return; }
+
+  resultEl.textContent = 'Posting return…';
+  const dateStr = document.getElementById('return-date').value || todayISO();
+  const reference = document.getElementById('return-reference').value.trim() || (invRef(rec) + '-RET');
+
+  const payload = {
+    value: {
+      issueDate: dateStr + 'T00:00:00',
+      reference,
+      customer: invCustomerKey(rec),
+      salesInvoice: invoiceKey,
+      description: 'POS Sale Return',
+      lines: returnLines.map((l, i) => ({
+        lineNumber: i + 1,
+        item: l.item,
+        qty: l.qty,
+        salesUnitPrice: l.price,
+      })),
+      hasLineNumber: false,
+      hasLineDescription: false,
+      discount: false,
+      amountsIncludeTax: false,
+    }
+  };
+
+  try {
+    const key = await apiCall('POST', '/api4/credit-note', payload);
+    resultEl.textContent = '✓ Return posted: ' + reference;
+    toast('✓ Sale return recorded', 'success');
+    state.allCreditNotes = null; // force refresh next time
+    if (state.dayRegisterData) state.dayRegisterData = null;
+    if (state.historyData) state.historyData = null;
+    setTimeout(closeGenericModal, 900);
+    if (document.getElementById('register-modal')?.classList.contains('open')) renderRegisterModalBody();
+    if (document.getElementById('history-modal')?.classList.contains('open')) renderHistoryModalBody();
+  } catch (e) {
+    debugLog('fail', e.message);
+    resultEl.textContent = 'Failed: ' + e.message;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   CREDIT BALANCE — when Receipts + Returns exceed an invoice's
+   total, the customer effectively has a credit sitting against that
+   invoice. Two ways to resolve it:
+     1. Refund it out via a Payment (POST /api4/payment) from a bank/
+        cash account back to the customer.
+     2. Apply it against a different invoice via a balanced Journal
+        Entry (POST /api4/journal-entry): debit AR/customer/source
+        invoice (cancels the excess credit sitting there) and credit
+        AR/customer/target invoice (reduces what's owed there) — the
+        same account, same customer, just moving the balance between
+        two invoice references.
+══════════════════════════════════════════════════════ */
+let _adjustTargetInvoice = null;
+let _adjustMode = 'refund';
+
+async function openAdjustCreditModal(invoiceKey, creditAmount) {
+  const rec = await fetchSalesInvoiceFresh(invoiceKey);
+  if (!rec) { toast('Could not load this invoice.', 'error'); return; }
+  const customerKey = invCustomerKey(rec);
+  _adjustTargetInvoice = null;
+  _adjustMode = 'refund';
+
+  const accountOptions = (state.paymentAccounts || []).map(a => `<option value="${a.key}">${escapeHtml(a.item?.name || 'Account')}</option>`).join('');
+
+  const body = `
+    <div style="font:500 11px 'IBM Plex Sans';color:var(--text-mute);margin-bottom:10px">
+      <strong style="color:var(--text)">${escapeHtml(invRef(rec))}</strong> has a credit balance of <strong style="color:var(--success)">${fmt(creditAmount)}</strong> — Receipts + Returns exceed the invoice total. Choose what to do with it:
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button class="btn btn-primary" id="adj-tab-refund" style="flex:1" onclick="switchAdjustTab('refund')" type="button">💵 Refund to Customer</button>
+      <button class="btn btn-secondary" id="adj-tab-apply" style="flex:1" onclick="switchAdjustTab('apply')" type="button">🔀 Apply to Another Invoice</button>
+    </div>
+
+    <div id="adjust-refund-panel">
+      <div class="form-row">
+        <div class="form-field"><label>Refund From Account</label><select id="adj-refund-account">${accountOptions}</select></div>
+        <div class="form-field"><label>Amount</label><input type="number" id="adj-refund-amount" value="${creditAmount.toFixed(2)}" max="${creditAmount}" min="0" step="any"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-field"><label>Date</label><input type="date" id="adj-refund-date" value="${todayISO()}"></div>
+        <div class="form-field"><label>Reference</label><input type="text" id="adj-refund-reference" value="${escapeHtml(invRef(rec))}-REFUND"></div>
+      </div>
+    </div>
+
+    <div id="adjust-apply-panel" style="display:none">
+      <div class="form-field" style="margin-bottom:8px">
+        <label>Search Invoice to Apply Credit To</label>
+        <input type="text" id="adj-apply-search" placeholder="Reference or customer name…" autocomplete="off">
+      </div>
+      <div id="adj-apply-results" class="table-scroll" style="max-height:220px;margin-bottom:8px">
+        <div style="padding:10px;color:var(--text-mute);font-size:11px">Type at least 2 characters…</div>
+      </div>
+      <div class="form-row">
+        <div class="form-field"><label>Target Invoice</label><input type="text" id="adj-apply-target-label" readonly placeholder="Select an invoice above…" style="background:var(--bg)"></div>
+        <div class="form-field"><label>Amount to Apply</label><input type="number" id="adj-apply-amount" max="${creditAmount}" min="0" step="any"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-field"><label>Date</label><input type="date" id="adj-apply-date" value="${todayISO()}"></div>
+        <div class="form-field"><label>Reference</label><input type="text" id="adj-apply-reference" value="${escapeHtml(invRef(rec))}-ADJ"></div>
+      </div>
+    </div>
+
+    <div id="adjust-result" style="margin-top:8px;font:500 11px 'IBM Plex Sans';color:var(--text-mute)"></div>
+  `;
+  const actions = `
+    <button class="btn btn-secondary" onclick="closeGenericModal()">Cancel</button>
+    <button class="btn btn-primary" id="adjust-submit-btn" onclick="submitAdjustCredit('${invoiceKey}', '${customerKey}', ${creditAmount})">Post</button>
+  `;
+  openGenericModal('💳 Credit Balance — ' + invRef(rec), body, actions);
+
+  const searchInput = document.getElementById('adj-apply-search');
+  // Only the results panel re-renders per keystroke, never the input itself.
+  searchInput.addEventListener('input', () => runAdjustTargetSearch(searchInput.value, invoiceKey));
+}
+
+function switchAdjustTab(which) {
+  _adjustMode = which;
+  document.getElementById('adjust-refund-panel').style.display = which === 'refund' ? 'block' : 'none';
+  document.getElementById('adjust-apply-panel').style.display = which === 'apply' ? 'block' : 'none';
+  document.getElementById('adj-tab-refund').className = which === 'refund' ? 'btn btn-primary' : 'btn btn-secondary';
+  document.getElementById('adj-tab-apply').className = which === 'apply' ? 'btn btn-primary' : 'btn btn-secondary';
+}
+
+async function runAdjustTargetSearch(query, excludeKey) {
+  const resultsEl = document.getElementById('adj-apply-results');
+  if (!resultsEl) return;
+  const q = query.trim().toLowerCase();
+  if (q.length < 2) { resultsEl.innerHTML = '<div style="padding:10px;color:var(--text-mute);font-size:11px">Type at least 2 characters…</div>'; return; }
+  resultsEl.innerHTML = '<div style="padding:10px;color:var(--text-mute);font-size:11px">Searching…</div>';
+  const { salesInvoices, allReceipts, creditNotes, journalEntries } = await loadHistoryData();
+  const matches = salesInvoices.filter(x =>
+    x.key !== excludeKey && (invRef(x).toLowerCase().includes(q) || customerNameByKey(invCustomerKey(x)).toLowerCase().includes(q))
+  ).sort((a, b) => invDate(b).localeCompare(invDate(a))).slice(0, 20);
+
+  if (!matches.length) { resultsEl.innerHTML = '<div style="padding:10px;color:var(--text-mute);font-size:11px">No matching invoices.</div>'; return; }
+
+  resultsEl.innerHTML = matches.map(x => {
+    const { due } = invoiceBalance(x.key, invTotal(x), allReceipts, creditNotes, journalEntries);
+    const refEsc = escapeHtml(invRef(x)).replace(/'/g, "\\'");
+    return `<div style="padding:6px 8px;border-bottom:1px solid var(--border);cursor:pointer;font-size:11px" onclick="selectAdjustTarget('${x.key}','${refEsc}', ${due})">
+      <strong>${escapeHtml(invRef(x))}</strong> — ${escapeHtml(customerNameByKey(invCustomerKey(x)))} — Due: ${fmt(due)}
+    </div>`;
+  }).join('');
+}
+
+function selectAdjustTarget(key, label, due) {
+  _adjustTargetInvoice = key;
+  const labelEl = document.getElementById('adj-apply-target-label');
+  if (labelEl) labelEl.value = `${label} (Due: ${fmt(due)})`;
+  const amtEl = document.getElementById('adj-apply-amount');
+  if (amtEl) {
+    const cap = Number(amtEl.max) || 0;
+    amtEl.value = Math.max(0, Math.min(cap, due)).toFixed(2);
+  }
+}
+
+async function submitAdjustCredit(sourceInvoiceKey, customerKey, creditAmount) {
+  const resultEl = document.getElementById('adjust-result');
+  const btn = document.getElementById('adjust-submit-btn');
+  btn.disabled = true;
+  try {
+    const arAccount = await resolveARAccountForCustomer(customerKey);
+    if (!arAccount) throw new Error('Could not resolve the Accounts Receivable account.');
+
+    if (_adjustMode === 'refund') {
+      const account = document.getElementById('adj-refund-account').value;
+      const amount = Number(document.getElementById('adj-refund-amount').value) || 0;
+      if (amount <= 0 || amount > creditAmount + 0.01) throw new Error('Enter an amount up to the available credit.');
+      const date = document.getElementById('adj-refund-date').value || todayISO();
+      const reference = document.getElementById('adj-refund-reference').value.trim() || 'REFUND';
+      const payload = { value: {
+        date: date + 'T00:00:00', reference, payee: 1, customer: customerKey, paidFrom: account,
+        lines: [{ account: arAccount, accountsReceivableCustomer: customerKey, accountsReceivableSalesInvoice: sourceInvoiceKey, amount }]
+      }};
+      await apiCall('POST', '/api4/payment', payload);
+      resultEl.textContent = '✓ Refund posted: ' + reference;
+      toast('✓ Refund recorded', 'success');
+    } else {
+      if (!_adjustTargetInvoice) throw new Error('Select a target invoice to apply the credit to.');
+      const amount = Number(document.getElementById('adj-apply-amount').value) || 0;
+      if (amount <= 0 || amount > creditAmount + 0.01) throw new Error('Enter an amount up to the available credit.');
+      const date = document.getElementById('adj-apply-date').value || todayISO();
+      const reference = document.getElementById('adj-apply-reference').value.trim() || 'ADJ';
+      const payload = { value: {
+        date: date + 'T00:00:00', reference,
+        narration: 'POS credit adjustment between invoices',
+        lines: [
+          { account: arAccount, accountsReceivableCustomer: customerKey, accountsReceivableSalesInvoice: sourceInvoiceKey, debit: amount, credit: 0 },
+          { account: arAccount, accountsReceivableCustomer: customerKey, accountsReceivableSalesInvoice: _adjustTargetInvoice, debit: 0, credit: amount },
+        ]
+      }};
+      await apiCall('POST', '/api4/journal-entry', payload);
+      resultEl.textContent = '✓ Credit applied to the other invoice.';
+      toast('✓ Credit adjusted between invoices', 'success');
+    }
+    state.dayRegisterData = null;
+    state.historyData = null;
+    setTimeout(closeGenericModal, 900);
+    if (document.getElementById('register-modal')?.classList.contains('open')) renderRegisterModalBody();
+    if (document.getElementById('history-modal')?.classList.contains('open')) renderHistoryModalBody();
+  } catch (e) {
+    debugLog('fail', e.message);
+    resultEl.textContent = 'Failed: ' + e.message;
+    btn.disabled = false;
+  }
+}
+
+
+state.historyData = null; // { salesInvoices, purchaseInvoices, allReceipts }
+state.historyFilters = { from: '', to: '', text: '' };
+
+async function loadHistoryData(force) {
+  if (state.historyData && !force) return state.historyData;
+  const [salesRaw, purchaseRaw, receiptRaw, creditRaw, journalRaw] = await Promise.all([
+    getBatchEndpoint('/api4/sales-invoice-batch', () => {}).catch(() => []),
+    getBatchEndpoint('/api4/purchase-invoice-batch', () => {}).catch(() => []),
+    getBatchEndpoint('/api4/receipt-batch', () => {}).catch(() => []),
+    getBatchEndpoint('/api4/credit-note-batch', () => {}).catch(() => []),
+    getBatchEndpoint('/api4/journal-entry-batch', () => {}).catch(() => []),
+  ]);
+  state.historyData = { salesInvoices: salesRaw, purchaseInvoices: purchaseRaw, allReceipts: receiptRaw, creditNotes: creditRaw, journalEntries: journalRaw };
+  if (force || !state.allCreditNotes) state.allCreditNotes = creditRaw; // shared cache used by the Return modal
+  if (force || !state.allJournalEntries) state.allJournalEntries = journalRaw; // shared cache used by the Adjust modal
+  return state.historyData;
+}
+
+function toggleHistoryModal() {
+  document.getElementById('history-modal').classList.add('open');
+  const today = todayISO();
+  const from = new Date(); from.setDate(from.getDate() - 30);
+  if (!state.historyFilters.from) state.historyFilters.from = from.toISOString().slice(0, 10);
+  if (!state.historyFilters.to) state.historyFilters.to = today;
+  renderHistoryModalBody();
+}
+function closeHistoryModal() {
+  document.getElementById('history-modal').classList.remove('open');
+}
+function applyHistoryFilters() {
+  state.historyFilters.from = document.getElementById('hist-from').value;
+  state.historyFilters.to = document.getElementById('hist-to').value;
+  state.historyFilters.text = document.getElementById('hist-search').value.trim().toLowerCase();
+  renderHistoryModalBody(true);
+}
+
+async function renderHistoryModalBody(skipFetch) {
+  const el = document.getElementById('history-modal-body');
+  if (!el) return;
+  if (!skipFetch) el.innerHTML = `<div style="padding:30px;text-align:center;color:var(--text-mute)">Loading sales history…</div>`;
+  const { salesInvoices, allReceipts, creditNotes, journalEntries } = await loadHistoryData();
+
+  const { from, to, text } = state.historyFilters;
+  const filtered = salesInvoices.filter(r => {
+    const d = invDate(r);
+    if (from && d < from) return false;
+    if (to && d > to) return false;
+    if (text) {
+      const ref = invRef(r).toLowerCase();
+      const cust = customerNameByKey(invCustomerKey(r)).toLowerCase();
+      if (!ref.includes(text) && !cust.includes(text)) return false;
+    }
+    return true;
+  }).sort((a, b) => invDate(b).localeCompare(invDate(a)));
+
+  const totalRevenue = filtered.reduce((s, r) => s + invTotal(r), 0);
+  const totalReceived = filtered.reduce((s, r) => s + receiptTotalForInvoice(r.key, allReceipts), 0);
+  const totalReturned = filtered.reduce((s, r) => s + returnTotalForInvoice(r.key, creditNotes), 0);
+
+  const rows = filtered.slice(0, 500).map(r => {
+    const total = invTotal(r);
+    const { rcv, ret, due, credit } = invoiceBalance(r.key, total, allReceipts, creditNotes, journalEntries);
+    return `
+      <tr>
+        <td>${escapeHtml(invDate(r))}</td>
+        <td><button class="icon-btn" title="Edit" onclick="editSalesInvoice('${r.key}')">✎</button> <strong>${escapeHtml(invRef(r))}</strong></td>
+        <td>${escapeHtml(customerNameByKey(invCustomerKey(r)))}</td>
+        <td style="text-align:right">${fmt(total)}</td>
+        <td style="text-align:right">${fmt(rcv)}${ret > 0.005 ? ` <span style="color:var(--text-mute)">(−${fmt(ret)} ret.)</span>` : ''}</td>
+        <td style="text-align:right;color:${credit > 0.005 ? 'var(--accent)' : (due > 0.005 ? 'var(--warn)' : 'var(--success)')}">${credit > 0.005 ? `Credit ${fmt(credit)}` : fmt(due)}</td>
+        <td>
+          <div class="actions-cell">
+            <button class="btn btn-secondary btn-xs" onclick="toggleHistoryDrilldown('${r.key}')">Items</button>
+            ${credit > 0.005 ? `<button class="btn btn-primary btn-xs" onclick="openAdjustCreditModal('${r.key}', ${credit.toFixed(2)})">💳 Adjust</button>` : ''}
+            <button class="btn btn-secondary btn-xs" onclick="openSaleReturnModal('${r.key}')">↩ Return</button>
+          </div>
+        </td>
+      </tr>
+      <tr id="hist-drilldown-${r.key}" class="drilldown-row" style="display:none"><td colspan="7">${renderInvoiceLineItems(r)}</td></tr>
+    `;
+  }).join('') || `<tr><td colspan="7" style="text-align:center;color:var(--text-mute);padding:14px">No invoices match this filter.</td></tr>`;
+
+  el.innerHTML = `
+    <div class="reg-toolbar">
+      <div class="form-field"><label>From</label><input type="date" id="hist-from" value="${state.historyFilters.from}"></div>
+      <div class="form-field"><label>To</label><input type="date" id="hist-to" value="${state.historyFilters.to}"></div>
+      <div class="form-field" style="min-width:200px"><label>Search Ref / Customer</label><input type="text" id="hist-search" value="${escapeHtml(state.historyFilters.text)}" placeholder="Type to filter…"></div>
+      <button class="btn btn-primary" onclick="applyHistoryFilters()">Filter</button>
+      <button class="btn btn-secondary" onclick="loadHistoryData(true).then(() => renderHistoryModalBody(true))">↻ Refresh</button>
+    </div>
+    <div class="summary" style="margin-bottom:12px">
+      <div class="summary-row"><span>Invoices in range</span><span class="v">${filtered.length}</span></div>
+      <div class="summary-row"><span>Total Invoiced</span><span class="v">${fmt(totalRevenue)}</span></div>
+      <div class="summary-row"><span>Total Returned</span><span class="v">${fmt(totalReturned)}</span></div>
+      <div class="summary-row grand"><span class="l">Total Received</span><span class="v">${fmt(totalReceived)}</span></div>
+    </div>
+    <div class="table-scroll" style="max-height:420px">
+      <table class="reg-table">
+        <thead><tr><th>Date</th><th>Ref</th><th>Customer</th><th style="text-align:right">Total</th><th style="text-align:right">Received</th><th style="text-align:right">Due</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    ${filtered.length > 500 ? `<div style="font:500 10px 'IBM Plex Sans';color:var(--text-mute);margin-top:6px">Showing first 500 of ${filtered.length} — narrow the date range to see more.</div>` : ''}
+  `;
+}
+function toggleHistoryDrilldown(key) {
+  const row = document.getElementById('hist-drilldown-' + key);
+  if (row) row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+}
+
+/* ══════════════════════════════════════════════════════
+   SALES ANALYSIS — revenue/qty breakdowns over a date range
+══════════════════════════════════════════════════════ */
+state.analysisFilters = { from: '', to: '' };
+
+function toggleAnalysisModal() {
+  document.getElementById('analysis-modal').classList.add('open');
+  const today = todayISO();
+  const from = new Date(); from.setDate(from.getDate() - 30);
+  if (!state.analysisFilters.from) state.analysisFilters.from = from.toISOString().slice(0, 10);
+  if (!state.analysisFilters.to) state.analysisFilters.to = today;
+  renderAnalysisModalBody();
+}
+function closeAnalysisModal() {
+  document.getElementById('analysis-modal').classList.remove('open');
+}
+
+/* ══════════════════════════════════════════════════════
+   RETURNS SEARCH — find any past invoice (by reference or
+   customer name) to jump straight into a Sale Return, without
+   first having to locate it in the Day Register or History list.
+══════════════════════════════════════════════════════ */
+function toggleReturnsSearchModal() {
+  document.getElementById('returns-search-modal').classList.add('open');
+  const body = document.getElementById('returns-search-body');
+  body.innerHTML = `
+    <div class="form-field" style="margin-bottom:10px">
+      <label>Search by Reference or Customer</label>
+      <input type="text" id="returns-search-input" placeholder="e.g. POS-260912-234627 or a customer name" autocomplete="off">
+    </div>
+    <div id="returns-search-results">
+      <div style="padding:20px;text-align:center;color:var(--text-mute)">Type at least 2 characters to search…</div>
+    </div>
+  `;
+  const input = document.getElementById('returns-search-input');
+  // Only the results panel re-renders on each keystroke — never the input
+  // itself — so typing doesn't lose focus or jump the cursor.
+  input.addEventListener('input', () => runReturnsSearch(input.value));
+  setTimeout(() => input.focus(), 100);
+}
+function closeReturnsSearchModal() {
+  document.getElementById('returns-search-modal').classList.remove('open');
+}
+
+async function runReturnsSearch(query) {
+  const resultsEl = document.getElementById('returns-search-results');
+  if (!resultsEl) return;
+  const q = query.trim().toLowerCase();
+  if (q.length < 2) {
+    resultsEl.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text-mute)">Type at least 2 characters to search…</div>`;
+    return;
+  }
+  resultsEl.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text-mute)">Searching…</div>`;
+  const { salesInvoices, allReceipts, creditNotes, journalEntries } = await loadHistoryData();
+
+  const matches = salesInvoices.filter(r =>
+    invRef(r).toLowerCase().includes(q) || customerNameByKey(invCustomerKey(r)).toLowerCase().includes(q)
+  ).sort((a, b) => invDate(b).localeCompare(invDate(a))).slice(0, 50);
+
+  if (!matches.length) {
+    resultsEl.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text-mute)">No matching invoices.</div>`;
+    return;
+  }
+
+  const rows = matches.map(r => {
+    const total = invTotal(r);
+    const { due, credit } = invoiceBalance(r.key, total, allReceipts, creditNotes, journalEntries);
+    return `
+      <tr>
+        <td>${escapeHtml(invDate(r))}</td>
+        <td><strong>${escapeHtml(invRef(r))}</strong></td>
+        <td>${escapeHtml(customerNameByKey(invCustomerKey(r)))}</td>
+        <td style="text-align:right">${fmt(total)}</td>
+        <td style="text-align:right;color:${credit > 0.005 ? 'var(--accent)' : 'inherit'}">${credit > 0.005 ? `Credit ${fmt(credit)}` : fmt(due)}</td>
+        <td>
+          <div class="actions-cell">
+            ${credit > 0.005 ? `<button class="btn btn-primary btn-xs" onclick="closeReturnsSearchModal(); openAdjustCreditModal('${r.key}', ${credit.toFixed(2)})">💳 Adjust</button>` : ''}
+            <button class="btn btn-secondary btn-xs" onclick="closeReturnsSearchModal(); openSaleReturnModal('${r.key}')">↩ Return</button>
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
+
+  resultsEl.innerHTML = `
+    <div class="table-scroll" style="max-height:min(50vh,480px)">
+      <table class="reg-table">
+        <thead><tr><th>Date</th><th>Ref</th><th>Customer</th><th style="text-align:right">Total</th><th style="text-align:right">Due</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    ${matches.length >= 50 ? `<div style="font:500 10px 'IBM Plex Sans';color:var(--text-mute);margin-top:6px">Showing the first 50 matches — narrow your search to see fewer, more specific results.</div>` : ''}
+  `;
+}
+function applyAnalysisFilters() {
+  state.analysisFilters.from = document.getElementById('an-from').value;
+  state.analysisFilters.to = document.getElementById('an-to').value;
+  renderAnalysisModalBody(true);
+}
+
+async function renderAnalysisModalBody(skipFetch) {
+  const el = document.getElementById('analysis-modal-body');
+  if (!el) return;
+  if (!skipFetch) el.innerHTML = `<div style="padding:30px;text-align:center;color:var(--text-mute)">Crunching numbers…</div>`;
+  const { salesInvoices } = await loadHistoryData();
+  const { from, to } = state.analysisFilters;
+  const filtered = salesInvoices.filter(r => {
+    const d = invDate(r);
+    return (!from || d >= from) && (!to || d <= to);
+  });
+
+  const totalRevenue = filtered.reduce((s, r) => s + invTotal(r), 0);
+  const totalQty = filtered.reduce((s, r) => s + invLines(r).reduce((ss, l) => ss + (Number(l.qty) || 0), 0), 0);
+  const invoiceCount = filtered.length;
+  const avgSale = invoiceCount ? totalRevenue / invoiceCount : 0;
+
+  // Aggregate per item
+  const itemAgg = new Map(); // key -> { name, qty, revenue }
+  for (const r of filtered) {
+    for (const l of invLines(r)) {
+      const qty = Number(l.qty) || 0;
+      const rev = qty * (Number(l.salesUnitPrice ?? l.unitPrice) || 0);
+      const cur = itemAgg.get(l.item) || { name: itemNameByKey(l.item), qty: 0, revenue: 0 };
+      cur.qty += qty; cur.revenue += rev;
+      itemAgg.set(l.item, cur);
+    }
+  }
+  const byRevenue = [...itemAgg.values()].sort((a, b) => b.revenue - a.revenue).slice(0, 10);
+  const byQty = [...itemAgg.values()].sort((a, b) => b.qty - a.qty).slice(0, 10);
+  const maxRev = byRevenue[0]?.revenue || 1;
+  const maxQty = byQty[0]?.qty || 1;
+
+  // Aggregate per day
+  const dayAgg = new Map(); // dateStr -> { revenue, count }
+  for (const r of filtered) {
+    const d = invDate(r);
+    const cur = dayAgg.get(d) || { revenue: 0, count: 0 };
+    cur.revenue += invTotal(r); cur.count += 1;
+    dayAgg.set(d, cur);
+  }
+  const days = [...dayAgg.entries()].sort((a, b) => b[0].localeCompare(a[0]));
+  const maxDayRevenue = Math.max(1, ...days.map(([, v]) => v.revenue));
+
+  const revRows = byRevenue.map(x => `
+    <tr>
+      <td>${escapeHtml(x.name)}</td>
+      <td style="text-align:right">${fmt(x.revenue)}</td>
+      <td><div style="background:var(--accent);height:8px;border-radius:4px;width:${Math.max(4, Math.round(x.revenue / maxRev * 100))}%"></div></td>
+    </tr>`).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text-mute)">No data.</td></tr>';
+
+  const qtyRows = byQty.map(x => `
+    <tr>
+      <td>${escapeHtml(x.name)}</td>
+      <td style="text-align:right">${fmtQty(x.qty)}</td>
+      <td><div style="background:var(--success);height:8px;border-radius:4px;width:${Math.max(4, Math.round(x.qty / maxQty * 100))}%"></div></td>
+    </tr>`).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text-mute)">No data.</td></tr>';
+
+  const dayRows = days.map(([d, v]) => `
+    <tr>
+      <td>${escapeHtml(d)}</td>
+      <td style="text-align:right">${v.count}</td>
+      <td style="text-align:right">${fmt(v.revenue)}</td>
+      <td><div style="background:var(--accent);height:8px;border-radius:4px;width:${Math.max(4, Math.round(v.revenue / maxDayRevenue * 100))}%"></div></td>
+    </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text-mute)">No data.</td></tr>';
+
+  el.innerHTML = `
+    <div class="reg-toolbar">
+      <div class="form-field"><label>From</label><input type="date" id="an-from" value="${state.analysisFilters.from}"></div>
+      <div class="form-field"><label>To</label><input type="date" id="an-to" value="${state.analysisFilters.to}"></div>
+      <button class="btn btn-primary" onclick="applyAnalysisFilters()">Run</button>
+      <button class="btn btn-secondary" onclick="loadHistoryData(true).then(() => renderAnalysisModalBody(true))">↻ Refresh Data</button>
+    </div>
+    <div class="summary" style="margin-bottom:14px">
+      <div class="summary-row"><span>Invoices</span><span class="v">${invoiceCount}</span></div>
+      <div class="summary-row"><span>Total Qty Sold</span><span class="v">${fmtQty(totalQty)}</span></div>
+      <div class="summary-row"><span>Average Sale</span><span class="v">${fmt(avgSale)}</span></div>
+      <div class="summary-row grand"><span class="l">Total Revenue</span><span class="v">${fmt(totalRevenue)}</span></div>
+    </div>
+    <div class="reg-columns">
+      <div class="reg-col">
+        <div class="reg-col-title">Top Items by Revenue</div>
+        <div class="table-scroll"><table class="reg-table"><thead><tr><th>Item</th><th style="text-align:right">Revenue</th><th></th></tr></thead><tbody>${revRows}</tbody></table></div>
+      </div>
+      <div class="reg-col">
+        <div class="reg-col-title">Top Items by Quantity</div>
+        <div class="table-scroll"><table class="reg-table"><thead><tr><th>Item</th><th style="text-align:right">Qty</th><th></th></tr></thead><tbody>${qtyRows}</tbody></table></div>
+      </div>
+    </div>
+    <div class="reg-col-title" style="margin-top:14px">Revenue by Day</div>
+    <div class="table-scroll" style="max-height:300px">
+      <table class="reg-table"><thead><tr><th>Date</th><th style="text-align:right">Invoices</th><th style="text-align:right">Revenue</th><th></th></tr></thead><tbody>${dayRows}</tbody></table>
+    </div>
+  `;
+}
+
+/* ---- Printable Day Register summary — 80mm thermal layout, pulls the
+   business name/address straight from Manager's Business Details. ---- */
+async function printDayRegisterReport() {
+  const dateStr = state.dayRegisterDate;
+  const bd = await getBusinessDetails();
+  const { salesInvoices, creditNotes, allReceipts } = await loadDayRegisterData(dateStr);
+  const opening = getRegisterDecimal(dateStr, REG_OPEN_PREFIX) ?? 0;
+  const closing = getRegisterDecimal(dateStr, REG_CLOSE_PREFIX);
+  const receivedTotal = salesInvoices.reduce((s, r) => s + receiptTotalForInvoice(r.key, allReceipts), 0);
+  const salesTotal    = salesInvoices.reduce((s, r) => s + invTotal(r), 0);
+  const returnsTotal  = creditNotes.reduce((s, r) => s + cnTotal(r), 0);
+  const expectedCash  = opening + receivedTotal;
+
+  const saleRows = salesInvoices.map(r => `<tr><td>${escapeHtml(invRef(r))}</td><td style="text-align:right">${fmt(invTotal(r))}</td><td style="text-align:right">${fmt(receiptTotalForInvoice(r.key, allReceipts))}</td></tr>`).join('');
+  const returnRows = creditNotes.map(r => `<tr><td>${escapeHtml(cnRef(r))}</td><td style="text-align:right">${fmt(cnTotal(r))}</td></tr>`).join('');
+
+  const bizName = bd?.name || 'Business';
+  const bizAddr = bd?.address || '';
+
   const html = `<!doctype html><html><head><meta charset="utf-8">
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -1584,29 +2750,29 @@ function printDayClosingReport() {
       table{width:100%;border-collapse:collapse;font-size:10px;margin:2mm 0}
       .row{display:flex;justify-content:space-between}
       .grand{font-weight:700;font-size:13px;border-top:2px solid #000;padding-top:1.5mm;margin-top:1.5mm}
-      h1{font-size:14px;text-align:center;margin-bottom:2mm}
+      h1{font-size:14px;text-align:center;margin-bottom:1mm}
       .sub{text-align:center;font-size:9px;color:#333;margin-bottom:3mm}
       .hr{border-top:1px dashed #999;margin:2mm 0}
+      th{text-align:left;border-bottom:1px solid #000}
     </style>
   </head><body>
-    <h1>DAY CLOSING REPORT</h1>
-    <div class="sub">POS Terminal · Manager.io</div>
+    <h1>${escapeHtml(bizName)}</h1>
+    ${bizAddr ? `<div class="sub">${escapeHtml(bizAddr)}</div>` : ''}
+    <div class="sub">DAY REGISTER SUMMARY</div>
     <div class="row"><span>Date</span><span>${escapeHtml(dateStr)}</span></div>
-    <div class="row"><span>Opened</span><span>${escapeHtml(new Date(reg.openedAt).toLocaleTimeString())}</span></div>
-    ${reg.closedAt ? `<div class="row"><span>Closed</span><span>${escapeHtml(new Date(reg.closedAt).toLocaleTimeString())}</span></div>` : ''}
     <div class="hr"></div>
-    <table>
-      <thead><tr style="border-bottom:1px solid #000"><th style="text-align:left">Ref#</th><th style="text-align:left">Time</th><th style="text-align:left">Method</th><th style="text-align:right">Amt</th></tr></thead>
-      <tbody>${rows || '<tr><td colspan="4" style="padding:2mm 0;color:#666">No sales recorded</td></tr>'}</tbody>
-    </table>
+    <div class="row"><span>Opening Cash</span><span>${fmt(opening)}</span></div>
+    <div class="row"><span>Sales Invoiced (${salesInvoices.length})</span><span>${fmt(salesTotal)}</span></div>
+    <div class="row"><span>Received</span><span>${fmt(receivedTotal)}</span></div>
+    <div class="row"><span>Returns (${creditNotes.length})</span><span>${fmt(returnsTotal)}</span></div>
+    <div class="row grand"><span>Expected Cash</span><span>${fmt(expectedCash)}</span></div>
+    ${closing !== null ? `<div class="row"><span>Closing Cash</span><span>${fmt(closing)}</span></div><div class="row"><span>Variance</span><span>${(closing - expectedCash) >= 0 ? '+' : ''}${fmt(closing - expectedCash)}</span></div>` : ''}
     <div class="hr"></div>
-    <div class="row"><span>Opening Float</span><span>${fmt(reg.openingFloat)}</span></div>
-    <div class="row"><span>Total Sales (${s.count})</span><span>${fmt(s.totalSales)}</span></div>
-    <div class="row"><span>Cash Sales</span><span>${fmt(s.cashSales)}</span></div>
-    <div class="row"><span>Non-Cash Sales</span><span>${fmt(s.nonCashSales)}</span></div>
-    <div class="row"><span>Expected Cash</span><span>${fmt(s.expectedCash)}</span></div>
-    <div class="row"><span>Counted Cash</span><span>${fmt(reg.countedCash)}</span></div>
-    <div class="row grand"><span>Variance</span><span>${variance >= 0 ? '+' : ''}${fmt(variance)}</span></div>
+    <table><thead><tr><th>Sales Ref</th><th style="text-align:right">Total</th><th style="text-align:right">Rcvd</th></tr></thead>
+    <tbody>${saleRows || '<tr><td colspan="3">None</td></tr>'}</tbody></table>
+    <div class="hr"></div>
+    <table><thead><tr><th>Return Ref</th><th style="text-align:right">Amount</th></tr></thead>
+    <tbody>${returnRows || '<tr><td colspan="2">None</td></tr>'}</tbody></table>
     <script>setTimeout(function(){window.focus();window.print();},400);<\/script>
   </body></html>`;
   const printWin = window.open('', '_blank', 'width=320,height=600');
@@ -1614,6 +2780,7 @@ function printDayClosingReport() {
   printWin.document.write(html);
   printWin.document.close();
 }
+
 
 /* ══════════════════════════════════════════════════════
    SETUP MODAL — create default POS customer + walk-in
@@ -1865,6 +3032,7 @@ async function submitSale() {
       paymentAccountKey: paymentAccount?.key || null,
       paymentAccountName: paymentAccount?.name || '',
       paymentReceiptKey: null, // set once "Record Payment" is used
+      appliedCredit: 0, // set/incremented by "Apply Credit" against this new invoice
       lines: state.cart.map(l => ({
         code: l.itemCode, name: l.itemName,
         qty: Number(l.qty) || 0,
@@ -1875,13 +3043,12 @@ async function submitSale() {
       totalQty: cartQty(),
     };
 
-    // Log this sale into today's register session, if one is open
-    registerLogSale({
-      reference, issueDate,
-      total: saleTotal,
-      isCash: !!paymentAccount?.isCash,
-      paymentAccountName: paymentAccount?.name || '',
-    });
+    // The Day Register now reads sales/receipts live from Manager rather
+    // than a local session log, so this sale will show up there automatically
+    // next time the register is opened/refreshed — invalidate today's cache
+    // so a currently-open register view picks it up on its next refresh.
+    if (state.dayRegisterData && state.dayRegisterData.date === issueDate) state.dayRegisterData = null;
+    updateRegisterBadge();
 
     // Update stock in memory
     for (const l of state.cart) {
@@ -1926,20 +3093,42 @@ function showReceiptModal() {
 function updateRecordPaymentButton() {
   const btn = document.getElementById('record-payment-btn');
   const note = document.getElementById('record-payment-note');
+  const applyBtn = document.getElementById('apply-credit-btn');
   const sale = state.lastSubmittedSale;
   if (!btn || !sale) return;
+  const remaining = Math.max(0, (Number(sale.total) || 0) - (Number(sale.appliedCredit) || 0));
+
+  if (applyBtn) applyBtn.disabled = !sale.invoiceKey || !!sale.paymentReceiptKey;
+
   if (sale.paymentReceiptKey) {
     btn.disabled = true;
-    btn.textContent = '✓ Payment Recorded';
-    if (note) { note.style.display = 'block'; note.textContent = 'Payment has been recorded against this invoice in Manager.'; }
-  } else if (!sale.invoiceKey || !sale.paymentAccountKey) {
+    btn.textContent = sale.paymentReceiptKey === 'covered-by-credit' ? '✓ Covered by Credit' : '✓ Payment Recorded';
+    if (note) {
+      note.style.display = 'block';
+      note.textContent = sale.paymentReceiptKey === 'covered-by-credit'
+        ? 'This invoice was fully settled by applied credit — no separate payment was needed.'
+        : 'Payment has been recorded against this invoice in Manager.';
+    }
+  } else if (!sale.invoiceKey) {
     btn.disabled = true;
     btn.textContent = '💰 Record Payment';
+    if (note) { note.style.display = 'none'; }
+  } else if (sale.appliedCredit > 0 && remaining <= 0.005) {
+    // Fully covered by applied credit — no bank/cash receipt needed at all.
+    btn.disabled = true;
+    btn.textContent = '✓ Covered by Credit';
+    if (note) { note.style.display = 'block'; note.textContent = `${fmt(sale.appliedCredit)} of credit fully covers this invoice.`; }
+  } else if (!sale.paymentAccountKey) {
+    btn.disabled = true;
+    btn.textContent = sale.appliedCredit > 0 ? `💰 Record Payment (${fmt(remaining)} remaining)` : '💰 Record Payment';
     if (note) { note.style.display = 'block'; note.textContent = 'Select a payment method before checkout to enable this.'; }
   } else {
     btn.disabled = false;
-    btn.textContent = '💰 Record Payment';
-    if (note) { note.style.display = 'none'; }
+    btn.textContent = sale.appliedCredit > 0 ? `💰 Record Payment (${fmt(remaining)} remaining)` : '💰 Record Payment';
+    if (note) {
+      note.style.display = sale.appliedCredit > 0 ? 'block' : 'none';
+      if (sale.appliedCredit > 0) note.textContent = `${fmt(sale.appliedCredit)} applied from credit — ${fmt(remaining)} still due.`;
+    }
   }
 }
 
@@ -2031,7 +3220,15 @@ async function resolveARAccountForCustomer(customerKey) {
 
 async function recordManagerReceipt() {
   const sale = state.lastSubmittedSale;
-  if (!sale || !sale.invoiceKey || !sale.paymentAccountKey || sale.paymentReceiptKey) return;
+  if (!sale || !sale.invoiceKey || sale.paymentReceiptKey) return;
+  const remaining = Math.max(0, (Number(sale.total) || 0) - (Number(sale.appliedCredit) || 0));
+  if (remaining <= 0.005) {
+    // Fully covered by applied credit already — nothing left to receipt.
+    sale.paymentReceiptKey = 'covered-by-credit';
+    updateRecordPaymentButton();
+    return;
+  }
+  if (!sale.paymentAccountKey) return;
   const btn = document.getElementById('record-payment-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Recording…'; }
   try {
@@ -2052,19 +3249,158 @@ async function recordManagerReceipt() {
           account: arAccount,
           accountsReceivableCustomer: sale.customerKey,
           accountsReceivableSalesInvoice: sale.invoiceKey,
-          amount: sale.total
+          amount: remaining // only what's left after any applied credit, not the full invoice total
         }]
       }
     };
     const key = await apiCall('POST', '/api4/receipt', payload);
     sale.paymentReceiptKey = key;
     toast('✓ Payment recorded in Manager — please verify it looks right', 'success');
+    state.dayRegisterData = null;
+    state.historyData = null;
     updateRecordPaymentButton();
   } catch (err) {
     debugLog('fail', err.message);
     toast('Could not record payment: ' + err.message, 'error');
     if (btn) { btn.disabled = false; btn.textContent = '💰 Record Payment'; }
   }
+}
+
+/* ══════════════════════════════════════════════════════
+   APPLY CREDIT TO A NEW SALE
+   Workflow: customer has a credit balance sitting on a past invoice
+   (from an over-return or overpayment) → apply some/all of it to the
+   invoice just created here → whatever's still owed gets collected via
+   the normal Record Payment button. Applying credit posts a balanced
+   Journal Entry (debit AR/source invoice, credit AR/this invoice),
+   the same mechanism as the History/Register "Adjust" button, just
+   entered from the receipt screen with the target invoice fixed to
+   the sale that was just made.
+══════════════════════════════════════════════════════ */
+async function findCustomerCreditInvoices(customerKey, excludeKey) {
+  const { salesInvoices, allReceipts, creditNotes, journalEntries } = await loadHistoryData();
+  return salesInvoices
+    .filter(x => invCustomerKey(x) === customerKey && x.key !== excludeKey)
+    .map(x => ({ rec: x, ...invoiceBalance(x.key, invTotal(x), allReceipts, creditNotes, journalEntries) }))
+    .filter(x => x.credit > 0.005)
+    .sort((a, b) => invDate(b.rec).localeCompare(invDate(a.rec)));
+}
+
+async function openApplyCreditToSaleModal() {
+  const sale = state.lastSubmittedSale;
+  if (!sale || !sale.invoiceKey) { toast('No current sale to apply credit to.', 'error'); return; }
+  if (sale.paymentReceiptKey) { toast('This invoice is already settled.', 'error'); return; }
+
+  const candidates = await findCustomerCreditInvoices(sale.customerKey, sale.invoiceKey);
+  const remaining = Math.max(0, (Number(sale.total) || 0) - (Number(sale.appliedCredit) || 0));
+
+  if (!candidates.length) {
+    openGenericModal('💳 Apply Credit', `
+      <div style="padding:6px 2px;color:var(--text-mute);font:500 12px/1.5 'IBM Plex Sans'">
+        ${escapeHtml(sale.customerName || 'This customer')} has no available credit balance on any other invoice right now.
+      </div>`, `<button class="btn btn-secondary" onclick="closeGenericModal()">Close</button>`);
+    return;
+  }
+
+  const rows = candidates.map(c => `
+    <tr>
+      <td><strong>${escapeHtml(invRef(c.rec))}</strong></td>
+      <td>${escapeHtml(invDate(c.rec))}</td>
+      <td style="text-align:right">${fmt(c.credit)}</td>
+      <td><input type="number" class="apply-credit-amount" data-source="${c.rec.key}" min="0" max="${c.credit}" step="any" value="${Math.min(c.credit, remaining).toFixed(2)}" style="width:110px"></td>
+    </tr>`).join('');
+
+  const body = `
+    <div style="font:500 11px 'IBM Plex Sans';color:var(--text-mute);margin-bottom:10px">
+      ${escapeHtml(sale.customerName || 'This customer')} has credit available on other invoices. Enter how much to apply from each toward
+      <strong style="color:var(--text)">${escapeHtml(sale.reference)}</strong> — remaining due: <strong style="color:var(--text)">${fmt(remaining)}</strong>.
+    </div>
+    <div class="table-scroll" style="max-height:260px">
+      <table class="reg-table">
+        <thead><tr><th>Invoice</th><th>Date</th><th style="text-align:right">Available Credit</th><th>Apply Amount</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div class="form-row" style="margin-top:10px">
+      <div class="form-field"><label>Date</label><input type="date" id="apply-credit-date" value="${todayISO()}"></div>
+      <div class="form-field"><label>Reference</label><input type="text" id="apply-credit-reference" value="${escapeHtml(sale.reference)}-CR"></div>
+    </div>
+    <div id="apply-credit-result" style="margin-top:8px;font:500 11px 'IBM Plex Sans';color:var(--text-mute)"></div>
+  `;
+  const actions = `
+    <button class="btn btn-secondary" onclick="closeGenericModal()">Cancel</button>
+    <button class="btn btn-primary" id="apply-credit-submit-btn" onclick="submitApplyCreditToSale()">Apply Credit</button>
+  `;
+  openGenericModal('💳 Apply Credit to ' + sale.reference, body, actions);
+}
+
+async function submitApplyCreditToSale() {
+  const sale = state.lastSubmittedSale;
+  const resultEl = document.getElementById('apply-credit-result');
+  const btn = document.getElementById('apply-credit-submit-btn');
+  if (!sale) return;
+  btn.disabled = true;
+  try {
+    const remaining = Math.max(0, (Number(sale.total) || 0) - (Number(sale.appliedCredit) || 0));
+    const rows = [...document.querySelectorAll('.apply-credit-amount')]
+      .map(el => ({ source: el.dataset.source, amount: Number(el.value) || 0, cap: Number(el.max) || 0 }))
+      .filter(r => r.amount > 0);
+    if (!rows.length) throw new Error('Enter an amount for at least one invoice.');
+    for (const r of rows) {
+      if (r.amount > r.cap + 0.01) throw new Error("One of the amounts exceeds that invoice's available credit.");
+    }
+    const totalRequested = rows.reduce((s, r) => s + r.amount, 0);
+    if (totalRequested > remaining + 0.01) throw new Error(`Total applied (${fmt(totalRequested)}) exceeds the remaining balance due (${fmt(remaining)}).`);
+
+    const arAccount = await resolveARAccountForCustomer(sale.customerKey);
+    if (!arAccount) throw new Error('Could not resolve the Accounts Receivable account.');
+
+    const date = document.getElementById('apply-credit-date').value || todayISO();
+    const reference = document.getElementById('apply-credit-reference').value.trim() || (sale.reference + '-CR');
+
+    resultEl.textContent = 'Applying credit…';
+    let appliedTotal = 0;
+    for (const r of rows) {
+      const payload = { value: {
+        date: date + 'T00:00:00', reference,
+        narration: 'POS credit applied to new sale',
+        lines: [
+          { account: arAccount, accountsReceivableCustomer: sale.customerKey, accountsReceivableSalesInvoice: r.source, debit: r.amount, credit: 0 },
+          { account: arAccount, accountsReceivableCustomer: sale.customerKey, accountsReceivableSalesInvoice: sale.invoiceKey, debit: 0, credit: r.amount },
+        ]
+      }};
+      await apiCall('POST', '/api4/journal-entry', payload);
+      appliedTotal += r.amount;
+    }
+
+    sale.appliedCredit = (Number(sale.appliedCredit) || 0) + appliedTotal;
+    resultEl.textContent = `✓ Applied ${fmt(appliedTotal)} in credit.`;
+    toast('✓ Credit applied to this sale', 'success');
+
+    // Invoice-level figures (Due/Credit shown everywhere) must reflect this
+    // immediately — refresh caches so Day Register/History aren't stale.
+    state.dayRegisterData = null;
+    state.historyData = null;
+    state.allJournalEntries = null;
+
+    const newRemaining = Math.max(0, (Number(sale.total) || 0) - (Number(sale.appliedCredit) || 0));
+    if (newRemaining <= 0.005) sale.paymentReceiptKey = 'covered-by-credit';
+
+    refreshReceiptPreview();
+    updateRecordPaymentButton();
+    setTimeout(closeGenericModal, 900);
+  } catch (e) {
+    resultEl.textContent = 'Failed: ' + e.message;
+    btn.disabled = false;
+  }
+}
+
+// Re-renders the on-screen receipt (Total / Credit Applied / Balance Due)
+// after applying credit, without closing or resubmitting the sale.
+function refreshReceiptPreview() {
+  const sale = state.lastSubmittedSale;
+  const area = document.getElementById('receipt-preview-area');
+  if (sale && area) area.innerHTML = buildThermalReceiptHTML(sale);
 }
 
 function closeReceiptModal() {
@@ -2090,8 +3426,9 @@ function buildThermalReceiptHTML(sale) {
   return `
     <div id="thermal-receipt" style="font-family:'Roboto Mono',monospace;width:72mm;max-width:72mm;margin:0 auto;padding:3mm 4mm;color:#000;font-size:11px;line-height:1.4">
       <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:2mm;margin-bottom:2mm">
-        <div style="font-size:14px;font-weight:700">SALES RECEIPT</div>
-        <div style="font-size:9px;margin-top:1mm;color:#333">POS Terminal · Manager.io</div>
+        <div style="font-size:14px;font-weight:700">${escapeHtml(state.businessDetails?.name || 'SALES RECEIPT')}</div>
+        ${state.businessDetails?.address ? `<div style="font-size:9px;margin-top:0.5mm;color:#333">${escapeHtml(state.businessDetails.address)}</div>` : ''}
+        <div style="font-size:9px;margin-top:1mm;color:#333">${state.businessDetails?.name ? 'Sales Receipt' : 'POS Terminal · Manager.io'}</div>
       </div>
       <div style="font-size:10px;border-bottom:1px dashed #999;padding-bottom:1.5mm;margin-bottom:1.5mm">
         <div style="display:flex;justify-content:space-between"><span>Ref#</span><span style="font-weight:700">${escapeHtml(sale.reference)}</span></div>
@@ -2118,6 +3455,9 @@ function buildThermalReceiptHTML(sale) {
       <div style="border-top:2px solid #000;margin-top:1.5mm;padding-top:1.5mm">
         <div style="display:flex;justify-content:space-between;font-size:10px"><span>Total Qty:</span><span style="font-weight:700">${sale.totalQty}</span></div>
         <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;margin-top:1mm"><span>TOTAL:</span><span>${fmt(sale.total)}</span></div>
+        ${sale.appliedCredit > 0 ? `
+        <div style="display:flex;justify-content:space-between;font-size:10px;margin-top:1mm"><span>Credit Applied:</span><span>−${fmt(sale.appliedCredit)}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;border-top:1px dashed #999;margin-top:1mm;padding-top:1mm"><span>BALANCE DUE:</span><span>${fmt(Math.max(0, sale.total - sale.appliedCredit))}</span></div>` : ''}
       </div>
       <div style="border-top:1px dashed #999;margin-top:2mm;padding-top:1.5mm;text-align:center;font-size:9px;color:#333">
         <div>Please report any shortage within 3 days</div>
@@ -2167,42 +3507,11 @@ function downloadReceiptPDF() {
   toast('Receipt downloaded as HTML — open in browser and "Save as PDF"', 'info');
 }
 
-// Normalizes a phone number for wa.me: digits only, no leading zeros/plus/spaces.
-// wa.me expects the FULL international number (country code + number) with no
-// "+", spaces, dashes, or leading "00". If the number looks like a local
-// number without a country code, it's passed through as-is since we have no
-// reliable way to guess the country here — better to let WhatsApp reject it
-// than silently attach the wrong country code.
-function normalizeWhatsAppNumber(raw) {
-  if (!raw) return '';
-  let digits = String(raw).trim().replace(/[^\d+]/g, '');
-  if (digits.startsWith('+')) digits = digits.slice(1);
-  else if (digits.startsWith('00')) digits = digits.slice(2);
-  return digits.replace(/\D/g, '');
-}
-
-function shareWhatsApp() {
-  const sale = state.lastSubmittedSale;
-  if (!sale) return;
-  let msg = `*SALES RECEIPT*\nRef# ${sale.reference}\nDate: ${sale.issueDate}\nCustomer: ${sale.customerName}\n────────\n`;
-  for (const l of sale.lines) {
-    msg += `• ${l.name}  ${l.qty} × ${fmt(l.price)} = ${fmt(l.total)}\n`;
-  }
-  msg += `────────\n*TOTAL: ${fmt(sale.total)}*\n\nThank you for your business!`;
-  const number = normalizeWhatsAppNumber(sale.custPhone);
-  const url = number
-    ? `https://wa.me/${number}?text=${encodeURIComponent(msg)}`
-    : `https://wa.me/?text=${encodeURIComponent(msg)}`;
-  if (!number && sale.custPhone) {
-    toast('Customer phone number looks incomplete — opening WhatsApp without a pre-filled contact', 'info');
-  }
-  window.open(url, '_blank');
-}
-
 /* ══════════════════════════════════════════════════════
    Feature #3: Quick Add Inventory Item via Barcode
 ══════════════════════════════════════════════════════ */
 function openAddItemModal(prefilledCode) {
+  document.getElementById('new-item-type').value = 'inventory';
   document.getElementById('new-item-code').value = prefilledCode || '';
   document.getElementById('new-item-name').value = '';
   document.getElementById('new-item-unit').value = 'pcs';
@@ -2228,6 +3537,7 @@ async function submitNewItemOnly() {
 }
 
 async function doSubmitNewItem(addToCart) {
+  const type  = document.getElementById('new-item-type').value; // 'inventory' | 'non-inventory'
   const code  = document.getElementById('new-item-code').value.trim();
   const name  = document.getElementById('new-item-name').value.trim();
   const unit  = document.getElementById('new-item-unit').value.trim() || 'pcs';
@@ -2236,32 +3546,58 @@ async function doSubmitNewItem(addToCart) {
   if (!code && !name) { toast('Please enter at least item code or name', 'error'); return; }
 
   try {
-    const payload = {
-      value: {
-        itemCode: code || null,
-        itemName: name || code,
-        unitName: unit,
-        hasDefaultSalesUnitPrice: price > 0,
-        defaultSalesUnitPrice: price,
-        valuationMethod: 0,  // FIFO
-      }
-    };
-
-    debugLog('info', 'Creating inventory item: ' + JSON.stringify(payload));
-    const newKey = await apiCall('POST', '/api4/inventory-item', payload);
-    debugLog('ok', 'Item created: ' + newKey);
-    toast(`✓ Item "${name || code}" created`, 'success');
+    let newKey, newRec;
+    if (type === 'non-inventory') {
+      const payload = {
+        value: {
+          code: code || null,
+          name: name || code,
+          unitName: unit,
+          hasDefaultSalesUnitPrice: price > 0,
+          defaultSalesUnitPrice: price,
+        }
+      };
+      debugLog('info', 'Creating non-inventory item: ' + JSON.stringify(payload));
+      const keys = await apiCall('POST', '/api4/non-inventory-item-batch', { values: [payload.value] });
+      newKey = Array.isArray(keys) ? keys[0] : keys;
+      debugLog('ok', 'Non-inventory item created: ' + newKey);
+      toast(`✓ Non-inventory item "${name || code}" created`, 'success');
+      newRec = {
+        key: newKey, posType: 'non-inventory',
+        item: {
+          itemCode: code, itemName: name || code, unitName: unit,
+          hasDefaultSalesUnitPrice: price > 0, defaultSalesUnitPrice: price,
+          hasDefaultQty: false, defaultQty: 0,
+          hasDefaultLineDescription: false, defaultLineDescription: '',
+        }
+      };
+    } else {
+      const payload = {
+        value: {
+          itemCode: code || null,
+          itemName: name || code,
+          unitName: unit,
+          hasDefaultSalesUnitPrice: price > 0,
+          defaultSalesUnitPrice: price,
+          valuationMethod: 0,  // FIFO
+        }
+      };
+      debugLog('info', 'Creating inventory item: ' + JSON.stringify(payload));
+      newKey = await apiCall('POST', '/api4/inventory-item', payload);
+      debugLog('ok', 'Item created: ' + newKey);
+      toast(`✓ Item "${name || code}" created`, 'success');
+      newRec = {
+        key: newKey, posType: 'inventory',
+        item: {
+          itemCode: code, itemName: name || code, unitName: unit,
+          hasDefaultSalesUnitPrice: price > 0, defaultSalesUnitPrice: price,
+          hasDefaultQty: false, defaultQty: 0,
+          hasDefaultLineDescription: false, defaultLineDescription: '',
+        }
+      };
+    }
 
     // Add to local state immediately
-    const newRec = {
-      key: newKey,
-      item: {
-        itemCode: code, itemName: name || code, unitName: unit,
-        hasDefaultSalesUnitPrice: price > 0, defaultSalesUnitPrice: price,
-        hasDefaultQty: false, defaultQty: 0,
-        hasDefaultLineDescription: false, defaultLineDescription: '',
-      }
-    };
     state.items.push(newRec);
     buildItemIndexes(); // Rebuild indexes
 
@@ -2615,7 +3951,7 @@ function attachBarcodeHandlers() {
       const name = r.item?.itemName || '';
       const has = qtyMap && (r.key in qtyMap);
       const ownedNum = has ? qtyMap[r.key] : null;
-      const owned = has ? fmtQty(ownedNum) : '—';
+      const owned = has ? fmtQty(ownedNum) : (r.posType === 'non-inventory' ? 'NI' : '—');
       const isLow = has && ownedNum <= 0;
       html += `<div class="suggest-item ${isLow?'low':''}" data-idx="${i}">
         <span class="si-code">${escapeHtml(code)}</span>
@@ -2813,13 +4149,27 @@ document.addEventListener('keydown', (e) => {
     e.preventDefault();
     openAddItemModal('');
   }
-  // Escape: close modals
+  // Escape: close whichever modal is currently open (checked in DOM order;
+  // closeGenericModal/closeReturnsSearchModal etc. are all reachable via
+  // data-close, so this doesn't need updating every time a modal is added).
   if (e.key === 'Escape') {
-    if (document.getElementById('receipt-modal').classList.contains('open')) closeReceiptModal();
-    else if (document.getElementById('add-item-modal').classList.contains('open')) closeAddItemModal();
-    else if (document.getElementById('setup-modal').classList.contains('open')) closeSetupModal();
-    else if (document.getElementById('register-modal').classList.contains('open')) closeRegisterModal();
-    else if (document.getElementById('hire-modal').classList.contains('open')) closeHireModal();
+    const openModal = document.querySelector('.modal-overlay.open');
+    if (openModal) {
+      const fn = openModal.dataset.close;
+      if (fn && typeof window[fn] === 'function') window[fn]();
+      else openModal.classList.remove('open');
+    }
+  }
+});
+
+// Click/tap outside a modal's content area closes it (standard modal UX
+// that was missing everywhere — clicking the dimmed backdrop now works
+// the same as pressing × or Escape).
+document.addEventListener('mousedown', (e) => {
+  if (e.target.classList?.contains('modal-overlay') && e.target.classList.contains('open')) {
+    const fn = e.target.dataset.close;
+    if (fn && typeof window[fn] === 'function') window[fn]();
+    else e.target.classList.remove('open');
   }
 });
 </script>
