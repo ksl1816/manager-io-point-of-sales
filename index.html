@@ -709,6 +709,21 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
 .modal-actions{display:flex;gap:8px;flex-wrap:wrap}
 .modal-actions .btn{flex:1;min-width:100px}
 
+/* ─────────── IN-APP USER GUIDE ─────────── */
+.guide-modal-content{max-width:min(820px,96vw);width:96vw;max-height:92vh}
+.guide-body{max-height:calc(92vh - 90px);overflow-y:auto;padding-right:6px}
+.guide-body h3{font:700 14px/1.3 'IBM Plex Sans';color:var(--text);margin:18px 0 6px}
+.guide-body h3:first-child{margin-top:0}
+.guide-body h4{font:700 12px/1.3 'IBM Plex Sans';color:var(--text);margin:12px 0 4px}
+.guide-body p{font:400 12.5px/1.6 'IBM Plex Sans';color:var(--text-mute);margin:0 0 8px}
+.guide-body ul{margin:0 0 10px 18px;padding:0}
+.guide-body li{font:400 12.5px/1.55 'IBM Plex Sans';color:var(--text-mute);margin-bottom:4px}
+.guide-body strong{color:var(--text);font-weight:600}
+.guide-body code{font-family:'IBM Plex Mono',monospace;font-size:11px;background:var(--input-bg);border:1px solid var(--border);border-radius:4px;padding:1px 4px;color:var(--text)}
+.guide-body .guide-note{background:var(--accent-soft);border:1px solid var(--accent-glow);border-radius:var(--radius-sm);padding:8px 12px;margin:0 0 10px}
+.guide-body .guide-note p{margin:0;color:var(--text)}
+.guide-body hr{border:0;border-top:1px solid var(--border);margin:16px 0}
+
 /* ─────────── HIRE US MODAL ─────────── */
 .hire-modal-content{max-width:560px}
 .hire-eyebrow{
@@ -917,6 +932,7 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
   <button class="debug-toggle" onclick="toggleHistoryModal()" title="Browse previous sales invoices">🕘 History</button>
   <button class="debug-toggle" onclick="toggleAnalysisModal()" title="Sales analysis & top items">📈 Analysis</button>
   <button class="debug-toggle" onclick="toggleReturnsSearchModal()" title="Search any invoice to record a return">↩ Returns</button>
+  <button class="debug-toggle" onclick="toggleGuideModal()" title="How to use this POS — full user guide">❓ Guide</button>
   <button class="debug-toggle" onclick="toggleSetupModal()" title="Default customer & custom fields setup">⚙ Setup</button>
   <button class="debug-toggle" onclick="toggleDebug()">Debug</button>
 </div>
@@ -1022,6 +1038,77 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
       <div style="display:flex;gap:8px;margin-top:14px">
         <button class="btn btn-secondary" style="flex:1" onclick="closeSetupModal()">Close</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- User Guide Modal: full how-to reference, self-contained -->
+<div class="modal-overlay" id="guide-modal" data-close="closeGuideModal">
+  <div class="modal-content guide-modal-content">
+    <div class="modal-header">
+      <span class="modal-title">❓ POS User Guide <span style="font:600 11px 'IBM Plex Mono',monospace;color:var(--text-mute)">v2.3</span></span>
+      <button class="modal-close" onclick="closeGuideModal()">×</button>
+    </div>
+    <div class="guide-body">
+
+      <h3>1. First-time setup</h3>
+      <p>Do this once per business, not every session.</p>
+      <ul>
+        <li>Click <strong>⬇ Load Items &amp; Customers</strong> — fetches every inventory item, non-inventory item, customer, and bank/cash account, and calculates current stock from your transaction history.</li>
+        <li>Open <strong>⚙ Setup</strong>. If no customer with code <code>999</code> or named "POS" exists, click <strong>Create Default "POS" Customer</strong>. Walk-in sales post against this customer; the person's name/phone (if typed) is saved in the invoice description. The Setup screen also explains how the POS tells cash from bank accounts.</li>
+        <li>Toggle 🌙/☀️ for light/dark mode.</li>
+      </ul>
+
+      <h3>2. Making a sale</h3>
+      <p><strong>Add items</strong> three ways: scan/type a barcode or code and press Enter; type to search and pick from the dropdown; or tap a tile in the <strong>Quick Add</strong> panel (Inventory / Non-Inventory tabs). An unrecognized code prompts you to create the item on the spot.</p>
+      <p><strong>Edit the cart</strong>: change <strong>Qty</strong>, <strong>Price</strong> (this sale only), or type a line <strong>Total</strong> to back-calculate Qty. Remove a line with ×, or <strong>Clear</strong> the cart.</p>
+      <p>Pick a customer (or leave it on the walk-in default), choose a payment method (cash accounts listed first), optionally type a walk-in name/phone, then click <strong>Complete Sale</strong>. A reference (<code>POS-YYMMDD-HHMMSS</code>) is generated automatically.</p>
+
+      <h3>3. The receipt screen</h3>
+      <ul>
+        <li><strong>🖨 Print</strong> — 80mm thermal layout.</li>
+        <li><strong>📄 Save as PDF</strong> — a real PDF file, generated in-browser.</li>
+        <li><strong>💳 Apply Credit</strong> — apply a customer's existing credit balance toward this invoice.</li>
+        <li><strong>💰 Record Payment</strong> — a multi-line form: type <strong>Tendered</strong> and Amount + Change compute automatically (Amount capped at what's due). Add lines to split across methods. Set the <strong>Receipt Date</strong> if it isn't today. Each line posts as its own real Receipt. When cash is tendered, <strong>TENDERED PAYMENT</strong> and <strong>CHANGE</strong> are printed under the TOTAL on the receipt, and the tendered/change figures are saved into the Receipt's <strong>Description</strong> in Manager so the record persists.</li>
+      </ul>
+
+      <h3>4. Day Register</h3>
+      <p>Click <strong>🗄 Register</strong>. A live, read-only view of one day — every figure is computed from real Manager transactions each time you open or refresh it.</p>
+      <ul>
+        <li><strong>Sales Invoiced</strong>, <strong>Cash Collected</strong>, <strong>Returns</strong>, and (if any) <strong>Bank Receipts</strong> and <strong>Cash Refunds Paid Out</strong>.</li>
+        <li><strong>Net Cash Movement</strong> = cash collected − cash refunds for the day. Figures are selected by each <strong>Receipt's own date</strong> and count <strong>only cash accounts</strong>; bank receipts are shown separately and excluded from the drawer figure. A later instalment against an older invoice therefore appears on the day the receipt was posted.</li>
+        <li>A card per Sales Invoice (Total / Received / Due, Items drill-down, Receipts breakdown, and Receipt / ✎ Edit / ↩ Return / 💳 Adjust actions). The Receipt form has an editable date.</li>
+        <li><strong>Receipts Posted This Day</strong> and <strong>Payments / Refunds Posted This Day</strong> — itemized lists (ref, customer, account with a cash/bank tag, amount) so every cash figure is traceable.</li>
+      </ul>
+      <p>Change the date with the picker, <strong>↻ Refresh</strong> to re-pull, or <strong>🖨 Print Day Summary</strong> — which uses the exact same calculation as the on-screen register.</p>
+      <div class="guide-note"><p><strong>Cash vs bank:</strong> Manager's account form has no cash/bank switch, so the POS infers it from features — "Can have pending transactions" enabled or an IBAN → Bank; neither → Cash. Tip: leave "Can have pending transactions" unticked on your cash drawer and ticked on real bank accounts.</p></div>
+
+      <h3>5. Sales History</h3>
+      <p>Click <strong>🕘 History</strong> to search across <em>all</em> invoices by date range and/or ref/customer text (press Enter or click Filter). Same cards and actions as the Register. If more than 500 match, narrow the range. <strong>↻ Refresh</strong> re-fetches from Manager.</p>
+
+      <h3>6. Sales Analysis</h3>
+      <p>Click <strong>📈 Analysis</strong>, pick a range, and get invoice count, quantity sold, average sale value, total revenue, top 10 items by revenue and by quantity, and a day-by-day breakdown — all computed in your browser.</p>
+
+      <h3>7. Returns and credit balances</h3>
+      <p>To return goods: use <strong>↩ Returns</strong> search, or the <strong>↩ Return</strong> button on any invoice card. Enter the quantity per line (can't exceed what's un-returned), confirm date/reference, and post — this creates a real Credit Note.</p>
+      <p>When Receipts + Returns exceed what was owed, the invoice shows a <strong>Credit</strong> balance. Click <strong>💳 Adjust</strong> to either <strong>Refund to Customer</strong> (a real Payment from a chosen account) or <strong>Apply to Another Invoice</strong> (a balanced Journal Entry).</p>
+
+      <h3>8. Editing an invoice</h3>
+      <p>Click <strong>✎</strong> next to any invoice reference to change its Reference, Issue Date, existing line Qty/Price, remove lines, or add a brand-new line. Click <strong>Save Changes</strong> to write back. Note: editing a paid invoice's total does not adjust Receipts already recorded — check those separately.</p>
+
+      <h3>9. Before you rely on this in production</h3>
+      <ul>
+        <li><strong>Accounts Receivable resolution.</strong> The extension resolves the AR control account (customer's own → existing receipts → the flagged AR account). There is <strong>no hardcoded fallback</strong>: if it can't be resolved, the transaction is stopped with an error rather than posting to a guessed account. To fix that, post one transaction manually in Manager.io first — open a Sales Invoice and use its <strong>Copy to → New Receipt</strong> button — which records the correct Accounts Receivable account; the extension then reuses that account for subsequent transactions.</li>
+        <li><strong>Return-quantity tracking</strong> assumes Credit Notes made outside this extension also set the invoice reference; if not, "already returned" may undercount for those.</li>
+        <li><strong>Credit/Due</strong> nets Receipts, Credit Notes, Journal Entries, and refund Payments read live from Manager; money moved some other way won't show.</li>
+        <li><strong>Stock quantities</strong> are computed from transaction history — a strong indicator, not a guaranteed audit figure.</li>
+        <li><strong>Non-Latin names in PDF receipts</strong> — Urdu/Arabic (and other non-Latin) names may not render in the generated PDF and can come out blank or as isolated, unjoined characters. Treat this as a known limitation and check such names on the printed/thermal receipt instead.</li>
+      </ul>
+      <p style="color:var(--text-dim);font-size:11px">Always verify against your official Manager.io reports before relying on these for accounting. This is a free, independent, community-built tool — not affiliated with or endorsed by Manager.io.</p>
+
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeGuideModal()">Close</button>
     </div>
   </div>
 </div>
@@ -3051,6 +3138,14 @@ function closeSetupModal() {
   document.getElementById('setup-modal').classList.remove('open');
 }
 
+/* ---- In-app User Guide modal (static, self-contained) ---- */
+function toggleGuideModal() {
+  document.getElementById('guide-modal').classList.add('open');
+}
+function closeGuideModal() {
+  document.getElementById('guide-modal').classList.remove('open');
+}
+
 function renderSetupCustomerStatus() {
   const el = document.getElementById('setup-customer-status');
   const btn = document.getElementById('setup-create-customer-btn');
@@ -3285,6 +3380,7 @@ async function submitSale() {
       paymentAccountKey: paymentAccount?.key || null,
       paymentAccountName: paymentAccount?.name || '',
       paymentReceiptKey: null, // set once "Record Payment" is used
+      payment: null, // { applied, tendered, change } — set once payment(s) recorded, drives Tendered/Change on the bill
       appliedCredit: 0, // set/incremented by "Apply Credit" against this new invoice
       lines: state.cart.map(l => ({
         code: l.itemCode, name: l.itemName,
@@ -3656,16 +3752,37 @@ function updateCheckoutPanelSummary() {
   ).join(' <span style="color:var(--text-mute)">·</span> ');
 }
 
+// Posts a Receipt, retrying once without the Description field if Manager
+// rejects the payload with it present — so the payment itself always goes
+// through even if this build's Manager doesn't accept a receipt description.
+async function postReceiptSafe(payload) {
+  try {
+    return await apiCall('POST', '/api4/receipt', payload);
+  } catch (e) {
+    if (payload?.value && 'description' in payload.value) {
+      const { description, ...rest } = payload.value;
+      debugLog('fail', 'Receipt post failed with description present, retrying without it: ' + e.message);
+      return await apiCall('POST', '/api4/receipt', { value: rest });
+    }
+    throw e;
+  }
+}
+
 async function submitCheckoutPayments() {
   const sale = state.lastSubmittedSale;
   const resultEl = document.getElementById('checkout-payment-result');
   if (!sale || !resultEl) return;
   const remaining = Math.max(0, (Number(sale.total) || 0) - (Number(sale.appliedCredit) || 0));
 
-  const rows = [...document.querySelectorAll('#checkout-payment-lines tr')].map(row => ({
-    account: row.querySelector('.chk-account')?.value,
-    amount: Number(row.querySelector('.chk-amount')?.value) || 0,
-  })).filter(l => l.account && l.amount > 0);
+  const rows = [...document.querySelectorAll('#checkout-payment-lines tr')].map(row => {
+    const opt = row.querySelector('.chk-account')?.selectedOptions?.[0];
+    return {
+      account: row.querySelector('.chk-account')?.value,
+      amount: Number(row.querySelector('.chk-amount')?.value) || 0,
+      tendered: Number(row.querySelector('.chk-tendered')?.value) || 0,
+      isCash: opt?.dataset?.cash === 'true',
+    };
+  }).filter(l => l.account && l.amount > 0);
 
   if (!rows.length) { resultEl.textContent = 'Enter at least one payment amount.'; return; }
   const totalEntered = rows.reduce((s, r) => s + r.amount, 0);
@@ -3680,26 +3797,45 @@ async function submitCheckoutPayments() {
     return;
   }
 
-  let posted = 0, failed = 0, postedTotal = 0;
+  let posted = 0, failed = 0, postedTotal = 0, cashTendered = 0, changeGiven = 0;
   for (let i = 0; i < rows.length; i++) {
     const l = rows[i];
+    const lineChange = (l.isCash && l.tendered > l.amount) ? (l.tendered - l.amount) : 0;
+    // Persist the cash-handling detail on the Receipt itself (Manager's
+    // Description field). Manager has no native "change given" concept, so
+    // this plain-text record is the durable place to keep tendered/change —
+    // it survives regardless of custom-field setup and never breaks.
+    const parts = [`POS ${sale.reference}`, `Applied ${fmt(l.amount)}`];
+    if (l.isCash && l.tendered > 0) parts.push(`Tendered ${fmt(l.tendered)}`, `Change ${fmt(lineChange)}`);
+    const description = parts.join(' · ');
     try {
       const payload = { value: {
         date: receiptDate + 'T00:00:00',
         reference: rows.length > 1 ? `${sale.reference}-P${i + 1}` : sale.reference,
+        description,
         paidBy: 1, // Customer
         customer: sale.customerKey,
         receivedIn: l.account,
         lines: [{ account: arAccount, accountsReceivableCustomer: sale.customerKey, accountsReceivableSalesInvoice: sale.invoiceKey, amount: l.amount }]
       }};
-      const key = await apiCall('POST', '/api4/receipt', payload);
+      const key = await postReceiptSafe(payload);
       posted++; postedTotal += l.amount;
+      if (l.isCash && l.tendered > 0) { cashTendered += l.tendered; changeGiven += lineChange; }
       if (posted === 1) sale.paymentReceiptKey = key; // keep at least one real key on the sale record
     } catch (e) {
       failed++;
       debugLog('fail', 'Checkout payment line failed: ' + e.message);
     }
   }
+
+  // Record the cash-handling summary on the sale so the receipt/bill can show
+  // TENDERED PAYMENT and CHANGE (accumulates if Post is used more than once).
+  sale.payment = {
+    applied: (sale.payment?.applied || 0) + postedTotal,
+    tendered: (sale.payment?.tendered || 0) + cashTendered,
+    change: (sale.payment?.change || 0) + changeGiven,
+  };
+  refreshReceiptPreview();
 
   state.dayRegisterData = null;
   state.historyData = null;
@@ -3906,6 +4042,9 @@ function buildThermalReceiptHTML(sale) {
         ${sale.appliedCredit > 0 ? `
         <div style="display:flex;justify-content:space-between;font-size:10px;margin-top:1mm"><span>Credit Applied:</span><span>−${fmt(sale.appliedCredit)}</span></div>
         <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;border-top:1px dashed #999;margin-top:1mm;padding-top:1mm"><span>BALANCE DUE:</span><span>${fmt(Math.max(0, sale.total - sale.appliedCredit))}</span></div>` : ''}
+        ${sale.payment && sale.payment.tendered > 0 ? `
+        <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;border-top:1px dashed #999;margin-top:1mm;padding-top:1mm"><span>TENDERED PAYMENT:</span><span>${fmt(sale.payment.tendered)}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700"><span>CHANGE:</span><span>${fmt(sale.payment.change)}</span></div>` : ''}
       </div>
       <div style="border-top:1px dashed #999;margin-top:2mm;padding-top:1.5mm;text-align:center;font-size:9px;color:#333">
         <div>Please report any shortage within 3 days</div>
@@ -4004,7 +4143,8 @@ async function buildAndSaveReceiptPDF(sale) {
   const addrLineCount = state.businessDetails?.address
     ? Math.ceil(state.businessDetails.address.length / 30) : 0;
   const estimatedHeightMM = 66 + addrLineCount * 3.5 + (sale.custPhone ? 4.5 : 0)
-    + sale.lines.length * 6 + (sale.appliedCredit > 0 ? 10 : 0);
+    + sale.lines.length * 6 + (sale.appliedCredit > 0 ? 10 : 0)
+    + (sale.payment && sale.payment.tendered > 0 ? 13 : 0);
 
   const doc = new jsPDF({ unit: 'mm', format: [pageWidthMM, estimatedHeightMM] });
   const urduReady = await ensureUrduFont(doc);
@@ -4087,6 +4227,12 @@ async function buildAndSaveReceiptPDF(sale) {
     row('Credit Applied:', '-' + fmt(sale.appliedCredit), 8); y += 4;
     hr(true); y += 4;
     row('BALANCE DUE:', fmt(Math.max(0, sale.total - sale.appliedCredit)), 9, true); y += 5;
+  }
+
+  if (sale.payment && sale.payment.tendered > 0) {
+    hr(true); y += 4;
+    row('TENDERED PAYMENT:', fmt(sale.payment.tendered), 9, true); y += 4.5;
+    row('CHANGE:', fmt(sale.payment.change), 9, true); y += 5;
   }
 
   y += 1; hr(true); y += 4;
