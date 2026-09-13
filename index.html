@@ -893,6 +893,12 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
       Secure
     </span>
   </div>
+  <button class="app-cta" id="user-guide-btn" style="background:var(--accent-soft);color:var(--accent);border-color:rgba(79,140,255,.35)" onclick="openUserGuideModal()">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+    </svg>
+    User Guide
+  </button>
   <button class="app-cta" id="cta-btn" onclick="openHireModal()">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
       <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
@@ -1000,6 +1006,18 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
       </div>
       <div id="setup-customer-status" style="font:600 12px/1.4 'IBM Plex Sans';margin-bottom:8px"></div>
       <button class="btn btn-primary" id="setup-create-customer-btn" style="width:100%" onclick="setupCreateDefaultCustomer()">Create Default "POS" Customer</button>
+
+      <div style="border-top:1px solid var(--border);margin-top:16px;padding-top:14px">
+        <div style="font:700 12.5px/1.3 'IBM Plex Sans';color:var(--text);margin-bottom:4px">Cash vs Bank accounts</div>
+        <div style="font:500 11px/1.55 'IBM Plex Sans';color:var(--text-mute)">
+          The Day Register's <strong>Net Cash Movement</strong> only counts money in and out of your physical <em>cash drawer</em>, so the POS has to know which of your Manager accounts are cash and which are bank. Manager's account form has no “cash vs bank” switch, so the POS works it out from the account's features:
+          <ul style="margin:6px 0 6px 16px;padding:0;line-height:1.5">
+            <li>Has <strong>“Can have pending transactions”</strong> enabled, or an <strong>IBAN</strong> → treated as <strong>Bank</strong>.</li>
+            <li>Neither → treated as <strong>Cash</strong> (the drawer).</li>
+          </ul>
+          Practical tip: in Manager, leave <strong>“Can have pending transactions”</strong> <em>unticked</em> on your cash-drawer account and <em>ticked</em> on real bank accounts — that's what keeps the drawer figure accurate. Bank receipts still appear in the register (as “Bank Receipts”), they’re just kept out of the cash-drawer total.
+        </div>
+      </div>
 
       <div style="display:flex;gap:8px;margin-top:14px">
         <button class="btn btn-secondary" style="flex:1" onclick="closeSetupModal()">Close</button>
@@ -1564,23 +1582,23 @@ function renderPaymentMethodOptions() {
   }
   // Cash accounts first (most common for POS), then bank accounts, alphabetically within each group.
   const sorted = [...accounts].sort((a, b) => {
-    const ca = a.item?.isCashAccount ? 0 : 1, cb = b.item?.isCashAccount ? 0 : 1;
+    const ca = isCashAccountItem(a.item) ? 0 : 1, cb = isCashAccountItem(b.item) ? 0 : 1;
     if (ca !== cb) return ca - cb;
     return (a.item?.name || '').localeCompare(b.item?.name || '');
   });
   sel.innerHTML = sorted.map(a =>
-    `<option value="${a.key}">${escapeHtml(a.item?.name || 'Unnamed')}${a.item?.isCashAccount ? ' (Cash)' : ''}</option>`
+    `<option value="${a.key}">${escapeHtml(a.item?.name || 'Unnamed')}${isCashAccountItem(a.item) ? ' (Cash)' : ''}</option>`
   ).join('');
   // Preselect a cash account by default if one exists (typical POS default)
-  const preselect = sorted.find(a => a.item?.isCashAccount) || sorted[0];
+  const preselect = sorted.find(a => isCashAccountItem(a.item)) || sorted[0];
   if (preselect) {
     sel.value = preselect.key;
-    state.selectedPaymentAccount = { key: preselect.key, name: preselect.item?.name || 'Unnamed', isCash: !!preselect.item?.isCashAccount };
+    state.selectedPaymentAccount = { key: preselect.key, name: preselect.item?.name || 'Unnamed', isCash: isCashAccountItem(preselect.item) };
   }
   sel.onchange = () => {
     const found = sorted.find(a => a.key === sel.value);
     state.selectedPaymentAccount = found
-      ? { key: found.key, name: found.item?.name || 'Unnamed', isCash: !!found.item?.isCashAccount }
+      ? { key: found.key, name: found.item?.name || 'Unnamed', isCash: isCashAccountItem(found.item) }
       : null;
   };
 }
@@ -1733,6 +1751,107 @@ function invoiceBalance(invoiceKey, total, allReceipts, creditNotes, journalEntr
   return { rcv, ret, adj, refunded, balance, due: Math.max(0, balance), credit: Math.max(0, -balance) };
 }
 
+/* ---- Receipt-level accessors, used by the Day Register cash calc ----
+   The Day Register's cash figure is driven by the RECEIPT itself (its own
+   date and the account the money landed in), NOT by the invoice it pays.
+   This is what makes a later instalment against an older invoice show up on
+   the day the receipt was actually posted, and keeps bank receipts out of
+   the cash-drawer figure. Invoice balances (invoiceBalance above) still use
+   every receipt linked to the invoice regardless of date — only this cash
+   calculation is date/account scoped. */
+function receiptDateOf(r)  { return (r?.item?.date || r?.date || '').slice(0, 10); }
+function receiptAccountOf(r){ return r?.item?.receivedIn || r?.receivedIn || ''; }
+// Manager's "Bank or Cash Account" form has NO field that marks an account as
+// cash vs bank — it only offers IBAN, "Can have pending transactions", and
+// Credit limit. Crucially, the API's isBankAccount flag is NOT trustworthy: a
+// plain cash drawer like "Cash in Hand" comes back with isCashAccount unset AND
+// isBankAccount === true, so keying off isBankAccount tags the drawer as a bank
+// account (the bug this replaced). We therefore infer the type from the only
+// things the user actually sets — bank-only features:
+//   • "Can have pending transactions" → bank (cash clears instantly; a drawer
+//     never holds pending items)
+//   • an IBAN → bank (a cash drawer has none)
+// Anything with neither is treated as cash (the drawer). An explicit
+// isCashAccount === true is still honoured as a positive cash signal, but the
+// classification no longer depends on isBankAccount at all.
+function isCashAccountItem(item) {
+  if (!item) return false;
+  if (item.isCashAccount === true) return true;
+  if (item.canHavePendingTransactions === true) return false;
+  if (item.hasInternationalBankAccountNumber === true) return false;
+  if (item.internationalBankAccountNumber) return false;
+  return true;
+}
+function isCashAccountKey(key) {
+  const a = (state.paymentAccounts || []).find(x => x.key === key);
+  return isCashAccountItem(a?.item);
+}
+// Sum of receipt line amounts for receipts POSTED on dateStr, split by
+// whether the money landed in a Cash account or a (non-cash) Bank account.
+function receiptsCollectedOnDate(dateStr, receipts) {
+  let cash = 0, bank = 0;
+  for (const r of receipts || []) {
+    if (receiptDateOf(r) !== dateStr) continue;
+    const amt = (r?.item?.lines || []).reduce((s, l) => s + (Number(l.amount) || 0), 0);
+    if (isCashAccountKey(receiptAccountOf(r))) cash += amt; else bank += amt;
+  }
+  return { cash, bank };
+}
+
+/* ---- Single source of truth for the day's headline figures, so the
+   on-screen register and the printed Day Summary can never diverge. ---- */
+function computeDaySummary(dateStr, data) {
+  const { salesInvoices, creditNotes, allReceipts, allPayments } = data;
+  const salesTotal   = salesInvoices.reduce((s, r) => s + invTotal(r), 0);
+  const returnsTotal = creditNotes.reduce((s, r) => s + cnTotal(r), 0);
+  // Cash IN: cash-account receipts posted on this date.
+  const { cash: cashCollected, bank: bankReceipts } = receiptsCollectedOnDate(dateStr, allReceipts);
+  // Cash OUT: refunds paid out of a cash account on this date.
+  const cashRefunds = (allPayments || []).filter(p => payDate(p) === dateStr).reduce((s, p) => {
+    if (!isCashAccountKey(payPaidFrom(p))) return s;
+    return s + payLines(p).reduce((ss, l) => ss + (Number(l.amount) || 0), 0);
+  }, 0);
+  const netCashMovement = cashCollected - cashRefunds;
+  return { salesTotal, returnsTotal, cashCollected, bankReceipts, cashRefunds, netCashMovement };
+}
+
+/* ---- Itemized lists of every Receipt and every Payment posted ON the
+   selected date, independent of which invoice they touch. This is what
+   makes the day's cash figure fully traceable: a receipt posted today
+   against an older invoice (which has no sales card today) still shows up
+   here. ---- */
+function receiptRefOf(r)      { return r?.item?.reference || r?.reference || r?.key || ''; }
+function receiptCustomerOf(r) { return r?.item?.customer || r?.customer || ''; }
+function receiptAmountOf(r)   { return (r?.item?.lines || []).reduce((s, l) => s + (Number(l.amount) || 0), 0); }
+function payRefOf(p)          { return p?.item?.reference || p?.reference || p?.key || ''; }
+function payCustomerOf(p)     { return p?.item?.customer || p?.customer || ''; }
+function payAmountOf(p)       { return payLines(p).reduce((s, l) => s + (Number(l.amount) || 0), 0); }
+
+function dayReceiptsList(dateStr, receipts) {
+  return (receipts || [])
+    .filter(r => receiptDateOf(r) === dateStr)
+    .map(r => ({
+      reference: receiptRefOf(r),
+      customer:  customerNameByKey(receiptCustomerOf(r)),
+      account:   accountNameByKey(receiptAccountOf(r)),
+      amount:    receiptAmountOf(r),
+      isCash:    isCashAccountKey(receiptAccountOf(r)),
+    }))
+    .sort((a, b) => b.amount - a.amount);
+}
+function dayPaymentsList(dateStr, payments) {
+  return (payments || [])
+    .filter(p => payDate(p) === dateStr)
+    .map(p => ({
+      reference: payRefOf(p),
+      customer:  customerNameByKey(payCustomerOf(p)),
+      account:   accountNameByKey(payPaidFrom(p)),
+      amount:    payAmountOf(p),
+      isCash:    isCashAccountKey(payPaidFrom(p)),
+    }))
+    .sort((a, b) => b.amount - a.amount);
+}
+
 /* ---- Fetch the day's data straight from Manager (cached per-date until refreshed) ---- */
 async function loadDayRegisterData(dateStr, force) {
   if (state.dayRegisterData && state.dayRegisterData.date === dateStr && !force) return state.dayRegisterData;
@@ -1782,20 +1901,17 @@ async function renderRegisterModalBody() {
   await getBusinessDetails();
   const { salesInvoices, creditNotes, allReceipts, allJournalEntries, allPayments } = await loadDayRegisterData(dateStr);
 
-  const salesTotal    = salesInvoices.reduce((s, r) => s + invTotal(r), 0);
-  const receivedTotal = salesInvoices.reduce((s, r) => s + receiptTotalForInvoice(r.key, allReceipts), 0);
-  const returnsTotal  = creditNotes.reduce((s, r) => s + cnTotal(r), 0);
   const allCreditNotesForDue = state.allCreditNotes || creditNotes; // returns/adjustments can post on a later date than the sale, so Due must check ALL of them ever made against the invoice, not just today's
   const allJournalEntriesForDue = state.allJournalEntries || allJournalEntries;
   const allPaymentsForDue = state.allPayments || allPayments;
 
-  // Refunds paid out of a CASH account today actually leave the drawer.
-  const todaysCashRefunds = (allPayments || []).filter(p => payDate(p) === dateStr).reduce((s, p) => {
-    const acct = (state.paymentAccounts || []).find(a => a.key === payPaidFrom(p));
-    if (!acct?.item?.isCashAccount) return s;
-    return s + payLines(p).reduce((ss, l) => ss + (Number(l.amount) || 0), 0);
-  }, 0);
-  const netCashMovement = receivedTotal - todaysCashRefunds;
+  // Headline day figures — cash is scoped to receipts POSTED today into a
+  // cash account (bank receipts excluded), refunds to cash paid out today.
+  const { salesTotal, returnsTotal, cashCollected, bankReceipts, cashRefunds, netCashMovement } =
+    computeDaySummary(dateStr, { salesInvoices, creditNotes, allReceipts, allPayments });
+
+  const dayReceipts = dayReceiptsList(dateStr, allReceipts);
+  const dayPayments = dayPaymentsList(dateStr, allPayments);
 
   const salesCards = salesInvoices.map(r => {
     const total = invTotal(r);
@@ -1846,14 +1962,21 @@ async function renderRegisterModalBody() {
 
     <div class="summary" style="margin-bottom:14px">
       <div class="summary-row"><span>Sales Invoiced (${salesInvoices.length})</span><span class="v">${fmt(salesTotal)}</span></div>
-      <div class="summary-row"><span>Cash/Receipts Collected</span><span class="v">${fmt(receivedTotal)}</span></div>
-      ${todaysCashRefunds > 0.005 ? `<div class="summary-row"><span>Cash Refunds Paid Out</span><span class="v" style="color:var(--warn)">−${fmt(todaysCashRefunds)}</span></div>` : ''}
+      <div class="summary-row"><span>Cash Collected (receipts posted today)</span><span class="v">${fmt(cashCollected)}</span></div>
+      ${bankReceipts > 0.005 ? `<div class="summary-row"><span style="color:var(--text-mute)">Bank Receipts today (not cash)</span><span class="v" style="color:var(--text-mute)">${fmt(bankReceipts)}</span></div>` : ''}
+      ${cashRefunds > 0.005 ? `<div class="summary-row"><span>Cash Refunds Paid Out</span><span class="v" style="color:var(--warn)">−${fmt(cashRefunds)}</span></div>` : ''}
       <div class="summary-row"><span>Returns / Credit Notes (${creditNotes.length})</span><span class="v">${fmt(returnsTotal)}</span></div>
-      <div class="summary-row grand"><span class="l">Net Cash Movement (Collected − Refunded)</span><span class="v">${fmt(netCashMovement)}</span></div>
+      <div class="summary-row grand"><span class="l">Net Cash Movement (Cash Collected − Cash Refunded)</span><span class="v">${fmt(netCashMovement)}</span></div>
     </div>
 
     <div class="reg-col-title">Sales Invoices</div>
     <div class="reg-cards" style="margin-bottom:16px;max-height:min(50vh,560px);overflow-y:auto;padding-right:2px">${salesCards}</div>
+
+    <div class="reg-col-title">Receipts Posted This Day (${dayReceipts.length})</div>
+    <div class="reg-cards" style="margin-bottom:16px;max-height:min(34vh,380px);overflow-y:auto;padding-right:2px">${renderDayTxnTable(dayReceipts, 'receipts')}</div>
+
+    <div class="reg-col-title">Payments / Refunds Posted This Day (${dayPayments.length})</div>
+    <div class="reg-cards" style="margin-bottom:16px;max-height:min(30vh,340px);overflow-y:auto;padding-right:2px">${renderDayTxnTable(dayPayments, 'payments')}</div>
 
     <div class="reg-col-title">Returns (Credit Notes)</div>
     <div class="reg-cards" style="max-height:260px;overflow-y:auto;padding-right:2px">${returnCards}</div>
@@ -1880,6 +2003,26 @@ function toggleReceiptsDrilldown(key, prefix) {
   if (row) row.style.display = (row.style.display === 'none' || !row.style.display) ? 'block' : 'none';
 }
 
+// Flat table of the day's receipts or payments (Ref / Customer / Account /
+// Amount), with a cash-vs-bank tag so the summary's cash split is visible
+// line by line.
+function renderDayTxnTable(rows, noun) {
+  if (!rows.length) return `<div class="reg-card-empty">No ${noun} on this date.</div>`;
+  const body = rows.map(x => `
+    <tr>
+      <td>${escapeHtml(x.reference)}</td>
+      <td>${escapeHtml(x.customer)}</td>
+      <td>${escapeHtml(x.account)} <span style="color:${x.isCash ? 'var(--success)' : 'var(--text-dim)'};font-size:9px">${x.isCash ? 'cash' : 'bank'}</span></td>
+      <td style="text-align:right">${fmt(x.amount)}</td>
+    </tr>`).join('');
+  const total = rows.reduce((s, x) => s + x.amount, 0);
+  return `<table class="reg-subtable">
+    <thead><tr><th>Ref</th><th>Customer</th><th>Account</th><th style="text-align:right">Amount</th></tr></thead>
+    <tbody>${body}</tbody>
+    <tfoot><tr><td colspan="3" style="text-align:right;font-weight:700">Total</td><td style="text-align:right;font-weight:700">${fmt(total)}</td></tr></tfoot>
+  </table>`;
+}
+
 function renderInvoiceLineItems(r) {
   const lines = invLines(r);
   if (!lines.length) return `<div style="padding:8px;color:var(--text-mute)">No line items.</div>`;
@@ -1904,6 +2047,10 @@ function renderReceiptForm(r, outstanding) {
   return `
     <div class="receipt-form" id="rcpt-${r.key}" data-invoice="${r.key}">
       <div class="receipt-form-title">Record Receipt(s) — Outstanding: ${fmt(outstanding)}</div>
+      <div class="form-field" style="margin-bottom:6px;max-width:180px">
+        <label style="font-size:10px">Receipt Date</label>
+        <input type="date" class="rcpt-date" value="${todayISO()}">
+      </div>
       <div class="receipt-lines"></div>
       <div style="display:flex;gap:6px;margin-top:4px">
         <button class="btn btn-secondary btn-xs" onclick="addReceiptLine('${r.key}')">+ Add Receipt Line</button>
@@ -1947,6 +2094,8 @@ async function submitReceiptLines(invoiceKey) {
     amount: Number(row.querySelector('.rcpt-amount').value) || 0,
   })).filter(l => l.amount > 0);
   if (!lines.length) { resultEl.textContent = 'Enter at least one amount.'; return; }
+  const receiptDate = wrap.querySelector('.rcpt-date')?.value || todayISO();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(receiptDate)) { resultEl.textContent = 'Enter a valid receipt date.'; return; }
 
   resultEl.textContent = 'Posting…';
   const arAccount = await resolveARAccountForCustomer(customerKey);
@@ -1956,7 +2105,7 @@ async function submitReceiptLines(invoiceKey) {
   for (const l of lines) {
     try {
       const payload = { value: {
-        date: todayISO() + 'T00:00:00',
+        date: receiptDate + 'T00:00:00',
         reference: invRef(invRec) + '-R' + (posted + 1),
         paidBy: 1,
         customer: customerKey,
@@ -2799,15 +2948,9 @@ async function printDayRegisterReport() {
   const allJournalEntriesForDue = state.allJournalEntries || allJournalEntries;
   const allPaymentsForDue = state.allPayments || allPayments;
 
-  const receivedTotal = salesInvoices.reduce((s, r) => s + receiptTotalForInvoice(r.key, allReceipts), 0);
-  const salesTotal    = salesInvoices.reduce((s, r) => s + invTotal(r), 0);
-  const returnsTotal  = creditNotes.reduce((s, r) => s + cnTotal(r), 0);
-  const todaysCashRefunds = (allPayments || []).filter(p => payDate(p) === dateStr).reduce((s, p) => {
-    const acct = (state.paymentAccounts || []).find(a => a.key === payPaidFrom(p));
-    if (!acct?.item?.isCashAccount) return s;
-    return s + payLines(p).reduce((ss, l) => ss + (Number(l.amount) || 0), 0);
-  }, 0);
-  const netCashMovement = receivedTotal - todaysCashRefunds;
+  // Identical calculation to the on-screen register (single source of truth).
+  const { salesTotal, returnsTotal, cashCollected, bankReceipts, cashRefunds, netCashMovement } =
+    computeDaySummary(dateStr, { salesInvoices, creditNotes, allReceipts, allPayments });
 
   const saleRows = salesInvoices.map(r => {
     const total = invTotal(r);
@@ -2825,6 +2968,17 @@ async function printDayRegisterReport() {
     <td>${escapeHtml(cnRef(r))}<div class="cust">${escapeHtml(customerNameByKey(cnCustomerKey(r)))} · vs ${escapeHtml(invRefByKey(cnSalesInvoice(r)))}</div></td>
     <td style="text-align:right">${fmt(cnTotal(r))}</td>
   </tr>`).join('');
+
+  const dayReceipts = dayReceiptsList(dateStr, allReceipts);
+  const dayPayments = dayPaymentsList(dateStr, allPayments);
+  const txnRow = x => `<tr>
+    <td>${escapeHtml(x.reference)}<div class="cust">${escapeHtml(x.customer)} · ${escapeHtml(x.account)} (${x.isCash ? 'cash' : 'bank'})</div></td>
+    <td style="text-align:right">${fmt(x.amount)}</td>
+  </tr>`;
+  const receiptRows = dayReceipts.map(txnRow).join('');
+  const paymentRows = dayPayments.map(txnRow).join('');
+  const receiptsSum = dayReceipts.reduce((s, x) => s + x.amount, 0);
+  const paymentsSum = dayPayments.reduce((s, x) => s + x.amount, 0);
 
   const bizName = bd?.name || 'Business';
   const bizAddr = bd?.address || '';
@@ -2853,14 +3007,25 @@ async function printDayRegisterReport() {
     <div class="row"><span>Date</span><span>${escapeHtml(dateStr)}</span></div>
     <div class="hr"></div>
     <div class="row"><span>Sales Invoiced (${salesInvoices.length})</span><span>${fmt(salesTotal)}</span></div>
-    <div class="row"><span>Received</span><span>${fmt(receivedTotal)}</span></div>
-    ${todaysCashRefunds > 0.005 ? `<div class="row"><span>Cash Refunds Paid Out</span><span>−${fmt(todaysCashRefunds)}</span></div>` : ''}
+    <div class="row"><span>Cash Collected (today)</span><span>${fmt(cashCollected)}</span></div>
+    ${bankReceipts > 0.005 ? `<div class="row"><span>Bank Receipts today (not cash)</span><span>${fmt(bankReceipts)}</span></div>` : ''}
+    ${cashRefunds > 0.005 ? `<div class="row"><span>Cash Refunds Paid Out</span><span>−${fmt(cashRefunds)}</span></div>` : ''}
     <div class="row"><span>Returns (${creditNotes.length})</span><span>${fmt(returnsTotal)}</span></div>
     <div class="row grand"><span>Net Cash Movement</span><span>${fmt(netCashMovement)}</span></div>
     <div class="hr"></div>
     <h2>Sales Invoices</h2>
     <table><thead><tr><th>Ref / Customer</th><th style="text-align:right">Total</th><th style="text-align:right">Rcvd</th><th style="text-align:right">Due</th></tr></thead>
     <tbody>${saleRows || '<tr><td colspan="4">None</td></tr>'}</tbody></table>
+    <div class="hr"></div>
+    <h2>Receipts Posted (${dayReceipts.length})</h2>
+    <table><thead><tr><th>Ref / Customer / Account</th><th style="text-align:right">Amount</th></tr></thead>
+    <tbody>${receiptRows || '<tr><td colspan="2">None</td></tr>'}
+    ${dayReceipts.length ? `<tr><td style="text-align:right;font-weight:700">Total</td><td style="text-align:right;font-weight:700">${fmt(receiptsSum)}</td></tr>` : ''}</tbody></table>
+    <div class="hr"></div>
+    <h2>Payments / Refunds Posted (${dayPayments.length})</h2>
+    <table><thead><tr><th>Ref / Customer / Account</th><th style="text-align:right">Amount</th></tr></thead>
+    <tbody>${paymentRows || '<tr><td colspan="2">None</td></tr>'}
+    ${dayPayments.length ? `<tr><td style="text-align:right;font-weight:700">Total</td><td style="text-align:right;font-weight:700">${fmt(paymentsSum)}</td></tr>` : ''}</tbody></table>
     <div class="hr"></div>
     <h2>Returns (Credit Notes)</h2>
     <table><thead><tr><th>Ref / Customer / Invoice</th><th style="text-align:right">Amount</th></tr></thead>
@@ -3231,11 +3396,14 @@ function updateRecordPaymentButton() {
 // clearing entry in a Suspense-type account instead of Accounts
 // Receivable), even though accountsReceivableCustomer/
 // accountsReceivableSalesInvoice were correctly populated.
-// Hardcoded fallback: this business's generic Accounts Receivable account
-// UUID, confirmed directly by the user. Used only if the dynamic lookups
-// (customer override → existing receipts → balance-sheet/control accounts)
-// all come back empty.
-const ACCT_ACCOUNTS_RECEIVABLE = 'd1489e95-bb28-4f5d-b42e-67d3291b3893';
+//
+// There is deliberately NO hardcoded Accounts Receivable UUID fallback.
+// If the dynamic lookups (customer override → existing receipts →
+// balance-sheet/control accounts) all come back empty, the resolver
+// returns null and the calling transaction is aborted with an error
+// rather than silently posting to a fixed account that may be wrong for
+// this business. A wrong AR account produces bad ledger data that is
+// worse than a clear failure the operator can act on.
 
 // The AR account is exposed via the balance-sheet-account-batch and
 // control-account-batch endpoints (isAccountsReceivable flag) — NOT
@@ -3255,10 +3423,14 @@ async function getDefaultARAccount() {
     const toItems = (data) => Array.isArray(data?.items) ? data.items : (Array.isArray(data) ? data : []);
     const all = [...toItems(bsData), ...toItems(caData)];
     const arAccount = all.find(a => a.item?.isAccountsReceivable === true);
-    cachedDefaultARAccount = arAccount ? arAccount.key : ACCT_ACCOUNTS_RECEIVABLE;
+    // No hardcoded fallback: if the ledger exposes no AR account, resolve
+    // to null so the caller can stop and surface an error.
+    cachedDefaultARAccount = arAccount ? arAccount.key : null;
   } catch (err) {
-    debugLog('fail', 'Could not fetch balance-sheet/control accounts for AR lookup, using hardcoded fallback: ' + err.message);
-    cachedDefaultARAccount = ACCT_ACCOUNTS_RECEIVABLE;
+    // Transient error: leave the cache unset (undefined) so the next
+    // attempt can retry rather than being stuck on a null result.
+    debugLog('fail', 'Could not fetch balance-sheet/control accounts for AR lookup: ' + err.message);
+    return null;
   }
   return cachedDefaultARAccount;
 }
@@ -3333,6 +3505,10 @@ function renderCheckoutPaymentPanel() {
   panel.innerHTML = `
     <div style="border:1px solid var(--border);border-radius:var(--radius);padding:10px;background:var(--bg)">
       <div style="font:600 11px 'IBM Plex Sans';margin-bottom:8px">Record Payment — Due: ${fmt(remaining)}</div>
+      <div class="form-field" style="margin-bottom:8px;max-width:180px">
+        <label style="font-size:10px">Receipt Date</label>
+        <input type="date" id="checkout-payment-date" value="${sale.issueDate || todayISO()}">
+      </div>
       <div style="overflow-x:auto">
         <table style="width:100%;border-collapse:collapse;font-size:11px">
           <thead>
@@ -3375,7 +3551,7 @@ function addCheckoutPaymentLine(prefillAccountKey, prefillAmount) {
   }
   const accounts = state.paymentAccounts || [];
   const options = accounts.map(a =>
-    `<option value="${a.key}" data-cash="${!!a.item?.isCashAccount}" ${a.key === prefillAccountKey ? 'selected' : ''}>${escapeHtml(a.item?.name || 'Account')}</option>`
+    `<option value="${a.key}" data-cash="${isCashAccountItem(a.item)}" ${a.key === prefillAccountKey ? 'selected' : ''}>${escapeHtml(a.item?.name || 'Account')}</option>`
   ).join('');
   const tr = document.createElement('tr');
   tr.innerHTML = `
@@ -3494,6 +3670,8 @@ async function submitCheckoutPayments() {
   if (!rows.length) { resultEl.textContent = 'Enter at least one payment amount.'; return; }
   const totalEntered = rows.reduce((s, r) => s + r.amount, 0);
   if (totalEntered > remaining + 0.01) { resultEl.textContent = `Total entered (${fmt(totalEntered)}) exceeds what's due (${fmt(remaining)}).`; return; }
+  const receiptDate = document.getElementById('checkout-payment-date')?.value || sale.issueDate || todayISO();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(receiptDate)) { resultEl.textContent = 'Enter a valid receipt date.'; return; }
 
   resultEl.textContent = 'Posting…';
   const arAccount = await resolveARAccountForCustomer(sale.customerKey);
@@ -3507,7 +3685,7 @@ async function submitCheckoutPayments() {
     const l = rows[i];
     try {
       const payload = { value: {
-        date: (sale.issueDate || todayISO()) + 'T00:00:00',
+        date: receiptDate + 'T00:00:00',
         reference: rows.length > 1 ? `${sale.reference}-P${i + 1}` : sale.reference,
         paidBy: 1, // Customer
         customer: sale.customerKey,
