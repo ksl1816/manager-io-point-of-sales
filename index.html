@@ -7,6 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Roboto+Mono:wght@400;500;600;700&family=Noto+Nastaliq+Urdu:wght@400;600;700&family=Noto+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
+<!-- jsPDF: used only to generate a real PDF file for the receipt "Save as PDF"
+     button (client-side, no server involved — see downloadReceiptPDF()). -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 /* ─────────── DESIGN TOKENS ─────────── */
 :root{
@@ -913,7 +916,7 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
     <div id="record-payment-note" style="font:500 10.5px/1.5 'IBM Plex Sans';color:var(--text-mute);margin:8px 2px 0;display:none"></div>
     <div class="modal-actions">
       <button class="btn btn-print" onclick="printReceipt()">🖨 Print</button>
-      <button class="btn btn-secondary" onclick="downloadReceiptPDF()" title="Downloads a print-ready HTML file — use your browser's Print dialog to Save as PDF">📄 Save as PDF</button>
+      <button class="btn btn-secondary" onclick="downloadReceiptPDF()" title="Downloads this receipt as a real PDF file">📄 Save as PDF</button>
       <button class="btn btn-secondary" id="apply-credit-btn" onclick="openApplyCreditToSaleModal()">💳 Apply Credit</button>
       <button class="btn btn-secondary" id="record-payment-btn" onclick="recordManagerReceipt()">💰 Record Payment</button>
       <button class="btn btn-secondary" onclick="closeReceiptModal()">Close</button>
@@ -3417,21 +3420,90 @@ function printReceipt() {
 }
 
 function downloadReceiptPDF() {
-  const receipt = document.getElementById('thermal-receipt');
-  if (!receipt) return;
   const sale = state.lastSubmittedSale;
-  const ref = sale ? sale.reference : 'receipt';
-  const html = `<!doctype html><html><head><meta charset="utf-8">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>@page{size:80mm auto;margin:0}*{box-sizing:border-box;margin:0;padding:0}body{background:#fff;font-family:'Roboto Mono',monospace}</style>
-  </head><body>${receipt.outerHTML}</body></html>`;
-  const blob = new Blob([html], { type: 'text/html' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = ref.replace(/[^\w.-]+/g, '_') + '.html';
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-  toast('Receipt downloaded as HTML — open in browser and "Save as PDF"', 'info');
+  if (!sale) { toast('No receipt to export.', 'error'); return; }
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    toast('PDF library failed to load — check your connection and try again.', 'error');
+    return;
+  }
+  const { jsPDF } = window.jspdf;
+
+  const pageWidthMM = 80;
+  const marginMM = 4;
+  const contentWidthMM = pageWidthMM - marginMM * 2;
+  const addrLineCount = state.businessDetails?.address
+    ? Math.ceil(state.businessDetails.address.length / 34) : 0;
+  const estimatedHeightMM = 58 + addrLineCount * 3.2 + (sale.custPhone ? 4 : 0)
+    + sale.lines.length * 5 + (sale.appliedCredit > 0 ? 9 : 0);
+
+  const doc = new jsPDF({ unit: 'mm', format: [pageWidthMM, estimatedHeightMM] });
+  let y = marginMM + 2;
+
+  const setF = (size, bold) => { doc.setFont('courier', bold ? 'bold' : 'normal'); doc.setFontSize(size); };
+  const row = (l, r, size = 8, bold = false) => {
+    setF(size, bold);
+    doc.text(l, marginMM, y);
+    doc.text(r, pageWidthMM - marginMM, y, { align: 'right' });
+  };
+  const hr = (dashed) => {
+    doc.setLineDashPattern(dashed ? [0.6, 0.6] : [], 0);
+    doc.line(marginMM, y, pageWidthMM - marginMM, y);
+    doc.setLineDashPattern([], 0);
+  };
+
+  setF(11, true);
+  doc.text(state.businessDetails?.name || 'SALES RECEIPT', pageWidthMM / 2, y, { align: 'center' });
+  y += 4;
+  if (state.businessDetails?.address) {
+    setF(7, false);
+    const addrLines = doc.splitTextToSize(state.businessDetails.address, contentWidthMM);
+    addrLines.forEach(l => { doc.text(l, pageWidthMM / 2, y, { align: 'center' }); y += 3.2; });
+  }
+  y += 1; hr(false); y += 4;
+
+  row('Ref#', sale.reference, 8, true); y += 4;
+  row('Date', sale.issueDate || todayISO(), 8); y += 4;
+  row('Customer', sale.customerName, 8); y += 4;
+  if (sale.custPhone) { row('Phone', sale.custPhone, 8); y += 4; }
+  hr(true); y += 4;
+
+  setF(7, true);
+  doc.text('QTY', marginMM, y);
+  doc.text('ITEM', marginMM + 10, y);
+  doc.text('RATE', pageWidthMM - marginMM - 14, y, { align: 'right' });
+  doc.text('AMT', pageWidthMM - marginMM, y, { align: 'right' });
+  y += 1; hr(false); y += 4;
+
+  for (const l of sale.lines) {
+    setF(8, false);
+    doc.text(String(l.qty), marginMM, y);
+    const nameLines = doc.splitTextToSize(l.name, contentWidthMM - 30);
+    doc.text(nameLines[0] || '', marginMM + 10, y);
+    doc.text(fmt(l.price), pageWidthMM - marginMM - 14, y, { align: 'right' });
+    doc.text(fmt(l.total), pageWidthMM - marginMM, y, { align: 'right' });
+    y += 4.5;
+    for (let i = 1; i < nameLines.length; i++) { doc.text(nameLines[i], marginMM + 10, y); y += 4; }
+  }
+
+  y += 1; hr(false); y += 4;
+  row('Total Qty:', String(sale.totalQty), 8, true); y += 4.5;
+  row('TOTAL:', fmt(sale.total), 11, true); y += 5;
+
+  if (sale.appliedCredit > 0) {
+    row('Credit Applied:', '-' + fmt(sale.appliedCredit), 8); y += 4;
+    hr(true); y += 4;
+    row('BALANCE DUE:', fmt(Math.max(0, sale.total - sale.appliedCredit)), 9, true); y += 5;
+  }
+
+  y += 1; hr(true); y += 4;
+  setF(6.5, false);
+  doc.text('Please report any shortage within 3 days', pageWidthMM / 2, y, { align: 'center' }); y += 3;
+  doc.text('Bill required for any exchange', pageWidthMM / 2, y, { align: 'center' }); y += 4;
+  doc.text('- Thank you for your business -', pageWidthMM / 2, y, { align: 'center' });
+
+  const filename = (sale.reference || 'receipt').replace(/[^\w.-]+/g, '_') + '.pdf';
+  doc.save(filename);
+  toast('✓ Receipt saved as PDF', 'success');
 }
 
 /* ══════════════════════════════════════════════════════
