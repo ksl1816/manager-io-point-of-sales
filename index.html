@@ -1692,7 +1692,7 @@ async function loadDayRegisterData(dateStr, force) {
     getBatchEndpoint('/api4/credit-note-batch', () => {}).catch(() => []),
     getBatchEndpoint('/api4/receipt-batch', () => {}).catch(() => []),
     getBatchEndpoint('/api4/journal-entry-batch', () => {}).catch(() => []),
-    getBatchEndpoint('/api4/payment-batch', () => {}).catch(() => []),
+    getBatchEndpoint('/api4/payment-batch', () => {}).catch(e => { debugLog('fail', 'payment-batch fetch failed: ' + e.message); return []; }),
   ]);
   if (force || !state.allCreditNotes) state.allCreditNotes = creditRaw; // keep the Return-modal cache in sync
   if (force || !state.allJournalEntries) state.allJournalEntries = journalRaw; // keep the Adjust-modal cache in sync
@@ -2112,7 +2112,7 @@ async function loadJournalEntries(force) {
 state.allPayments = null;
 async function loadPayments(force) {
   if (state.allPayments && !force) return state.allPayments;
-  state.allPayments = await getBatchEndpoint('/api4/payment-batch', () => {}).catch(() => []);
+  state.allPayments = await getBatchEndpoint('/api4/payment-batch', () => {}).catch(e => { debugLog('fail', 'payment-batch fetch failed: ' + e.message); return []; });
   return state.allPayments;
 }
 
@@ -2400,7 +2400,7 @@ async function loadHistoryData(force) {
     getBatchEndpoint('/api4/receipt-batch', () => {}).catch(() => []),
     getBatchEndpoint('/api4/credit-note-batch', () => {}).catch(() => []),
     getBatchEndpoint('/api4/journal-entry-batch', () => {}).catch(() => []),
-    getBatchEndpoint('/api4/payment-batch', () => {}).catch(() => []),
+    getBatchEndpoint('/api4/payment-batch', () => {}).catch(e => { debugLog('fail', 'payment-batch fetch failed: ' + e.message); return []; }),
   ]);
   state.historyData = { salesInvoices: salesRaw, allReceipts: receiptRaw, creditNotes: creditRaw, journalEntries: journalRaw, payments: paymentRaw };
   if (force || !state.allCreditNotes) state.allCreditNotes = creditRaw; // shared cache used by the Return modal
