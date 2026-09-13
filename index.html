@@ -1582,13 +1582,35 @@ async function getBusinessDetails(force) {
 
 // Always re-fetches business-details right before writing, so a save from
 // this session can't silently clobber a field someone else just wrote.
+// PUT /api4/business-details returns a bare boolean (true/false), not the
+// updated record — previously this was never checked, so a rejected write
+// still showed "✓ Saved" and updated local state as if it had worked,
+// only for the value to be missing again on the next real reload. Now it
+// throws on a falsy/failed response, and verifies by reading the value
+// straight back from a fresh GET rather than trusting the local copy.
 async function saveBusinessCustomDecimal(fieldName, amount) {
   const bd = await getBusinessDetails(true);
   bd.customFields2 = bd.customFields2 || {};
   bd.customFields2.decimals = bd.customFields2.decimals || {};
-  bd.customFields2.decimals[fieldName] = Number(amount) || 0;
-  await apiCall('PUT', '/api4/business-details', { value: bd });
-  state.businessDetails = bd;
+  const valueToSave = Number(amount) || 0;
+  bd.customFields2.decimals[fieldName] = valueToSave;
+
+  debugLog('info', `Saving Business Details field "${fieldName}" = ${valueToSave}`);
+  const result = await apiCall('PUT', '/api4/business-details', { value: bd });
+  if (result === false) {
+    debugLog('fail', `PUT /api4/business-details returned false for field "${fieldName}" — write rejected by Manager.`);
+    throw new Error('Manager rejected the write to Business Details (returned false). The value was NOT saved.');
+  }
+
+  // Don't trust the local copy — re-fetch and confirm the field actually
+  // stuck before telling the caller it's safe to proceed.
+  const verifyBd = await getBusinessDetails(true);
+  const savedValue = verifyBd?.customFields2?.decimals?.[fieldName];
+  if (Number(savedValue) !== valueToSave) {
+    debugLog('fail', `Verification failed for "${fieldName}": expected ${valueToSave}, Manager has ${savedValue}.`);
+    throw new Error('Saved, but the value read back from Manager doesn\'t match what was sent — please check Business Details directly.');
+  }
+  debugLog('ok', `Confirmed "${fieldName}" = ${savedValue} in Business Details.`);
 }
 
 function getRegisterDecimal(dateStr, prefix) {
@@ -1949,19 +1971,35 @@ async function submitReceiptLines(invoiceKey) {
 async function submitOpeningCash(dateStr) {
   const input = document.getElementById('reg-opening-input');
   const amount = Number(input?.value) || 0;
-  await saveBusinessCustomDecimal(REG_OPEN_PREFIX + dateStr, amount);
-  toast('✓ Opening cash saved to Business Details', 'success');
-  updateRegisterBadge();
-  renderRegisterModalBody();
+  const btn = input?.nextElementSibling;
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+  try {
+    await saveBusinessCustomDecimal(REG_OPEN_PREFIX + dateStr, amount);
+    toast('✓ Opening cash saved to Business Details', 'success');
+    updateRegisterBadge();
+    renderRegisterModalBody();
+  } catch (e) {
+    debugLog('fail', 'Opening cash save failed: ' + e.message);
+    toast('✗ Opening cash was NOT saved: ' + e.message, 'error');
+    if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
+  }
 }
 async function submitClosingCash(dateStr) {
   const input = document.getElementById('reg-closing-input');
   const amount = Number(input?.value) || 0;
   if (!confirm('Close the register for ' + dateStr + '? This is saved to Business Details and will be used as the suggested opening float tomorrow.')) return;
-  await saveBusinessCustomDecimal(REG_CLOSE_PREFIX + dateStr, amount);
-  toast('✓ Closing cash saved to Business Details', 'success');
-  updateRegisterBadge();
-  renderRegisterModalBody();
+  const btn = input?.nextElementSibling;
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+  try {
+    await saveBusinessCustomDecimal(REG_CLOSE_PREFIX + dateStr, amount);
+    toast('✓ Closing cash saved to Business Details', 'success');
+    updateRegisterBadge();
+    renderRegisterModalBody();
+  } catch (e) {
+    debugLog('fail', 'Closing cash save failed: ' + e.message);
+    toast('✗ Closing cash was NOT saved: ' + e.message, 'error');
+    if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
+  }
 }
 
 /* ══════════════════════════════════════════════════════
