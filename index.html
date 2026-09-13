@@ -913,7 +913,7 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
     <div id="record-payment-note" style="font:500 10.5px/1.5 'IBM Plex Sans';color:var(--text-mute);margin:8px 2px 0;display:none"></div>
     <div class="modal-actions">
       <button class="btn btn-print" onclick="printReceipt()">🖨 Print</button>
-      <button class="btn btn-secondary" onclick="downloadReceiptPDF()">📄 PDF</button>
+      <button class="btn btn-secondary" onclick="downloadReceiptPDF()" title="Downloads a print-ready HTML file — use your browser's Print dialog to Save as PDF">📄 Save as PDF</button>
       <button class="btn btn-secondary" id="apply-credit-btn" onclick="openApplyCreditToSaleModal()">💳 Apply Credit</button>
       <button class="btn btn-secondary" id="record-payment-btn" onclick="recordManagerReceipt()">💰 Record Payment</button>
       <button class="btn btn-secondary" onclick="closeReceiptModal()">Close</button>
@@ -1554,7 +1554,7 @@ const REG_CLOSE_PREFIX = 'POS Register Closing ';
 
 state.businessDetails   = null;
 state.dayRegisterDate   = todayISO();
-state.dayRegisterData   = null; // { date, salesInvoices, purchaseInvoices, allReceipts }
+state.dayRegisterData   = null; // { date, salesInvoices, creditNotes, allReceipts, allJournalEntries }
 
 async function getBusinessDetails(force) {
   if (state.businessDetails && !force) return state.businessDetails;
@@ -1606,13 +1606,6 @@ function invCustomerKey(r){ return r?.item?.customer || r?.customer || ''; }
 function invLines(r)      { return r?.item?.lines || r?.lines || []; }
 function invTotal(r) {
   return invLines(r).reduce((s, l) => s + (Number(l.qty) || 0) * (Number(l.salesUnitPrice ?? l.unitPrice) || 0), 0);
-}
-function purRef(r)         { return r?.item?.reference || r?.reference || r?.key || ''; }
-function purDate(r)        { return (r?.item?.issueDate || r?.issueDate || '').slice(0, 10); }
-function purSupplierKey(r) { return r?.item?.supplier || r?.supplier || ''; }
-function purLines(r)       { return r?.item?.lines || r?.lines || []; }
-function purTotal(r) {
-  return purLines(r).reduce((s, l) => s + (Number(l.qty) || 0) * (Number(l.unitPrice ?? l.purchaseUnitPrice) || 0), 0);
 }
 function customerNameByKey(key) {
   const c = state.customers.find(x => x.key === key);
@@ -1925,13 +1918,15 @@ async function submitClosingCash(dateStr) {
 }
 
 /* ══════════════════════════════════════════════════════
-   REAL EDIT — Sales Invoice & Purchase Invoice
-   Uses the documented PUT /api4/sales-invoice and (by the same
-   Manager line-item conventions) PUT /api4/purchase-invoice.
-   Both fetch the live record fresh (so we edit current data, not a
-   stale cache), patch just reference/issueDate/lines, and PUT the
-   whole record back with its key — Manager requires the full object,
-   not a partial patch.
+   REAL EDIT — Sales Invoice
+   Uses the documented PUT /api4/sales-invoice. Fetches the live
+   record fresh (so we edit current data, not a stale cache), patches
+   just reference/issueDate/lines, and PUTs the whole record back with
+   its key — Manager requires the full object, not a partial patch.
+   (Purchase Invoice editing was removed — it was never wired to any
+   button in the UI, and its write schema was never independently
+   confirmed against Manager's API. Purchase invoices are still read
+   for stock-quantity calculations only.)
 ══════════════════════════════════════════════════════ */
 async function fetchSalesInvoiceFresh(key) {
   try {
@@ -1941,15 +1936,6 @@ async function fetchSalesInvoiceFresh(key) {
   } catch (e) { debugLog('fail', 'Direct invoice lookup failed, using cached copy: ' + e.message); }
   return (state.dayRegisterData?.salesInvoices || []).find(x => x.key === key)
       || (state.historyData?.salesInvoices || []).find(x => x.key === key) || null;
-}
-async function fetchPurchaseInvoiceFresh(key) {
-  try {
-    const data = await apiCall('GET', '/api4/purchase-invoice-batch?Keys=' + encodeURIComponent(key));
-    const list = Array.isArray(data?.items) ? data.items : (Array.isArray(data) ? data : []);
-    if (list[0]) return list[0];
-  } catch (e) { debugLog('fail', 'Direct invoice lookup failed, using cached copy: ' + e.message); }
-  return (state.dayRegisterData?.purchaseInvoices || []).find(x => x.key === key)
-      || (state.historyData?.purchaseInvoices || []).find(x => x.key === key) || null;
 }
 
 function openGenericModal(title, bodyHtml, actionsHtml) {
@@ -2021,7 +2007,11 @@ async function submitEditSalesInvoice(key) {
   const rows = [...document.querySelectorAll('#edit-si-lines tbody tr')];
   const origLines = invLines(rec);
   val.lines = rows.map((row, i) => {
-    const orig = origLines[i] || {};
+    // Use the ORIGINAL line index stored in data-idx, not this row's current
+    // position — removing an earlier row shifts every later row up, so the
+    // display position no longer matches the line it actually came from.
+    const origIdx = Number(row.dataset.idx);
+    const orig = origLines[origIdx] || {};
     return {
       ...orig,
       lineNumber: i + 1,
@@ -2032,68 +2022,6 @@ async function submitEditSalesInvoice(key) {
   try {
     await apiCall('PUT', '/api4/sales-invoice', { key, value: val });
     toast('✓ Sales Invoice updated', 'success');
-    closeGenericModal();
-    if (state.dayRegisterData) state.dayRegisterData = null;
-    if (state.historyData) state.historyData = null;
-    if (document.getElementById('register-modal')?.classList.contains('open')) renderRegisterModalBody();
-    if (document.getElementById('history-modal')?.classList.contains('open')) renderHistoryModalBody();
-  } catch (e) {
-    debugLog('fail', e.message);
-    toast('Could not save: ' + e.message, 'error');
-  }
-}
-
-async function editPurchaseInvoice(key) {
-  const rec = await fetchPurchaseInvoiceFresh(key);
-  if (!rec) { toast('Could not load this Purchase Invoice.', 'error'); return; }
-  const lines = purLines(rec);
-  const rowsHtml = lines.map((l, i) => `
-    <tr data-idx="${i}">
-      <td>${escapeHtml(itemNameByKey(l.item))}</td>
-      <td><input type="number" class="edit-qty" step="any" min="0" value="${Number(l.qty) || 0}" style="width:80px"></td>
-      <td><input type="number" class="edit-price" step="any" min="0" value="${Number(l.unitPrice ?? l.purchaseUnitPrice) || 0}" style="width:100px"></td>
-      <td style="text-align:right"><button class="icon-btn" onclick="this.closest('tr').remove()">✕</button></td>
-    </tr>`).join('');
-  const body = `
-    <div class="form-row">
-      <div class="form-field"><label>Reference</label><input type="text" id="edit-pi-reference" value="${escapeHtml(purRef(rec))}"></div>
-      <div class="form-field"><label>Issue Date</label><input type="date" id="edit-pi-date" value="${escapeHtml(purDate(rec))}"></div>
-    </div>
-    <div class="table-scroll" style="margin-top:10px">
-      <table class="reg-table" id="edit-pi-lines">
-        <thead><tr><th>Item</th><th>Qty</th><th>Unit Price</th><th></th></tr></thead>
-        <tbody>${rowsHtml}</tbody>
-      </table>
-    </div>
-    <div style="font:500 10px 'IBM Plex Sans';color:var(--text-mute);margin-top:6px">Purchase Invoice edits use the same line shape as Sales Invoices — if your Manager version rejects this, the purchase-side field names may differ slightly from what's assumed here.</div>
-  `;
-  const actions = `
-    <button class="btn btn-secondary" onclick="closeGenericModal()">Cancel</button>
-    <button class="btn btn-primary" onclick="submitEditPurchaseInvoice('${key}')">Save Changes</button>
-  `;
-  openGenericModal('✎ Edit Purchase Invoice — ' + purRef(rec), body, actions);
-}
-
-async function submitEditPurchaseInvoice(key) {
-  const rec = await fetchPurchaseInvoiceFresh(key);
-  if (!rec) { toast('Invoice not found.', 'error'); return; }
-  const val = { ...(rec.item || rec) };
-  val.reference = document.getElementById('edit-pi-reference').value.trim() || val.reference;
-  val.issueDate = document.getElementById('edit-pi-date').value + 'T00:00:00';
-  const rows = [...document.querySelectorAll('#edit-pi-lines tbody tr')];
-  const origLines = purLines(rec);
-  val.lines = rows.map((row, i) => {
-    const orig = origLines[i] || {};
-    return {
-      ...orig,
-      lineNumber: i + 1,
-      qty: Number(row.querySelector('.edit-qty').value) || 0,
-      unitPrice: Number(row.querySelector('.edit-price').value) || 0,
-    };
-  });
-  try {
-    await apiCall('PUT', '/api4/purchase-invoice', { key, value: val });
-    toast('✓ Purchase Invoice updated', 'success');
     closeGenericModal();
     if (state.dayRegisterData) state.dayRegisterData = null;
     if (state.historyData) state.historyData = null;
@@ -2418,19 +2346,18 @@ async function submitAdjustCredit(sourceInvoiceKey, customerKey, creditAmount) {
 }
 
 
-state.historyData = null; // { salesInvoices, purchaseInvoices, allReceipts }
+state.historyData = null; // { salesInvoices, allReceipts, creditNotes, journalEntries }
 state.historyFilters = { from: '', to: '', text: '' };
 
 async function loadHistoryData(force) {
   if (state.historyData && !force) return state.historyData;
-  const [salesRaw, purchaseRaw, receiptRaw, creditRaw, journalRaw] = await Promise.all([
+  const [salesRaw, receiptRaw, creditRaw, journalRaw] = await Promise.all([
     getBatchEndpoint('/api4/sales-invoice-batch', () => {}).catch(() => []),
-    getBatchEndpoint('/api4/purchase-invoice-batch', () => {}).catch(() => []),
     getBatchEndpoint('/api4/receipt-batch', () => {}).catch(() => []),
     getBatchEndpoint('/api4/credit-note-batch', () => {}).catch(() => []),
     getBatchEndpoint('/api4/journal-entry-batch', () => {}).catch(() => []),
   ]);
-  state.historyData = { salesInvoices: salesRaw, purchaseInvoices: purchaseRaw, allReceipts: receiptRaw, creditNotes: creditRaw, journalEntries: journalRaw };
+  state.historyData = { salesInvoices: salesRaw, allReceipts: receiptRaw, creditNotes: creditRaw, journalEntries: journalRaw };
   if (force || !state.allCreditNotes) state.allCreditNotes = creditRaw; // shared cache used by the Return modal
   if (force || !state.allJournalEntries) state.allJournalEntries = journalRaw; // shared cache used by the Adjust modal
   return state.historyData;
