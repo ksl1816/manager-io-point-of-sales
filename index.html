@@ -1653,15 +1653,13 @@ function adjustmentTotalForInvoice(invoiceKey, journalEntries) {
   }
   return total;
 }
-// Single place that computes an invoice's true balance, netting Receipts,
-// Returns (Credit Notes), AND manual Journal Entry adjustments — anywhere
-// "Due"/"Credit" is shown should go through this so all three stay in sync.
 // A Payment (refund) posted against this invoice's AR line cancels out
 // part of a credit balance, the same direction as a debit Journal Entry —
-// it must be ADDED to the balance (moving it back toward/above zero),
-// not treated like a Receipt. Without this, refunding a customer's credit
-// via "Refund to Customer" would post correctly in Manager but the
-// extension would keep showing the same stale Credit amount forever.
+// it must be ADDED to the balance (moving it back toward/above zero).
+// Confirmed: GET /api4/payment-batch is a real, paginated batch endpoint
+// (Skip/PageSize/Keys, same shape as every other -batch endpoint here) —
+// an earlier assumption that it didn't exist was wrong; reverted back to
+// reading it directly instead of the invoice-custom-field workaround.
 function payLines(p) { return p?.item?.lines || p?.lines || []; }
 function payDate(p) { return (p?.item?.date || p?.date || '').slice(0, 10); }
 function payPaidFrom(p) { return p?.item?.paidFrom || p?.paidFrom || ''; }
@@ -1675,6 +1673,10 @@ function paymentTotalForInvoice(invoiceKey, payments) {
   return total;
 }
 
+// Single place that computes an invoice's true balance, netting Receipts,
+// Returns (Credit Notes), Journal Entry adjustments, and Payments (refunds)
+// — anywhere "Due"/"Credit" is shown should go through this so all four
+// stay in sync.
 function invoiceBalance(invoiceKey, total, allReceipts, creditNotes, journalEntries, payments) {
   const rcv = receiptTotalForInvoice(invoiceKey, allReceipts);
   const ret = returnTotalForInvoice(invoiceKey, creditNotes);
@@ -1755,8 +1757,7 @@ async function renderRegisterModalBody() {
   const allPaymentsForDue = state.allPayments || allPayments;
 
   // Refunds paid out of a CASH account today actually leave the drawer, so
-  // they must reduce Expected Cash the same way a Receipt increases it —
-  // otherwise a refund paid in cash would silently vanish from this total.
+  // they must reduce Expected Cash the same way a Receipt increases it.
   const todaysCashRefunds = (allPayments || []).filter(p => payDate(p) === dateStr).reduce((s, p) => {
     const acct = (state.paymentAccounts || []).find(a => a.key === payPaidFrom(p));
     if (!acct?.item?.isCashAccount) return s;
@@ -2109,12 +2110,7 @@ async function loadJournalEntries(force) {
   return state.allJournalEntries;
 }
 
-state.allPayments = null;
-async function loadPayments(force) {
-  if (state.allPayments && !force) return state.allPayments;
-  state.allPayments = await getBatchEndpoint('/api4/payment-batch', () => {}).catch(e => { debugLog('fail', 'payment-batch fetch failed: ' + e.message); return []; });
-  return state.allPayments;
-}
+state.allPayments = null; // lazy-loaded/refreshed cache of payment-batch, used to net refunds into invoice balances
 
 // How much of a given invoice line's qty has already been credited back.
 function alreadyReturnedQty(invoiceKey, itemKey, creditNotes) {
@@ -2357,6 +2353,7 @@ async function submitAdjustCredit(sourceInvoiceKey, customerKey, creditAmount) {
         lines: [{ account: arAccount, accountsReceivableCustomer: customerKey, accountsReceivableSalesInvoice: sourceInvoiceKey, amount }]
       }};
       await apiCall('POST', '/api4/payment', payload);
+      state.allPayments = null; // force a fresh payment-batch fetch next load, so the refund shows up immediately
       resultEl.textContent = '✓ Refund posted: ' + reference;
       toast('✓ Refund recorded', 'success');
     } else {
