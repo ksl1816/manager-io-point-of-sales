@@ -62,6 +62,7 @@ Clicking Record Payment opens a small table:
 - Need to split the payment across more than one method (part cash, part card)? Click **+ Add Line** — the new line's Amount auto-fills with whatever's still left to allocate.
 - A running summary at the bottom shows **Entered / Remaining (or Fully Paid) / Change Due** across all lines combined.
 - Click **Post Payment(s)** — each line posts as its own real Receipt in Manager.
+- When cash is tendered, the receipt/bill shows **TENDERED PAYMENT** and **CHANGE** beneath the TOTAL (on screen, on the thermal print, and in the PDF). Because Manager has no built-in "change given" field, these figures are also written into each Receipt's **Description** (e.g. `POS <ref> · Applied 7360.00 · Tendered 7400.00 · Change 40.00`) so the cash-handling record is stored durably on the document itself.
 
 If the invoice was fully covered by Applied Credit already, Record Payment is disabled and shows "✓ Covered by Credit" instead.
 
@@ -136,16 +137,14 @@ You can change:
 
 Click **Save Changes** to write it back to Manager. Note: editing an already-paid invoice's total amount does **not** automatically adjust any Receipts already recorded against it — check those separately if you change a paid invoice's total.
 
-*Purchase Invoice editing is not available* — it was removed because it was never reliably wired up and its write behavior was never independently confirmed against Manager's API. Edit Purchase Invoices directly in Manager.
-
 ---
 
 ## 9. Things worth knowing before you rely on this in production
 
-- **Accounts Receivable resolution.** Every Receipt/Payment/Journal Entry needs the correct AR control account. The extension tries the customer's own configured account first, then falls back through a few automatic lookups, and only reaches a hardcoded fallback account if all of those come back empty. If your business has multiple AR accounts across customer groups, double-check the very first few transactions land in the right one.
+- **Accounts Receivable resolution.** Every Receipt/Payment/Journal Entry needs the correct AR control account. The extension tries the customer's own configured account first, then a few automatic lookups (an AR account already used on an existing receipt, then the Chart of Accounts' flagged AR account). There is **no hardcoded fallback** — if none of those resolve, the transaction is stopped with an error rather than posting to a guessed account. To resolve it, post one transaction manually in Manager.io first: open a Sales Invoice and use its **Copy to → New Receipt** button, which records the correct Accounts Receivable account. The extension then reuses that account for subsequent transactions.
 - **Return-quantity tracking** assumes Credit Notes created outside this extension also set the invoice reference field — if you post returns manually in Manager without linking them to the invoice, "already returned" quantities here may undercount for those.
 - **Credit/Due calculations** net four sources — Receipts, Credit Notes, Journal Entries, and refund Payments — all read live from Manager. Money that moved some other way (a manual entry that doesn't reference the invoice) won't show up in these figures.
 - **Stock quantities** shown are calculated from your transaction history (starting balances, purchases, sales, returns, write-offs) and may not always match Manager's own item balance in complex scenarios — treat it as a strong indicator, not a guaranteed audit-grade figure.
-- **PDF receipts with Urdu/Arabic names**: the correct script now renders (instead of garbled symbols), but each letter appears in isolated form rather than fully joined cursive Nastaliq — legible, not calligraphically perfect.
+- **PDF receipts with non-Latin names**: Urdu/Arabic (and other non-Latin) names may not render in the generated PDF — they can come out blank or as isolated, unjoined characters. Treat this as a known limitation and rely on the printed/thermal receipt for those names.
 
 Always verify sales, receipts, returns, and credit adjustments against your official Manager.io reports before relying on them for accounting or reconciliation. This is a free, independent, community-built tool — not affiliated with or endorsed by Manager.io.
