@@ -2,6 +2,8 @@
 
 This guide covers everyday use of the extension, in the order you'd actually touch things during a shift. It describes only what the extension actually does — nothing here is aspirational or simplified for effect.
 
+> 💡 This same guide is available inside the extension at any time — click the **User Guide** button in the header.
+
 ---
 
 ## 1. First-time setup
