@@ -1,4 +1,4 @@
-# POS Terminal for Manager.io — User Guide (v2.2)
+# POS Terminal for Manager.io — User Guide (v2.3)
 
 This guide covers everyday use of the extension, in the order you'd actually touch things during a shift. It describes only what the extension actually does — nothing here is aspirational or simplified for effect.
 
@@ -10,7 +10,7 @@ Do this once per business, not every session.
 
 1. Open the extension inside Manager.io.
 2. Click **⬇ Load Items & Customers** (top toolbar). This fetches every inventory item, non-inventory item, customer, and bank/cash account, and calculates current stock quantities from your transaction history. On a large business this can take a little while — the progress bar and status text show what stage it's at.
-3. Open **⚙ Setup** (top toolbar). If no customer with code `999` or named "POS" exists yet, click **Create Default "POS" Customer**. Every walk-in sale (no specific customer picked) posts against this customer, with the actual person's name/phone (if you type them in) saved in the invoice's description field — there are no custom fields to configure for this; it's automatic.
+3. Open **⚙ Setup** (top toolbar). If no customer with code `999` or named "POS" exists yet, click **Create Default "POS" Customer**. Every walk-in sale (no specific customer picked) posts against this customer, with the actual person's name/phone (if you type them in) saved in the invoice's description field — there are no custom fields to configure for this; it's automatic. The Setup screen also explains **how the POS tells cash accounts from bank accounts** (which drives the Day Register's cash total) — worth a read if you have more than one bank/cash account.
 4. Toggle 🌙/☀️ in the top bar if you want light mode instead of dark.
 
 You don't need to repeat step 2/3 again unless you're setting this up on a different business.
@@ -72,18 +72,21 @@ If the invoice was fully covered by Applied Credit already, Record Payment is di
 Click **🗄 Register**. This is a live, read-only-by-design view of a single day's activity — there is nothing to open, close, or manually enter here; every figure is computed from real Manager transactions the moment you open or refresh it.
 
 For the selected date, you'll see:
-- **Sales Invoiced**, **Cash/Receipts Collected**, **Returns/Credit Notes**, and (if any happened that day) **Cash Refunds Paid Out**
-- **Net Cash Movement** — Collected minus Refunded for the day; this is the actual cash-in-the-drawer change, not a manually-reconciled "expected vs actual" figure
+- **Sales Invoiced**, **Cash Collected**, **Returns/Credit Notes**, and (if any happened that day) **Bank Receipts** and **Cash Refunds Paid Out**
+- **Net Cash Movement** — Cash Collected minus Cash Refunds for the day; this is the actual cash-in-the-drawer change, not a manually-reconciled "expected vs actual" figure. Only money into and out of **cash** accounts counts here — bank receipts are deliberately excluded (they're shown separately so nothing looks like it vanished).
 - A card per Sales Invoice, each showing:
   - Reference, customer, and a **Paid / Due X / Credit X** status badge
   - **Items** — expand to see the line items sold
   - **Receipts (N)** — only appears if the invoice was paid in more than one transaction; expands to show each individual receipt with its account, date, and amount
-  - **Receipt** button (if still due) to record a payment against it directly, right there
+  - **Receipt** button (if still due) to record a payment against it directly, right there. You can set the **Receipt Date** on the form, so a payment can be dated to the day it was actually taken (including a later instalment against an older invoice).
   - **💳 Adjust** button (if it has a credit balance) to refund or reassign it
   - **↩ Return** to post a return against it
+- **Receipts Posted This Day** and **Payments / Refunds Posted This Day** — flat, itemized lists of every receipt and payment *dated to this day* (ref, customer, account with a cash/bank tag, and amount), each with a total. These are selected by the transaction's own date, so a receipt posted today against an older invoice appears here (and in the cash figure) even though that invoice has no card today.
 - A card per Return (Credit Note) for that date, showing which invoice and customer it was against
 
-Change the date with the picker at the top; click **↻ Refresh** to re-pull the latest data; click **🖨 Print Day Summary** for an 80mm thermal-formatted printable version of everything above.
+**How the register decides cash vs bank.** The cash figures only count your physical cash drawer, so the POS classifies each Manager account. Manager's account form has no "cash vs bank" switch, so the POS infers it from the account's features: an account with **"Can have pending transactions"** enabled or an **IBAN** is treated as Bank; an account with neither is treated as Cash (the drawer). Tip: in Manager, leave "Can have pending transactions" unticked on your cash-drawer account and ticked on real bank accounts to keep the drawer total accurate.
+
+Change the date with the picker at the top; click **↻ Refresh** to re-pull the latest data; click **🖨 Print Day Summary** for an 80mm thermal-formatted printable version of everything above (using the exact same figures as the on-screen register).
 
 ---
 
