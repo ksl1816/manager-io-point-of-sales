@@ -908,7 +908,7 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
       Secure
     </span>
   </div>
-  <button class="app-cta" id="user-guide-btn" style="background:var(--accent-soft);color:var(--accent);border-color:rgba(79,140,255,.35)" onclick="openUserGuideModal()">
+  <button class="app-cta" id="user-guide-btn" style="background:var(--accent-soft);color:var(--accent);border-color:rgba(79,140,255,.35)" onclick="toggleGuideModal()">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
     </svg>
@@ -932,7 +932,6 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
   <button class="debug-toggle" onclick="toggleHistoryModal()" title="Browse previous sales invoices">🕘 History</button>
   <button class="debug-toggle" onclick="toggleAnalysisModal()" title="Sales analysis & top items">📈 Analysis</button>
   <button class="debug-toggle" onclick="toggleReturnsSearchModal()" title="Search any invoice to record a return">↩ Returns</button>
-  <button class="debug-toggle" onclick="toggleGuideModal()" title="How to use this POS — full user guide">❓ Guide</button>
   <button class="debug-toggle" onclick="toggleSetupModal()" title="Default customer & custom fields setup">⚙ Setup</button>
   <button class="debug-toggle" onclick="toggleDebug()">Debug</button>
 </div>
