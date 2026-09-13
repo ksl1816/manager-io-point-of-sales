@@ -28,9 +28,9 @@ This README is written to match exactly what the current `index.html` does — e
   - **Refund to Customer** — posts a Manager Payment paying the credit out of a chosen bank/cash account
   - **Apply to Another Invoice** — posts a balanced Journal Entry moving the credit from the source invoice to a different invoice the customer owes on
 - **Apply Credit to a new sale** — from the receipt screen right after a sale, apply a customer's existing credit balance (from a prior over-return/overpayment) toward the invoice just created; the receipt updates to show Total, Credit Applied, and Balance Due, and Record Payment only ever collects what's left after the credit
-- **Real invoice editing** — edit a Sales or Purchase Invoice's reference, date, and line qty/price directly from the extension; saved back to Manager via `PUT /api4/sales-invoice` / `PUT /api4/purchase-invoice`
+- **Real invoice editing** — edit a Sales Invoice's reference, date, and line qty/price directly from the extension, saved back to Manager via `PUT /api4/sales-invoice`
 - **Printable Day Register summary** — an 80mm thermal-formatted summary of the day (opening/closing cash, sales, receipts, returns), with the business name and address pulled live from Manager's Business Details
-- **Receipts** — on-screen receipt preview, thermal-style print layout showing the actual business name/address, and PDF download (saved as HTML for "Save as PDF" via the browser print dialog)
+- **Receipts** — on-screen receipt preview, thermal-style print layout showing the actual business name/address, and a genuine PDF download generated client-side via jsPDF
 - **Setup panel** — configure the default customer and required custom fields directly from the extension
 - **Light / dark theme toggle**
 - **Responsive layout** — usable on tablets and narrower screens (POS-friendly breakpoints)
@@ -71,7 +71,7 @@ Once installed inside Manager.io:
    - If a scanned code isn't recognized, you'll be prompted to quick-create a new item (choose Inventory or Non-Inventory) with that code
 4. Adjust quantity/price per line as needed, pick or confirm the **customer**, and choose a **payment method**
 5. Complete the sale — a reference number is generated automatically
-6. From the receipt screen: **print**, **download as PDF**, **💳 Apply Credit** (if the customer has an existing credit balance elsewhere), or **💰 Record Payment**
+6. From the receipt screen: **print**, **save as PDF** (a real PDF file, generated in-browser), **💳 Apply Credit** (if the customer has an existing credit balance elsewhere), or **💰 Record Payment**
 7. Click **🗄 Register** to open the Day Register for any date — set the opening cash (or accept the suggested carry-forward from the previous day's closing), review that date's Sales Invoices and Returns, record receipts, set the closing cash, and **🖨 Print Day Summary** when done
 8. Click **🕘 History** to search and browse past invoices beyond the current day, **📈 Analysis** to see revenue/quantity breakdowns and top-selling items, and **↩ Returns** to search any invoice directly for a return or credit adjustment
 9. Use **↩ Return** to post a Credit Note against a past invoice when a customer returns goods, and **💳 Adjust** wherever a Credit balance appears to refund or reassign it
@@ -84,7 +84,7 @@ Once installed inside Manager.io:
 | Property | Detail |
 |---|---|
 | File type | Single self-contained `index.html` file |
-| External libraries | None (no CDN dependencies except Google Fonts) |
+| External libraries | jsPDF (from cdnjs, used only to generate the receipt PDF) and Google Fonts. No analytics, tracking, or other third-party scripts. |
 | Framework | Vanilla HTML / CSS / JavaScript — no build step required |
 | Manager.io communication | `postMessage` API (standard extension protocol), with a direct-fetch fallback when running inside Manager's iframe context (`managerAppContext.apiEndpoint`) |
 | Pagination | Full — loops all `-batch` endpoints via `next_page_token` / `Skip` |
@@ -100,7 +100,6 @@ Once installed inside Manager.io:
 |---|---|
 | `POST /api4/sales-invoice` | Completing a sale |
 | `PUT /api4/sales-invoice` | Editing an existing Sales Invoice's reference/date/lines |
-| `PUT /api4/purchase-invoice` | Editing an existing Purchase Invoice's reference/date/lines |
 | `POST /api4/receipt` | Recording a payment against a Sales Invoice (checkout "Record Payment" and the Day Register's multi-line receipt form) |
 | `POST /api4/credit-note` | Posting a Sale Return |
 | `POST /api4/payment` | Refunding a customer's credit balance out of a bank/cash account |
@@ -117,10 +116,8 @@ Once installed inside Manager.io:
 These are the specific places where the extension makes a judgment call or a fallback assumption, rather than something guaranteed to be correct for every Manager.io business. Please review each one against your own Chart of Accounts before relying on this in production:
 
 - **Accounts Receivable account resolution.** Every Receipt, Payment, and Journal Entry that touches a customer's balance needs the correct AR control account. The extension resolves this, in order: (1) the customer's own configured control account, (2) an AR account already used on an existing Receipt for that customer, (3) an AR account used on *any* existing Receipt, (4) the Chart of Accounts' flagged `isAccountsReceivable` account via `balance-sheet-account-batch` / `control-account-batch`. If all of those fail, it falls back to a fixed account reference in `getDefaultARAccount()` that has held up across every business tried so far. In practice this fallback path is only reached if all of the earlier automatic lookups come back empty.
-- **Purchase Invoice edit schema.** `PUT /api4/purchase-invoice` uses the same line shape (`item` / `qty` / `unitPrice`) as Sales Invoices, since a separate Purchase Invoice PUT schema wasn't independently confirmed. If your Manager version rejects this shape, edit the Purchase Invoice directly in Manager instead — nothing else in the extension depends on this working.
 - **Credit-note return quantities** are tracked by comparing an invoice's original line quantities against the sum of quantities on *all* existing Credit Notes referencing that invoice — this assumes Credit Notes made outside this extension also set the `salesInvoice` field on the note; if they don't, "already returned" may under-count for those specific notes.
 - **Credit/Due calculations** (shown in Register, History, Returns Search, and Apply Credit) net three sources: Receipts, Credit Notes, and Journal Entries carrying `accountsReceivableSalesInvoice`. If a payment against an invoice was recorded some other way in Manager (e.g. a manual Journal Entry without that field set, or a different transaction type entirely), it won't be reflected in these figures.
-- **PDF download** is actually an HTML file with print-ready styling (no client-side PDF library is used) — the browser's own "Print → Save as PDF" produces the final PDF.
 
 ---
 
@@ -139,7 +136,7 @@ These are the specific places where the extension makes a judgment call or a fal
 
 This extension is an independent, community-built tool and is **not officially affiliated with or endorsed by Manager.io**. It is provided free of charge, as-is. Always verify sales, receipts, returns, credit adjustments, and register totals against your official Manager.io reports before relying on them for accounting or reconciliation.
 
-The POS creates and edits real Sales Invoices, Purchase Invoices, Receipts, Payments, Credit Notes, Journal Entries, and Business Details fields via the postMessage bridge — exercise care when testing and use a safe business instance for development before pointing it at live data.
+The POS creates and edits real Sales Invoices, Receipts, Payments, Credit Notes, Journal Entries, and Business Details fields via the postMessage bridge — exercise care when testing and use a safe business instance for development before pointing it at live data.
 
 ---
 
