@@ -34,6 +34,7 @@ This README is written to match exactly what the current `index.html` does — e
 - **Printable Day Register summary** — an 80mm thermal-formatted summary of the day (sales, cash collected, bank receipts, cash refunds, returns, net cash movement, the itemized Receipts and Payments lists, and each invoice's customer and Due/Credit status), computed with the exact same function as the on-screen register, with the business name and address pulled live from Manager's Business Details
 - **Receipts** — on-screen receipt preview, thermal-style print layout showing the actual business name/address, and a genuine PDF download generated client-side via jsPDF. Note: non-Latin scripts (Urdu/Arabic) may not render in the PDF — see Known Limitations
 - **Setup panel** — configure the default POS/walk-in customer directly from the extension
+- **Built-in User Guide** — a **User Guide** button in the header opens a full how-to reference inside the extension (no internet or separate file needed)
 - **Light / dark theme toggle**
 - **Responsive layout** — usable on tablets and narrower screens (POS-friendly breakpoints)
 - **Fully paginated data fetch** — loads all inventory items, non-inventory items, customers, and payment accounts across every API page
