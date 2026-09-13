@@ -3999,7 +3999,7 @@ function buildThermalReceiptHTML(sale) {
   let lines = '';
   for (const l of sale.lines) {
     lines += `<tr>
-      <td style="text-align:center;font-weight:700;font-size:10px;padding:1mm 1mm 1mm 0;vertical-align:top">${l.qty}</td>
+      <td style="text-align:center;font-weight:700;font-size:10px;padding:1mm 1mm 1mm 0;vertical-align:top">${fmtQty(l.qty)}</td>
       <td style="font-size:10px;font-weight:500;padding:1mm 2mm 1mm 0;vertical-align:top;word-break:break-word">${escapeHtml(l.name)}</td>
       <td style="text-align:right;font-size:10px;padding:1mm 2mm 1mm 0;vertical-align:top;white-space:nowrap">${fmt(l.price)}</td>
       <td style="text-align:right;font-weight:700;font-size:10px;padding:1mm 1mm 1mm 0;vertical-align:top;white-space:nowrap">${fmt(l.total)}</td>
@@ -4036,7 +4036,7 @@ function buildThermalReceiptHTML(sale) {
         <tbody>${lines}</tbody>
       </table>
       <div style="border-top:2px solid #000;margin-top:1.5mm;padding-top:1.5mm">
-        <div style="display:flex;justify-content:space-between;font-size:10px"><span>Total Qty:</span><span style="font-weight:700">${sale.totalQty}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:10px"><span>Total Qty:</span><span style="font-weight:700">${fmtQty(sale.totalQty)}</span></div>
         <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;margin-top:1mm"><span>TOTAL:</span><span>${fmt(sale.total)}</span></div>
         ${sale.appliedCredit > 0 ? `
         <div style="display:flex;justify-content:space-between;font-size:10px;margin-top:1mm"><span>Credit Applied:</span><span>−${fmt(sale.appliedCredit)}</span></div>
@@ -4206,7 +4206,7 @@ async function buildAndSaveReceiptPDF(sale) {
   for (const l of sale.lines) {
     const useUrdu = hasArabicScript(l.name);
     setF(8, false, useUrdu);
-    doc.text(String(l.qty), marginMM, y);
+    doc.text(fmtQty(l.qty), marginMM, y);
     const nameMaxWidth = contentWidthMM - 9 - 20; // reserve room for RATE+AMT columns
     const nameLines = doc.splitTextToSize(useUrdu ? prepareRtl(l.name) : l.name, nameMaxWidth);
     doc.text(nameLines[0] || '', marginMM + 9, y);
@@ -4219,7 +4219,7 @@ async function buildAndSaveReceiptPDF(sale) {
   }
 
   y += 1; hr(false); y += 4;
-  row('Total Qty:', String(sale.totalQty), 8, true); y += 4.5;
+  row('Total Qty:', fmtQty(sale.totalQty), 8, true); y += 4.5;
   row('TOTAL:', fmt(sale.total), 11, true); y += 5;
 
   if (sale.appliedCredit > 0) {
