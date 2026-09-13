@@ -1656,31 +1656,54 @@ function adjustmentTotalForInvoice(invoiceKey, journalEntries) {
 // Single place that computes an invoice's true balance, netting Receipts,
 // Returns (Credit Notes), AND manual Journal Entry adjustments — anywhere
 // "Due"/"Credit" is shown should go through this so all three stay in sync.
-function invoiceBalance(invoiceKey, total, allReceipts, creditNotes, journalEntries) {
+// A Payment (refund) posted against this invoice's AR line cancels out
+// part of a credit balance, the same direction as a debit Journal Entry —
+// it must be ADDED to the balance (moving it back toward/above zero),
+// not treated like a Receipt. Without this, refunding a customer's credit
+// via "Refund to Customer" would post correctly in Manager but the
+// extension would keep showing the same stale Credit amount forever.
+function payLines(p) { return p?.item?.lines || p?.lines || []; }
+function payDate(p) { return (p?.item?.date || p?.date || '').slice(0, 10); }
+function payPaidFrom(p) { return p?.item?.paidFrom || p?.paidFrom || ''; }
+function paymentTotalForInvoice(invoiceKey, payments) {
+  let total = 0;
+  for (const p of payments || []) {
+    for (const l of payLines(p)) {
+      if (l?.accountsReceivableSalesInvoice === invoiceKey) total += Number(l.amount) || 0;
+    }
+  }
+  return total;
+}
+
+function invoiceBalance(invoiceKey, total, allReceipts, creditNotes, journalEntries, payments) {
   const rcv = receiptTotalForInvoice(invoiceKey, allReceipts);
   const ret = returnTotalForInvoice(invoiceKey, creditNotes);
   const adj = adjustmentTotalForInvoice(invoiceKey, journalEntries);
-  const balance = total - rcv - ret - adj;
-  return { rcv, ret, adj, balance, due: Math.max(0, balance), credit: Math.max(0, -balance) };
+  const refunded = paymentTotalForInvoice(invoiceKey, payments);
+  const balance = total - rcv - ret - adj + refunded;
+  return { rcv, ret, adj, refunded, balance, due: Math.max(0, balance), credit: Math.max(0, -balance) };
 }
 
 /* ---- Fetch the day's data straight from Manager (cached per-date until refreshed) ---- */
 async function loadDayRegisterData(dateStr, force) {
   if (state.dayRegisterData && state.dayRegisterData.date === dateStr && !force) return state.dayRegisterData;
-  const [salesRaw, creditRaw, receiptRaw, journalRaw] = await Promise.all([
+  const [salesRaw, creditRaw, receiptRaw, journalRaw, paymentRaw] = await Promise.all([
     getBatchEndpoint('/api4/sales-invoice-batch', () => {}).catch(() => []),
     getBatchEndpoint('/api4/credit-note-batch', () => {}).catch(() => []),
     getBatchEndpoint('/api4/receipt-batch', () => {}).catch(() => []),
     getBatchEndpoint('/api4/journal-entry-batch', () => {}).catch(() => []),
+    getBatchEndpoint('/api4/payment-batch', () => {}).catch(() => []),
   ]);
   if (force || !state.allCreditNotes) state.allCreditNotes = creditRaw; // keep the Return-modal cache in sync
   if (force || !state.allJournalEntries) state.allJournalEntries = journalRaw; // keep the Adjust-modal cache in sync
+  if (force || !state.allPayments) state.allPayments = paymentRaw; // keep the refund-tracking cache in sync
   state.dayRegisterData = {
     date: dateStr,
     salesInvoices: salesRaw.filter(r => invDate(r) === dateStr),
     creditNotes: creditRaw.filter(r => cnDate(r) === dateStr),
     allReceipts: receiptRaw,
     allJournalEntries: journalRaw,
+    allPayments: paymentRaw,
   };
   return state.dayRegisterData;
 }
@@ -1718,7 +1741,7 @@ async function renderRegisterModalBody() {
   el.innerHTML = `<div style="padding:30px;text-align:center;color:var(--text-mute)">Loading day register…</div>`;
 
   await getBusinessDetails();
-  const { salesInvoices, creditNotes, allReceipts, allJournalEntries } = await loadDayRegisterData(dateStr);
+  const { salesInvoices, creditNotes, allReceipts, allJournalEntries, allPayments } = await loadDayRegisterData(dateStr);
 
   const opening    = getRegisterDecimal(dateStr, REG_OPEN_PREFIX);
   const closing    = getRegisterDecimal(dateStr, REG_CLOSE_PREFIX);
@@ -1727,13 +1750,23 @@ async function renderRegisterModalBody() {
   const salesTotal    = salesInvoices.reduce((s, r) => s + invTotal(r), 0);
   const receivedTotal = salesInvoices.reduce((s, r) => s + receiptTotalForInvoice(r.key, allReceipts), 0);
   const returnsTotal  = creditNotes.reduce((s, r) => s + cnTotal(r), 0);
-  const expectedCash  = (opening ?? 0) + receivedTotal;
   const allCreditNotesForDue = state.allCreditNotes || creditNotes; // returns/adjustments can post on a later date than the sale, so Due must check ALL of them ever made against the invoice, not just today's
   const allJournalEntriesForDue = state.allJournalEntries || allJournalEntries;
+  const allPaymentsForDue = state.allPayments || allPayments;
+
+  // Refunds paid out of a CASH account today actually leave the drawer, so
+  // they must reduce Expected Cash the same way a Receipt increases it —
+  // otherwise a refund paid in cash would silently vanish from this total.
+  const todaysCashRefunds = (allPayments || []).filter(p => payDate(p) === dateStr).reduce((s, p) => {
+    const acct = (state.paymentAccounts || []).find(a => a.key === payPaidFrom(p));
+    if (!acct?.item?.isCashAccount) return s;
+    return s + payLines(p).reduce((ss, l) => ss + (Number(l.amount) || 0), 0);
+  }, 0);
+  const expectedCash = (opening ?? 0) + receivedTotal - todaysCashRefunds;
 
   const salesRows = salesInvoices.map(r => {
     const total = invTotal(r);
-    const { rcv, ret, due: outstanding, credit } = invoiceBalance(r.key, total, allReceipts, allCreditNotesForDue, allJournalEntriesForDue);
+    const { rcv, ret, due: outstanding, credit } = invoiceBalance(r.key, total, allReceipts, allCreditNotesForDue, allJournalEntriesForDue, allPaymentsForDue);
     return `
       <tr>
         <td><button class="icon-btn" title="Edit Sales Invoice" onclick="editSalesInvoice('${r.key}')">✎</button> <strong>${escapeHtml(invRef(r))}</strong></td>
@@ -1780,6 +1813,7 @@ async function renderRegisterModalBody() {
       ${opening === null && prevClose ? `<div style="font:500 10px 'IBM Plex Sans';color:var(--text-mute);margin:-6px 0 8px">Suggested from ${escapeHtml(prevClose.date)}'s closing: ${fmt(prevClose.amount)}. Change it if this isn't right.</div>` : ''}
       <div class="summary-row"><span>Sales Invoiced (${salesInvoices.length})</span><span class="v">${fmt(salesTotal)}</span></div>
       <div class="summary-row"><span>Cash/Receipts Collected</span><span class="v">${fmt(receivedTotal)}</span></div>
+      ${todaysCashRefunds > 0.005 ? `<div class="summary-row"><span>Cash Refunds Paid Out</span><span class="v" style="color:var(--warn)">−${fmt(todaysCashRefunds)}</span></div>` : ''}
       <div class="summary-row"><span>Returns / Credit Notes (${creditNotes.length})</span><span class="v">${fmt(returnsTotal)}</span></div>
       <div class="summary-row grand"><span class="l">Expected Cash (Opening + Collected)</span><span class="v">${fmt(expectedCash)}</span></div>
       <div class="summary-row"><span>Closing Cash</span><span class="v">
@@ -2075,6 +2109,13 @@ async function loadJournalEntries(force) {
   return state.allJournalEntries;
 }
 
+state.allPayments = null;
+async function loadPayments(force) {
+  if (state.allPayments && !force) return state.allPayments;
+  state.allPayments = await getBatchEndpoint('/api4/payment-batch', () => {}).catch(() => []);
+  return state.allPayments;
+}
+
 // How much of a given invoice line's qty has already been credited back.
 function alreadyReturnedQty(invoiceKey, itemKey, creditNotes) {
   let total = 0;
@@ -2270,7 +2311,7 @@ async function runAdjustTargetSearch(query, excludeKey) {
   const q = query.trim().toLowerCase();
   if (q.length < 2) { resultsEl.innerHTML = '<div style="padding:10px;color:var(--text-mute);font-size:11px">Type at least 2 characters…</div>'; return; }
   resultsEl.innerHTML = '<div style="padding:10px;color:var(--text-mute);font-size:11px">Searching…</div>';
-  const { salesInvoices, allReceipts, creditNotes, journalEntries } = await loadHistoryData();
+  const { salesInvoices, allReceipts, creditNotes, journalEntries, payments } = await loadHistoryData();
   const matches = salesInvoices.filter(x =>
     x.key !== excludeKey && (invRef(x).toLowerCase().includes(q) || customerNameByKey(invCustomerKey(x)).toLowerCase().includes(q))
   ).sort((a, b) => invDate(b).localeCompare(invDate(a))).slice(0, 20);
@@ -2278,7 +2319,7 @@ async function runAdjustTargetSearch(query, excludeKey) {
   if (!matches.length) { resultsEl.innerHTML = '<div style="padding:10px;color:var(--text-mute);font-size:11px">No matching invoices.</div>'; return; }
 
   resultsEl.innerHTML = matches.map(x => {
-    const { due } = invoiceBalance(x.key, invTotal(x), allReceipts, creditNotes, journalEntries);
+    const { due } = invoiceBalance(x.key, invTotal(x), allReceipts, creditNotes, journalEntries, payments);
     const refEsc = escapeHtml(invRef(x)).replace(/'/g, "\\'");
     return `<div style="padding:6px 8px;border-bottom:1px solid var(--border);cursor:pointer;font-size:11px" onclick="selectAdjustTarget('${x.key}','${refEsc}', ${due})">
       <strong>${escapeHtml(invRef(x))}</strong> — ${escapeHtml(customerNameByKey(invCustomerKey(x)))} — Due: ${fmt(due)}
@@ -2354,15 +2395,17 @@ state.historyFilters = { from: '', to: '', text: '' };
 
 async function loadHistoryData(force) {
   if (state.historyData && !force) return state.historyData;
-  const [salesRaw, receiptRaw, creditRaw, journalRaw] = await Promise.all([
+  const [salesRaw, receiptRaw, creditRaw, journalRaw, paymentRaw] = await Promise.all([
     getBatchEndpoint('/api4/sales-invoice-batch', () => {}).catch(() => []),
     getBatchEndpoint('/api4/receipt-batch', () => {}).catch(() => []),
     getBatchEndpoint('/api4/credit-note-batch', () => {}).catch(() => []),
     getBatchEndpoint('/api4/journal-entry-batch', () => {}).catch(() => []),
+    getBatchEndpoint('/api4/payment-batch', () => {}).catch(() => []),
   ]);
-  state.historyData = { salesInvoices: salesRaw, allReceipts: receiptRaw, creditNotes: creditRaw, journalEntries: journalRaw };
+  state.historyData = { salesInvoices: salesRaw, allReceipts: receiptRaw, creditNotes: creditRaw, journalEntries: journalRaw, payments: paymentRaw };
   if (force || !state.allCreditNotes) state.allCreditNotes = creditRaw; // shared cache used by the Return modal
   if (force || !state.allJournalEntries) state.allJournalEntries = journalRaw; // shared cache used by the Adjust modal
+  if (force || !state.allPayments) state.allPayments = paymentRaw; // shared cache used by the refund-tracking math
   return state.historyData;
 }
 
@@ -2388,7 +2431,7 @@ async function renderHistoryModalBody(skipFetch) {
   const el = document.getElementById('history-modal-body');
   if (!el) return;
   if (!skipFetch) el.innerHTML = `<div style="padding:30px;text-align:center;color:var(--text-mute)">Loading sales history…</div>`;
-  const { salesInvoices, allReceipts, creditNotes, journalEntries } = await loadHistoryData();
+  const { salesInvoices, allReceipts, creditNotes, journalEntries, payments } = await loadHistoryData();
 
   const { from, to, text } = state.historyFilters;
   const filtered = salesInvoices.filter(r => {
@@ -2409,7 +2452,7 @@ async function renderHistoryModalBody(skipFetch) {
 
   const rows = filtered.slice(0, 500).map(r => {
     const total = invTotal(r);
-    const { rcv, ret, due, credit } = invoiceBalance(r.key, total, allReceipts, creditNotes, journalEntries);
+    const { rcv, ret, due, credit } = invoiceBalance(r.key, total, allReceipts, creditNotes, journalEntries, payments);
     return `
       <tr>
         <td>${escapeHtml(invDate(r))}</td>
@@ -2511,7 +2554,7 @@ async function runReturnsSearch(query) {
     return;
   }
   resultsEl.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text-mute)">Searching…</div>`;
-  const { salesInvoices, allReceipts, creditNotes, journalEntries } = await loadHistoryData();
+  const { salesInvoices, allReceipts, creditNotes, journalEntries, payments } = await loadHistoryData();
 
   const matches = salesInvoices.filter(r =>
     invRef(r).toLowerCase().includes(q) || customerNameByKey(invCustomerKey(r)).toLowerCase().includes(q)
@@ -2524,7 +2567,7 @@ async function runReturnsSearch(query) {
 
   const rows = matches.map(r => {
     const total = invTotal(r);
-    const { due, credit } = invoiceBalance(r.key, total, allReceipts, creditNotes, journalEntries);
+    const { due, credit } = invoiceBalance(r.key, total, allReceipts, creditNotes, journalEntries, payments);
     return `
       <tr>
         <td>${escapeHtml(invDate(r))}</td>
@@ -3208,10 +3251,10 @@ async function recordManagerReceipt() {
    the sale that was just made.
 ══════════════════════════════════════════════════════ */
 async function findCustomerCreditInvoices(customerKey, excludeKey) {
-  const { salesInvoices, allReceipts, creditNotes, journalEntries } = await loadHistoryData();
+  const { salesInvoices, allReceipts, creditNotes, journalEntries, payments } = await loadHistoryData();
   return salesInvoices
     .filter(x => invCustomerKey(x) === customerKey && x.key !== excludeKey)
-    .map(x => ({ rec: x, ...invoiceBalance(x.key, invTotal(x), allReceipts, creditNotes, journalEntries) }))
+    .map(x => ({ rec: x, ...invoiceBalance(x.key, invTotal(x), allReceipts, creditNotes, journalEntries, payments) }))
     .filter(x => x.credit > 0.005)
     .sort((a, b) => invDate(b.rec).localeCompare(invDate(a.rec)));
 }
