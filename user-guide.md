@@ -1,4 +1,4 @@
-# POS extension for Manager — User Guide (v2.4)
+# POS extension for Manager — User Guide (v2.5)
 
 This guide covers everyday use of the extension, in the order you'd actually touch things during a shift. It describes only what the extension actually does — nothing here is aspirational or simplified for effect.
 
@@ -87,7 +87,7 @@ For the selected date, you'll see:
 - **Receipts Posted This Day** and **Payments / Refunds Posted This Day** — flat, itemized lists of every receipt and payment *dated to this day* (ref, customer, account with a cash/bank tag, and amount), each with a total. These are selected by the transaction's own date, so a receipt posted today against an older invoice appears here (and in the cash figure) even though that invoice has no card today.
 - A card per Return (Credit Note) for that date, showing which invoice and customer it was against
 
-**How the register decides cash vs bank.** The cash figures only count your physical cash drawer, so you tell the POS which accounts those are: open **⚙ Setup → Cash Drawer Accounts** and tick them (the choice is saved in your browser). Only receipts and payments into those accounts count toward the day's cash; everything else is treated as bank and shown separately. This is explicit, so nothing is guessed once it's set. If you haven't set it yet, the register falls back to a rough guess (an account with "Can have pending transactions" or an IBAN is treated as bank, otherwise cash) and shows a notice that it's guessing — set your drawer account(s) to make the figure exact. Note that a genuine bank account without either setting would otherwise be mistaken for cash, which is exactly why the explicit choice exists.
+**How the register decides cash vs bank.** The cash figures only count your physical cash drawer, so you tell the POS which accounts those are: open **⚙ Setup → Cash Drawer Accounts** and tick them (the choice is saved in your browser). Only receipts and payments into those accounts count toward the day's cash; everything else is treated as bank and shown separately. Nothing is guessed — if you haven't selected any drawer accounts, the Day Register doesn't show a cash figure at all; it simply asks you to **configure your Cash Drawer Accounts first**. This is deliberate: it prevents a genuine bank account from ever being mistaken for cash.
 
 Change the date with the picker at the top; click **↻ Refresh** to re-pull the latest data; click **🖨 Print Day Summary** for an 80mm thermal-formatted printable version of everything above (using the exact same figures as the on-screen register).
 
