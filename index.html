@@ -1291,11 +1291,11 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
     </div>
     <div class="app-title">
       <div class="app-name">POS Terminal</div>
-      <div class="app-sub">for Manager.io · v2.4</div>
+      <div class="app-sub">for Manager.io · v2.5</div>
     </div>
   </div>
   <div class="app-badges">
-    <span class="app-badge b-blue">V2.4</span>
+    <span class="app-badge b-blue">V2.5</span>
     <span class="app-badge b-green">
       <svg class="b-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 12a9 9 0 1 1-3.8-7.4"/><polyline points="21 3 21 9 15 9"/>
@@ -1382,7 +1382,7 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
 
     <div class="hire-footer">
       <span>Free tool · Paid custom development</span>
-      <span style="font-family:'IBM Plex Mono',monospace">v2.4</span>
+      <span style="font-family:'IBM Plex Mono',monospace">v2.5</span>
     </div>
   </div>
 </div>
@@ -1426,7 +1426,7 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
       <div style="border-top:1px solid var(--border);margin-top:16px;padding-top:14px">
         <div style="font:700 12.5px/1.3 'IBM Plex Sans';color:var(--text);margin-bottom:4px">Cash Drawer Accounts</div>
         <div style="font:500 11px/1.55 'IBM Plex Sans';color:var(--text-mute);margin-bottom:8px">
-          Tick the account(s) that represent your <strong>physical cash drawer / till</strong>. The Day Register's <strong>Net Cash Movement</strong> counts only money into and out of these accounts; everything else is treated as bank and excluded from the drawer figure. This is an explicit choice — Manager's account form has no cash/bank field, so nothing is guessed once you've set this.
+          Tick the account(s) that represent your <strong>physical cash drawer / till</strong>. The Day Register's <strong>Net Cash Movement</strong> counts only money into and out of these accounts; everything else is treated as bank and excluded from the drawer figure. This is an explicit choice — Manager's account form has no cash/bank field, so nothing is guessed. Until you select at least one account here, the Day Register won't show a cash figure and will ask you to configure this first.
         </div>
         <div id="setup-cash-drawer-list" style="display:flex;flex-direction:column;gap:4px;max-height:180px;overflow-y:auto;margin-bottom:8px"></div>
         <div id="setup-cash-drawer-status" style="font:600 11px/1.4 'IBM Plex Sans';color:var(--text-mute)"></div>
@@ -1443,7 +1443,7 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
 <div class="modal-overlay" id="guide-modal" data-close="closeGuideModal">
   <div class="modal-content guide-modal-content">
     <div class="modal-header">
-      <span class="modal-title">❓ POS User Guide <span style="font:600 11px 'IBM Plex Mono',monospace;color:var(--text-mute)">v2.4</span></span>
+      <span class="modal-title">❓ POS User Guide <span style="font:600 11px 'IBM Plex Mono',monospace;color:var(--text-mute)">v2.5</span></span>
       <button class="modal-close" onclick="closeGuideModal()">×</button>
     </div>
     <div class="guide-body">
@@ -1478,7 +1478,7 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
         <li><strong>Receipts Posted This Day</strong> and <strong>Payments / Refunds Posted This Day</strong> — itemized lists (ref, customer, account with a cash/bank tag, amount) so every cash figure is traceable.</li>
       </ul>
       <p>Change the date with the picker, <strong>↻ Refresh</strong> to re-pull, or <strong>🖨 Print Day Summary</strong> — which uses the exact same calculation as the on-screen register.</p>
-      <div class="guide-note"><p><strong>Cash vs bank:</strong> Manager's account form has no cash/bank switch, so the POS infers it from features — "Can have pending transactions" enabled or an IBAN → Bank; neither → Cash. Tip: leave "Can have pending transactions" unticked on your cash drawer and ticked on real bank accounts.</p></div>
+      <div class="guide-note"><p><strong>Cash vs bank:</strong> You choose which account(s) are your physical cash drawer in <strong>⚙ Setup → Cash Drawer Accounts</strong>. Only those count as cash; everything else is bank. Nothing is guessed — if none are selected, the Day Register asks you to configure them first rather than showing a possibly-wrong cash figure.</p></div>
 
       <h3>5. Sales History</h3>
       <p>Click <strong>🕘 History</strong> to search across <em>all</em> invoices by date range and/or ref/customer text (press Enter or click Filter). Same cards and actions as the Register. If more than 500 match, narrow the range. <strong>↻ Refresh</strong> re-fetches from Manager.</p>
@@ -1611,7 +1611,7 @@ tr.over-row td{background:rgba(239,68,68,.04) !important}
    is running a cached or outdated copy of this file — hard refresh
    (Ctrl+Shift+R / Cmd+Shift+R) or redeploy, this is not a code bug.
 ══════════════════════════════════════════════════════ */
-debugLog('info', '🔧 POS build v2.4 — if you do not see this exact line first, you are running an old cached file.');
+debugLog('info', '🔧 POS build v2.5 — if you do not see this exact line first, you are running an old cached file.');
 
 /* ══════════════════════════════════════════════════════
    Capture managerAppContext from parent
@@ -2267,13 +2267,15 @@ function isCashAccountItem(item) {
   return true;
 }
 
-/* ---- Physical cash-drawer accounts: EXPLICIT user choice ----
-   The feature heuristic above can only ever guess, and a genuine bank account
-   with no IBAN and no pending-transactions flag would be mis-guessed as cash.
-   So the authoritative source is an explicit list the user picks in Setup
-   ("which account(s) are your physical cash drawer"), persisted in
-   localStorage. Only when the user has NOT chosen yet do we fall back to the
-   heuristic, and the Day Register shows a notice prompting them to choose. */
+/* ---- Physical cash-drawer accounts: EXPLICIT user choice, no guessing ----
+   The feature heuristic (isCashAccountItem, above) is retained ONLY to render
+   a "looks like cash/bank" hint next to each checkbox in Setup. It is never
+   used to decide the actual cash figure. The authoritative source is the
+   explicit list the user picks in Setup ("which account(s) are your physical
+   cash drawer"), persisted in localStorage. If the user has selected none, the
+   Day Register does not compute a cash figure at all — it asks them to
+   configure first (see renderRegisterModalBody / printDayRegisterReport). This
+   guarantees a genuine bank account is never counted as cash by a wrong guess. */
 const CASH_DRAWER_LS_KEY = 'pos-cash-drawer-accounts';
 function loadCashDrawerAccounts() {
   try {
@@ -2287,17 +2289,16 @@ function saveCashDrawerAccounts(keys) {
   // Any open/next Day Register must recompute against the new selection.
   state.dayRegisterData = state.dayRegisterData; // (register re-reads on open/refresh)
 }
-function cashDrawerConfigured() {
-  return Array.isArray(state.cashDrawerAccounts);
+// True only when the user has explicitly selected at least one drawer account.
+// The Day Register requires this before computing any cash figure.
+function hasCashDrawerAccounts() {
+  return Array.isArray(state.cashDrawerAccounts) && state.cashDrawerAccounts.length > 0;
 }
 function isCashAccountKey(key) {
-  if (cashDrawerConfigured()) {
-    // Explicit selection wins — no guessing.
-    return state.cashDrawerAccounts.includes(key);
-  }
-  // Not configured yet → best-effort heuristic (a guess, flagged in the UI).
-  const a = (state.paymentAccounts || []).find(x => x.key === key);
-  return isCashAccountItem(a?.item);
+  // Cash is ONLY what the user explicitly designated as the physical drawer.
+  // No heuristic/guess fallback — an unconfigured setup yields no cash at all,
+  // and the Day Register refuses to compute until accounts are selected.
+  return Array.isArray(state.cashDrawerAccounts) && state.cashDrawerAccounts.includes(key);
 }
 // Sum of receipt line amounts for receipts POSTED on dateStr, split by
 // whether the money landed in a Cash account or a (non-cash) Bank account.
@@ -2412,6 +2413,26 @@ async function renderRegisterModalBody() {
   el.innerHTML = `<div style="padding:30px;text-align:center;color:var(--text-mute)">Loading day register…</div>`;
 
   await getBusinessDetails();
+
+  // Hard gate: without an explicit cash-drawer selection there is no reliable
+  // way to know what's cash, so the register refuses to show a (possibly wrong)
+  // cash figure and asks the user to configure first. No guessing.
+  if (!hasCashDrawerAccounts()) {
+    el.innerHTML = `
+    <div class="reg-toolbar">
+      <div class="form-field"><label>Date</label><input type="date" id="reg-date-picker" value="${dateStr}" onchange="changeRegisterDate(this.value)"></div>
+    </div>
+    <div style="padding:32px 20px;text-align:center">
+      <div style="font-size:34px;margin-bottom:10px">🗄️</div>
+      <div style="font:700 15px 'IBM Plex Sans';color:var(--text);margin-bottom:8px">Please configure your Cash Drawer Accounts first</div>
+      <div style="font:500 12px/1.6 'IBM Plex Sans';color:var(--text-mute);max-width:460px;margin:0 auto 18px">
+        The Day Register reports your physical cash movement, so it needs to know which account(s) are your cash drawer / till. Select them once in Setup — nothing is guessed, so the cash figure is always exact.
+      </div>
+      <button class="btn btn-primary" onclick="closeRegisterModal(); toggleSetupModal();">⚙ Open Setup → Cash Drawer Accounts</button>
+    </div>`;
+    return;
+  }
+
   const { salesInvoices, creditNotes, allReceipts, allJournalEntries, allPayments } = await loadDayRegisterData(dateStr);
 
   const allCreditNotesForDue = state.allCreditNotes || creditNotes; // returns/adjustments can post on a later date than the sale, so Due must check ALL of them ever made against the invoice, not just today's
@@ -2484,9 +2505,6 @@ async function renderRegisterModalBody() {
 
     <div style="font:500 10.5px/1.5 'IBM Plex Sans';color:var(--text-mute);margin:-6px 0 14px;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--input-bg)">
       This is a <strong>cash-movement report</strong>: it shows cash received and paid out on the selected date, computed live from Manager. It is <strong>not a till reconciliation</strong> — there is no opening float, no closing count, and no counted-cash variance. To reconcile the physical drawer, count it against Net Cash Movement yourself.
-      ${cashDrawerConfigured()
-        ? ''
-        : '<div style="margin-top:6px;color:var(--warn)">⚠ Cash-drawer accounts are not set yet, so cash vs bank is being <em>guessed</em> from account features. Open <strong>⚙ Setup</strong> and tick your physical drawer account(s) to make this exact.</div>'}
     </div>
 
     <div class="reg-col-title">Sales Invoices</div>
@@ -3460,6 +3478,10 @@ async function renderAnalysisModalBody(skipFetch) {
 /* ---- Printable Day Register summary — 80mm thermal layout, pulls the
    business name/address straight from Manager's Business Details. ---- */
 async function printDayRegisterReport() {
+  if (!hasCashDrawerAccounts()) {
+    toast('Configure your Cash Drawer Accounts in ⚙ Setup before printing the cash summary.', 'error');
+    return;
+  }
   const dateStr = state.dayRegisterDate;
   const bd = await getBusinessDetails();
   const { salesInvoices, creditNotes, allReceipts, allJournalEntries, allPayments } = await loadDayRegisterData(dateStr);
@@ -3583,12 +3605,12 @@ function renderCashDrawerSetup() {
     if (status) status.textContent = '';
     return;
   }
-  const configured = cashDrawerConfigured();
   const selected = state.cashDrawerAccounts || [];
   host.innerHTML = accts.map(a => {
     const key = a.key, name = a.item?.name || 'Unnamed';
-    // Before the user has configured anything, pre-tick the heuristic guess as a starting point.
-    const checked = configured ? selected.includes(key) : isCashAccountItem(a.item);
+    // No pre-ticking from a guess — the selection must be a deliberate choice.
+    // The "looks like…" note is only a hint to help the user decide.
+    const checked = selected.includes(key);
     const guess = isCashAccountItem(a.item) ? 'looks like cash' : 'looks like bank';
     return `<label style="display:flex;align-items:center;gap:8px;font:500 12px 'IBM Plex Sans';color:var(--text);cursor:pointer">
       <input type="checkbox" class="cash-drawer-cb" value="${key}" ${checked ? 'checked' : ''} onchange="saveCashDrawerSelection()">
@@ -3600,14 +3622,10 @@ function renderCashDrawerSetup() {
 function updateCashDrawerStatus() {
   const status = document.getElementById('setup-cash-drawer-status');
   if (!status) return;
-  if (!cashDrawerConfigured()) {
-    status.innerHTML = '<span style="color:var(--warn)">Not set yet — the register is guessing from account features. Tick your drawer account(s) to make it exact.</span>';
-    return;
-  }
-  const n = (state.cashDrawerAccounts || []).length;
+  const n = hasCashDrawerAccounts() ? state.cashDrawerAccounts.length : 0;
   status.innerHTML = n
-    ? `<span style="color:var(--success)">✓ ${n} cash-drawer account${n === 1 ? '' : 's'} selected.</span>`
-    : '<span style="color:var(--warn)">No account selected — nothing will count as physical cash in the Day Register.</span>';
+    ? `<span style="color:var(--success)">✓ ${n} cash-drawer account${n === 1 ? '' : 's'} selected. The Day Register will count only these as cash.</span>`
+    : '<span style="color:var(--warn)">None selected — the Day Register will ask you to configure this before it shows any cash figure.</span>';
 }
 function saveCashDrawerSelection() {
   const keys = [...document.querySelectorAll('.cash-drawer-cb:checked')].map(cb => cb.value);
