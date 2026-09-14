@@ -1,6 +1,6 @@
 # 🧾 POS extension for Manager
 
-> A free, independent, community-built Point-of-Sale extension for [Manager](https://www.manager.io) (Manager.io) — barcode scanning, cart, a Manager-backed Day Register, receipts, sales history, sales analysis, sale returns, and credit-balance handling, in a single HTML file with no backend. It is **not** an official Manager product and is not affiliated with or endorsed by Manager.io.
+> An opensource, independent, community-built Point-of-Sale extension for [Manager](https://www.manager.io) (Manager.io) — barcode scanning, cart, a Manager-backed Day Register, receipts, sales history, sales analysis, sale returns, and credit-balance handling, in a single HTML file with no backend. It is **not** an official Manager product and is not affiliated with or endorsed by Manager.io.
 >
 > The jsPDF library is bundled inline, so PDF generation works fully offline. The only thing loaded from the network is web fonts (Google Fonts), which degrade gracefully to system fonts when offline — so the extension is *nearly* self-contained rather than 100% air-gapped.
 
