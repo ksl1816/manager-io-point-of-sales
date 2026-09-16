@@ -4235,9 +4235,12 @@ function updateCheckoutPanelSummary() {
   for (const row of rows) {
     const amount = Number(row.querySelector('.chk-amount')?.value) || 0;
     const tendered = Number(row.querySelector('.chk-tendered')?.value) || 0;
-    const isCash = row.querySelector('.chk-account')?.selectedOptions?.[0]?.dataset?.cash === 'true';
     totalEntered += amount;
-    if (isCash && tendered > amount) totalChange += (tendered - amount);
+    // Driven purely by what was actually typed into Tendered — not gated on
+    // Manager's isCashAccount flag, which isn't reliably set on every
+    // business's cash account (that mismatch was the exact bug that made
+    // Tendered/Change silently disappear on some businesses but not others).
+    if (tendered > amount) totalChange += (tendered - amount);
   }
   const remaining = totalDue - totalEntered;
   const parts = [`Entered: ${fmt(totalEntered)}`];
@@ -4296,13 +4299,16 @@ async function submitCheckoutPayments() {
   let posted = 0, failed = 0, postedTotal = 0, cashTendered = 0, changeGiven = 0;
   for (let i = 0; i < rows.length; i++) {
     const l = rows[i];
-    const lineChange = (l.isCash && l.tendered > l.amount) ? (l.tendered - l.amount) : 0;
+    // Not gated on Manager's isCashAccount flag — see note above. If the
+    // cashier typed a Tendered amount, respect it regardless of how that
+    // account happens to be flagged in this business's Chart of Accounts.
+    const lineChange = (l.tendered > l.amount) ? (l.tendered - l.amount) : 0;
     // Persist the cash-handling detail on the Receipt itself (Manager's
     // Description field). Manager has no native "change given" concept, so
     // this plain-text record is the durable place to keep tendered/change —
     // it survives regardless of custom-field setup and never breaks.
     const parts = [`POS ${sale.reference}`, `Applied ${fmt(l.amount)}`];
-    if (l.isCash && l.tendered > 0) parts.push(`Tendered ${fmt(l.tendered)}`, `Change ${fmt(lineChange)}`);
+    if (l.tendered > 0) parts.push(`Tendered ${fmt(l.tendered)}`, `Change ${fmt(lineChange)}`);
     const description = parts.join(' · ');
     try {
       const payload = { value: {
@@ -4316,7 +4322,7 @@ async function submitCheckoutPayments() {
       }};
       const key = await postReceiptSafe(payload);
       posted++; postedTotal += l.amount;
-      if (l.isCash && l.tendered > 0) { cashTendered += l.tendered; changeGiven += lineChange; }
+      if (l.tendered > 0) { cashTendered += l.tendered; changeGiven += lineChange; }
       if (posted === 1) sale.paymentReceiptKey = key; // keep at least one real key on the sale record
     } catch (e) {
       failed++;
